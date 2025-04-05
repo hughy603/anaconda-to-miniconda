@@ -1,254 +1,163 @@
 # Documentation Style Guide
 
-This guide provides detailed standards and best practices for documentation in the Conda-Forge Converter project.
+This guide provides standards and best practices for writing and maintaining documentation
+for the Conda-Forge Converter project.
 
-## Documentation Structure
+## General Principles
 
-- `user/`: User-focused documentation
+- **Clarity**: Write clear, concise, and accurate documentation
+- **Consistency**: Maintain consistent style, formatting, and terminology
+- **Completeness**: Cover all necessary information without redundancy
+- **Accessibility**: Make documentation accessible to users of all skill levels
 
-  - `getting-started.md`: Installation and basic usage
-  - `cli-reference.md`: Command-line interface reference
-  - `workflows.md`: Common workflow examples
-  - `troubleshooting.md`: Common issues and solutions
+## Document Structure
 
-- `dev/`: Developer documentation
+### Standard Sections
 
-  - `architecture.md`: Architecture overview
-  - `contributing.md`: Contributing guidelines
-  - `testing.md`: Testing approach and running tests
-  - `releasing.md`: Release process
-  - `documentation.md`: Documentation guidelines (this file)
+Each documentation file should follow this structure:
 
-- `api/`: API documentation
+1. **Title**: Clear, descriptive title (H1)
+1. **Overview**: Brief introduction to the topic (1-2 paragraphs)
+1. **Main Content**: Organized with appropriate headings (H2, H3, etc.)
+1. **Examples**: Practical examples where applicable
+1. **Related Information**: Links to related documentation
 
-  - `index.md`: API overview
-  - `core.md`: Core module documentation
+### Heading Hierarchy
 
-- `design/`: Design documentation
+- H1 (`#`): Document title
+- H2 (`##`): Major sections
+- H3 (`###`): Subsections
+- H4 (`####`): Minor subsections
 
-  - `overview.md`: High-level design decisions
-  - `improvements.md`: Planned improvements
+## Formatting Guidelines
 
-- `about/`: Project information
+### Text Formatting
 
-  - `license.md`: License information
-  - `changelog.md`: Version history and changes
+- Use **bold** for emphasis and important terms
+- Use `code` for technical terms, commands, and code snippets
+- Use *italics* sparingly for special terms or concepts
+- Use `>` for important notes or warnings
 
-## Building the Documentation
+### Code Blocks
 
-We use MkDocs with the Material theme for our documentation:
+- Use triple backticks with language specification:
 
-1. Install MkDocs with the Material theme:
+  ````markdown
+  ```python
+  def example_function():
+      return "Hello, World!"
+  ```
+  ````
 
-   ```bash
-   pip install mkdocs mkdocs-material mkdocstrings
-   ```
+- For command-line examples:
 
-1. Preview the documentation locally:
+  ````markdown
+  ```bash
+  conda-forge-converter -s myenv -t myenv_forge
+  ```
+  ````
 
-   ```bash
-   mkdocs serve
-   ```
+### Lists
 
-1. Build static site:
+- Use `-` for unordered lists
+- Use `1.` for ordered lists
+- Indent nested lists with 2 spaces
 
-   ```bash
-   mkdocs build
-   ```
+### Links
 
-## Principles
+- Use descriptive link text: `[CLI Reference](user/cli-reference.md)`
+- For external links, add a note: `[Python Documentation](https://docs.python.org/) (external)`
 
-Our documentation aims to be:
+### Images and Diagrams
 
-- **Accurate**: Technically correct and up-to-date
-- **Clear**: Easy to understand and navigate
-- **Comprehensive**: Covers all important aspects of the project
-- **Consistent**: Uses consistent terminology and formatting
-- **Accessible**: Usable by people with diverse backgrounds and experience levels
+- Use Mermaid for diagrams when possible
+- Include alt text for accessibility
+- Place images in the `docs/images/` directory
+
+## Terminology
+
+### Consistent Terms
+
+| Term        | Usage                        |
+| ----------- | ---------------------------- |
+| conda-forge | Always hyphenated, lowercase |
+| Anaconda    | Capitalized                  |
+| environment | Lowercase                    |
+| package     | Lowercase                    |
+| CLI         | All caps                     |
+
+### Command Examples
+
+- Use `conda-forge-converter` as the command name
+- Show both short and long options: `-s, --source`
+- Include examples with and without optional parameters
+
+## Writing Style
+
+### Tone
+
+- Professional but approachable
+- Direct and clear
+- Active voice preferred
+- Present tense for current features
+
+### Language
+
+- Use American English spelling
+- Avoid jargon unless necessary
+- Define technical terms on first use
+- Use consistent terminology throughout
 
 ## Documentation Types
 
 ### User Documentation
 
-- **Tutorials**: Step-by-step guides for beginners
-- **How-to Guides**: Task-oriented guides for specific objectives
-- **References**: Detailed technical descriptions of functions, classes, and APIs
-- **Explanations**: Conceptual discussions that provide context and background
+- Focus on how to use the tool
+- Include practical examples
+- Explain concepts clearly
+- Provide troubleshooting guidance
 
 ### Developer Documentation
 
-- **Architecture**: System design and component relationships
-- **Contributing Guide**: How to contribute to the project
-- **Code Standards**: Coding conventions and best practices
-- **Development Workflow**: Setting up development environment, testing, and release process
+- Include technical details
+- Explain design decisions
+- Document APIs and interfaces
+- Provide contribution guidelines
 
-## Markdown Style
+### API Documentation
 
-### General Formatting
+- Document all public functions and classes
+- Include parameter descriptions
+- Provide return value information
+- Include usage examples
 
-- Use ATX-style headers with a space after the hash: `# Heading`
-- Leave one blank line before and after headings
-- Line length: 120 characters maximum (except for code blocks and tables)
-- Use emphasis sparingly (`*italic*` or `**bold**`)
-- Use unordered lists with dashes (`-`) and ordered lists with numbers (`1.`)
-- Indent nested lists with 2 spaces
-
-### Code Formatting
-
-- Use backticks for inline code: `` `code` ``
-- Use fenced code blocks with language identifiers:
-
-```python
-def example_function():
-    """This is an example function."""
-    return True
-```
-
-### Links and References
-
-- Use reference-style links for better readability:
-  ```markdown
-  [link text][reference]
-
-  [reference]: https://example.com
-  ```
-- Use relative links for internal documentation
-- Always include descriptive link text that makes sense out of context
-
-### Images
-
-- Include alt text for all images:
-  ```markdown
-  ![Alt text describing the image](path/to/image.png)
-  ```
-- Keep images in an `assets` or `images` directory
-- Optimize images for web (reasonable file size)
-- Use SVG format for diagrams when possible
-
-## Python Docstrings
-
-We follow Google-style docstrings:
-
-```python
-def function_name(param1, param2):
-    """Short description of function.
-
-    Longer description explaining the function in detail.
-
-    Args:
-        param1 (type): Description of param1.
-        param2 (type): Description of param2.
-
-    Returns:
-        return_type: Description of return value.
-
-    Raises:
-        ExceptionType: Description of when this exception is raised.
-
-    Examples:
-        >>> function_name("example", 123)
-        "result"
-    """
-    return result
-```
-
-### Key Components
-
-- **One-line summary**: Brief description ending with a period
-- **Extended description**: Additional details as needed
-- **Args/Parameters**: All parameters with types and descriptions
-- **Returns**: Description of return value with type
-- **Raises**: Exceptions that may be raised
-- **Examples**: Usage examples (optional but encouraged)
-
-## Writing Guidelines
-
-### Voice and Tone
-
-- Use present tense: "The function returns a value" (not "will return")
-- Use active voice: "The system logs errors" (not "Errors are logged by the system")
-- Use second person ("you") in user guides and tutorials
-- Use imperative mood for commands: "Run the install command" (not "You should run")
-
-### Terminology and Consistency
-
-- Maintain a consistent vocabulary throughout the documentation
-- Proper capitalization for special terms (Python, conda-forge, etc.)
-- Define terms that may be unfamiliar to readers
-- Use "file" not "script" when referring to Python files
-
-### Content Guidelines
-
-- Write in clear, concise American English
-- Use present tense and active voice when possible
-- Use second person ("you") for user guides and tutorials
-- Use imperative mood for procedure steps ("Install the package", not "You should install the package")
-- Include examples for code snippets
-- Proper capitalization of special terms (Python, conda-forge, Miniconda, etc.)
-- Always provide context before showing code or commands
-
-### Structure
-
-- Each document should have a single, clear purpose
-- Begin with a brief introduction explaining the document's purpose
-- Use headers to organize content hierarchically
-- Include a "Related Resources" section at the end of each document
-
-### Versioning Notes
-
-- Clearly mark features with their minimum required version
-- Use admonitions for version-specific notes:
-  ```markdown
-  !!! note "Available from version 1.2"
-      This feature is only available in version 1.2 and later.
-  ```
-
-## Documentation Process
-
-### Adding New Documentation
-
-1. Identify what documentation is needed
-1. Place it in the appropriate directory within `docs/`
-1. Update the nav in `mkdocs.yml` if adding a new page
-1. Run pre-commit checks before committing
-1. Submit PR for review
-
-### Updating Existing Documentation
-
-1. Update content to be accurate and relevant
-1. Ensure consistency with existing documentation
-1. Run pre-commit checks before committing
-1. Submit PR for review
+## Maintenance
 
 ### Review Process
 
-Documentation PRs are reviewed for:
+1. Self-review for clarity and completeness
+1. Technical review for accuracy
+1. Editorial review for style and consistency
 
-- Technical accuracy
-- Completeness
-- Style consistency
-- Clarity and readability
-- Grammar and spelling
+### Versioning
 
-## Automated Checks
+- Keep documentation in sync with code
+- Update documentation with each release
+- Mark deprecated features clearly
+- Document breaking changes
 
-We use pre-commit hooks to enforce documentation standards:
+## Tools and Resources
 
-- **markdownlint**: Checks Markdown syntax and style
-- **pydocstyle**: Validates Python docstrings follow Google style
-- **mdformat**: Formats Markdown files consistently
-- **pymarkdown**: Additional Markdown linting
+### Documentation Tools
 
-Run checks locally with:
+- MkDocs for building documentation
+- Material theme for styling
+- Mermaid for diagrams
+- Pre-commit hooks for linting
 
-```bash
-pre-commit run --all-files
-```
+### Useful Resources
 
-For more details, see the [.pre-commit-config.yaml](../.pre-commit-config.yaml) file.
-
-## Related Resources
-
-- [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings)
-- [Material for MkDocs Documentation](https://squidfunk.github.io/mkdocs-material/)
-- [Diátaxis Documentation Framework](https://diataxis.fr/)
+- [Markdown Guide](https://www.markdownguide.org/)
+- [MkDocs Documentation](https://www.mkdocs.org/)
+- [Mermaid Documentation](https://mermaid-js.github.io/mermaid/)
+- [Technical Writing Guide](https://developers.google.com/tech-writing)
