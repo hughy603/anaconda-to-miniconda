@@ -45,6 +45,7 @@ test = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "pytest" },
     { name = "types-pathlib2" },
 ]
 
@@ -65,7 +66,10 @@ requires-dist = [
 provides-extras = ["dev", "test"]
 
 [package.metadata.requires-dev]
-dev = [{ name = "types-pathlib2", specifier = ">=2.3.0" }]
+dev = [
+    { name = "pytest", specifier = ">=8.3.5" },
+    { name = "types-pathlib2", specifier = ">=2.3.0" },
+]
 
 [[package]]
 name = "coverage"

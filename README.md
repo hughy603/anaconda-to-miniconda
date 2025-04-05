@@ -60,6 +60,28 @@ For all options:
 conda-forge-converter --help
 ```
 
-## License
+## Dependency Management
 
-MIT License
+This project uses a modern dependency management approach based on [uv](https://github.com/astral-sh/uv) and pre-commit hooks.
+
+Key components:
+
+- **pyproject.toml**: Source of truth for all dependencies
+- **uv**: Fast Python package installer used for dependency resolution
+- **pre-commit**: Automated checks and dependency locking
+
+For detailed information about the dependency management strategy, see [DEPENDENCY_MANAGEMENT.md](DEPENDENCY_MANAGEMENT.md).
+
+## Quick Setup
+
+```bash
+# Install tools
+pipx install uv
+pipx install pre-commit
+
+# Set up development environment
+./scripts/setup_dev.sh
+
+# Manual dependency update
+python3 scripts/update_deps.py
+```

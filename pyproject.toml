@@ -206,5 +206,6 @@ add-select = [
 
 [dependency-groups]
 dev = [
+    "pytest>=8.3.5",
     "types-pathlib2>=2.3.0",
 ]

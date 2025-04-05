@@ -4,10 +4,15 @@
     "python.analysis.diagnosticMode": "workspace",
     "python.analysis.autoImportCompletions": true,
     "python.analysis.indexing": true,
+    "python.analysis.extraPaths": ["${workspaceFolder}/src"],
     "python.analysis.packageIndexDepths": [
         {
             "name": "conda_forge_converter",
             "depth": 5
         }
-    ]
+    ],
+    "python.analysis.inlayHints.variableTypes": true,
+    "python.analysis.inlayHints.functionReturnTypes": true,
+    "python.analysis.importFormat": "relative",
+    "python.languageServer": "Pylance"
 }

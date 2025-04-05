@@ -64,7 +64,6 @@ dmypy.json
 
 # IDEs and editors
 .idea/
-.vscode/
 *.swp
 *.swo
 .project

@@ -1,6 +1,6 @@
 {
   "plugins": {
-    "max-line-length": {
+    "line-length": {
       "enabled": true,
       "line_length": 120,
       "code_blocks": false,
