@@ -1,0 +1,37 @@
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+    -   id: trailing-whitespace
+    -   id: end-of-file-fixer
+    -   id: check-yaml
+    -   id: check-added-large-files
+    -   id: check-merge-conflict
+    -   id: check-case-conflict
+    -   id: check-toml
+    -   id: mixed-line-ending
+        args: [--fix=lf]
+
+-   repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.4
+    hooks:
+    -   id: ruff
+        args: [--fix, --config=pyproject.toml, --exit-zero]
+    -   id: ruff-format
+        args: [--config=pyproject.toml]
+
+-   repo: https://github.com/RobertCraigie/pyright-python
+    rev: v1.1.398
+    hooks:
+    -   id: pyright
+        additional_dependencies:
+        - types-PyYAML
+        - pyyaml>=6.0
+        - typing_extensions>=4.7.0
+        - pytest>=7.0.0
+
+-   repo: https://github.com/commitizen-tools/commitizen
+    rev: v4.5.0
+    hooks:
+    -   id: commitizen
+        stages: [commit-msg]

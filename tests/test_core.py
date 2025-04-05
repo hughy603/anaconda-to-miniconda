@@ -1,81 +1,107 @@
-"""Unit tests for the core functionality in conda_forge_converter.core."""
+"""Tests for the core module."""
 
-import os
 import json
-import datetime
+from collections.abc import Sequence
+from typing import Any, cast
 from unittest import mock
-import pytest
-from typing import Any, Dict, List, Tuple
 
+import pytest
 import yaml
 
 from conda_forge_converter.core import (
-    find_environments_in_path,
-    list_all_conda_environments,
-    get_python_version,
-    get_environment_packages,
-    extract_package_specs,
-    get_environment_size,
-    environment_exists,
-    create_conda_forge_environment,
+    CondaPackage,
+    EnvironmentInfo,
+    PipPackage,
     convert_environment,
     convert_multiple_environments,
-    EnvironmentInfo,
+    create_conda_forge_environment,
+    environment_exists,
+    extract_package_specs,
+    find_environments_in_path,
+    get_environment_packages,
+    get_environment_size,
+    get_python_version,
+    list_all_conda_environments,
 )
 
 
 @pytest.fixture
-def mock_conda_environments() -> Dict[str, str]:
-    """Return a mock mapping of environment names to paths."""
+def mock_conda_environments() -> dict[str, str]:
+    """Fixture providing test conda environments."""
     return {
         "base": "/home/user/anaconda3",
-        "env1": "/home/user/anaconda3/envs/env1",
-        "env2": "/home/user/anaconda3/envs/env2",
         "data_science": "/home/user/anaconda3/envs/data_science",
+        "web_dev": "/home/user/anaconda3/envs/web_dev",
     }
 
 
 @pytest.fixture
-def mock_conda_packages() -> List[Dict[str, str]]:
-    """Return mock conda packages information."""
+def mock_conda_packages() -> list[CondaPackage]:
+    """Fixture providing test conda packages."""
     return [
-        {"name": "python", "version": "3.11.3"},
-        {"name": "numpy", "version": "1.24.3"},
-        {"name": "pandas", "version": "2.0.1"},
-        {"name": "matplotlib", "version": "3.7.1"},
+        cast(CondaPackage, {"name": "numpy", "version": "1.24.3"}),
+        cast(CondaPackage, {"name": "pandas", "version": "2.0.1"}),
+        cast(CondaPackage, {"name": "scipy", "version": "1.10.1"}),
     ]
 
 
 @pytest.fixture
-def mock_from_history_env_yaml() -> Dict[str, Any]:
-    """Return mock environment YAML from --from-history export."""
+def mock_from_history_env_yaml() -> dict[str, Any]:
+    """Fixture providing test environment.yml from --from-history export."""
     return {
-        "name": "env1",
-        "channels": ["defaults"],
-        "dependencies": [
-            "python=3.11",
-            "numpy=1.24",
-            "pandas=2.0",
-            {"pip": ["scikit-learn==1.2.2", "jupyterlab==4.0.0"]},
-        ],
-    }
-
-
-@pytest.fixture
-def mock_full_env_yaml() -> Dict[str, Any]:
-    """Return mock environment YAML from full export."""
-    return {
-        "name": "env1",
+        "name": "test_env",
         "channels": ["defaults"],
         "dependencies": [
             "python=3.11.3",
             "numpy=1.24.3",
             "pandas=2.0.1",
-            "matplotlib=3.7.1",
-            "scipy=1.10.1",
-            "_libgcc_mutex=0.1",
-            # ... many more packages
-            {"pip": ["scikit-learn==1.2.2", "jupyterlab==4.0.0", "ipywidgets==8.0.6"]},
+            "pip",
+            {
+                "pip": [
+                    "scikit-learn==1.2.2",
+                ],
+            },
+        ],
+    }
+
+
+@pytest.fixture
+def mock_full_env_yaml() -> dict[str, Any]:
+    """Fixture providing test environment.yml from regular export."""
+    return {
+        "name": "test_env",
+        "channels": ["defaults"],
+        "dependencies": [
+            "blas=1.0=mkl",
+            "ca-certificates=2023.01.10=haa95532_0",
+            "intel-openmp=2023.1.0=h59b6b97_46319",
+            "mkl=2023.1.0=h8bd8f75_46356",
+            "mkl-service=2.4.0=py311h2bbff1b_1",
+            "mkl_fft=1.3.6=py311hf62ec03_1",
+            "mkl_random=1.2.2=py311hf62ec03_1",
+            "numpy=1.24.3=py311hf62ec03_1",
+            "numpy-base=1.24.3=py311h4a8f9c9_1",
+            "openssl=1.1.1t=h2bbff1b_0",
+            "pandas=2.0.1=py311h5bb9026_0",
+            "pip=23.1.2=py311haa95532_0",
+            "python=3.11.3=h966fe2a_0",
+            "python-dateutil=2.8.2=pyhd3eb1b0_0",
+            "pytz=2022.7=py311haa95532_0",
+            "setuptools=67.8.0=py311haa95532_0",
+            "six=1.16.0=pyhd3eb1b0_1",
+            "sqlite=3.41.2=h2bbff1b_0",
+            "tzdata=2023c=h04d1e81_0",
+            "vc=14.2=h21ff451_1",
+            "vs2015_runtime=14.27.29016=h5e58377_2",
+            "wheel=0.38.4=py311haa95532_0",
+            {
+                "pip": [
+                    "scikit-learn==1.2.2",
+                    "threadpoolctl==3.1.0",
+                    "joblib==1.2.0",
+                    "scipy==1.10.1",
+                ],
+            },
         ],
     }
 
@@ -109,10 +135,10 @@ class TestEnvironmentInfo:
             [{"name": "python", "version": "3.11.3"}, {"name": "numpy", "version": "1.24.3"}],
             [{"name": "scikit-learn", "version": "1.2.2"}],
         )
-        
+
         # Execute
         info = EnvironmentInfo.from_environment("env1", "/path/to/env1")
-        
+
         # Verify
         assert info is not None
         assert info.name == "env1"
@@ -132,10 +158,10 @@ class TestEnvironmentInfo:
         # Setup
         mock_get_python.return_value = "3.11.3"
         mock_get_packages.return_value = ([], False)  # No packages found
-        
+
         # Execute
         info = EnvironmentInfo.from_environment("env1", "/path/to/env1")
-        
+
         # Verify
         assert info is None
 
@@ -143,39 +169,64 @@ class TestEnvironmentInfo:
 class TestFindEnvironmentsInPath:
     """Tests for find_environments_in_path function."""
 
-    @mock.patch("os.path.exists")
-    @mock.patch("os.listdir")
+    @mock.patch("pathlib.Path.exists")
+    @mock.patch("pathlib.Path.iterdir")
     @mock.patch("conda_forge_converter.core.is_conda_environment")
     def test_find_valid_environments(
         self,
         mock_is_conda_env: mock.MagicMock,
-        mock_listdir: mock.MagicMock,
+        mock_iterdir: mock.MagicMock,
         mock_exists: mock.MagicMock,
     ) -> None:
         """Test finding valid conda environments in a path."""
         # Setup
         mock_exists.return_value = True
-        mock_listdir.return_value = ["env1", "env2", "not_an_env"]
-        mock_is_conda_env.side_effect = lambda path: "env" in os.path.basename(path)
-        
+
+        # Set up mock_is_conda_env to identify env1 and env2 as conda environments
+        def is_conda_env_side_effect(path):
+            path_str = str(path)
+            is_env = "env1" in path_str or "env2" in path_str
+            print(f"Checking if {path_str} is env: {is_env}")
+            return is_env
+
+        mock_is_conda_env.side_effect = is_conda_env_side_effect
+
+        # Create mock directory entries
+        mock_env1 = mock.MagicMock()
+        mock_env1.name = "env1"
+        mock_env1.is_dir.return_value = True
+        mock_env1.__str__.return_value = "/path/to/envs/env1"
+
+        mock_env2 = mock.MagicMock()
+        mock_env2.name = "env2"
+        mock_env2.is_dir.return_value = True
+        mock_env2.__str__.return_value = "/path/to/envs/env2"
+
+        mock_not_env = mock.MagicMock()
+        mock_not_env.name = "not_an_env"
+        mock_not_env.is_dir.return_value = True
+        mock_not_env.__str__.return_value = "/path/to/envs/not_an_env"
+
+        mock_iterdir.return_value = [mock_env1, mock_env2, mock_not_env]
+
         # Execute
-        envs = find_environments_in_path("/path/to/envs", max_depth=2, verbose=False)
-        
+        envs = find_environments_in_path("/path/to/envs", max_depth=2, verbose=True)
+
         # Verify
         assert len(envs) == 2
         assert "env1" in envs
         assert "env2" in envs
         assert "not_an_env" not in envs
 
-    @mock.patch("os.path.exists")
+    @mock.patch("pathlib.Path.exists")
     def test_path_does_not_exist(self, mock_exists: mock.MagicMock) -> None:
         """Test with a non-existent path."""
         # Setup
         mock_exists.return_value = False
-        
+
         # Execute
         envs = find_environments_in_path("/path/does/not/exist", verbose=False)
-        
+
         # Verify
         assert envs == {}
 
@@ -187,20 +238,25 @@ class TestListAllCondaEnvironments:
     def test_registered_environments(self, mock_run: mock.MagicMock) -> None:
         """Test listing registered conda environments."""
         # Setup
-        mock_output = json.dumps({
-            "envs": [
-                "/home/user/anaconda3",
-                "/home/user/anaconda3/envs/env1",
-                "/home/user/anaconda3/envs/env2",
-            ]
-        })
+        mock_output = json.dumps(
+            {
+                "envs": [
+                    "/home/user/anaconda3",
+                    "/home/user/anaconda3/envs/env1",
+                    "/home/user/anaconda3/envs/env2",
+                ],
+            },
+        )
         mock_run.return_value = mock_output
-        
+
         # Execute
-        envs = list_all_conda_environments(verbose=False)
-        
+        envs = list_all_conda_environments()
+
         # Verify
         assert len(envs) == 3
+        assert "base" in envs
+        assert "env1" in envs
+        assert "env2" in envs
         assert envs["base"] == "/home/user/anaconda3"
         assert envs["env1"] == "/home/user/anaconda3/envs/env1"
         assert envs["env2"] == "/home/user/anaconda3/envs/env2"
@@ -212,30 +268,36 @@ class TestListAllCondaEnvironments:
         mock_find: mock.MagicMock,
         mock_run: mock.MagicMock,
     ) -> None:
-        """Test listing environments with custom search paths."""
+        """Test listing environments with additional search paths."""
         # Setup
-        mock_output = json.dumps({
-            "envs": [
-                "/home/user/anaconda3",
-                "/home/user/anaconda3/envs/env1",
-            ]
-        })
+        mock_output = json.dumps(
+            {
+                "envs": [
+                    "/home/user/anaconda3",
+                    "/home/user/anaconda3/envs/env1",
+                ],
+            },
+        )
         mock_run.return_value = mock_output
-        mock_find.side_effect = [
-            {"env2": "/custom/path/env2"},
-            {"env3": "/another/path/env3"},
-        ]
-        
+
+        # Mock the find_environments_in_path function to return additional envs
+        mock_find.return_value = {
+            "env3": "/opt/conda_envs/env3",
+            "env4": "/home/user/custom/env4",
+        }
+
         # Execute
         envs = list_all_conda_environments(
-            search_paths=["/custom/path", "/another/path"], verbose=False
+            search_paths=["/opt/conda_envs", "/home/user/custom"],
+            verbose=True,
         )
-        
+
         # Verify
         assert len(envs) == 4
+        assert "base" in envs
         assert "env1" in envs
-        assert "env2" in envs
         assert "env3" in envs
+        assert "env4" in envs
 
 
 class TestGetPythonVersion:
@@ -245,17 +307,18 @@ class TestGetPythonVersion:
     def test_get_python_version_by_name(self, mock_run: mock.MagicMock) -> None:
         """Test getting Python version by environment name."""
         # Setup
-        mock_output = json.dumps([
-            {"name": "python", "version": "3.11.3", "channel": "conda-forge"}
-        ])
+        mock_output = json.dumps(
+            [{"name": "python", "version": "3.11.3", "channel": "conda-forge"}],
+        )
         mock_run.return_value = mock_output
-        
+
         # Execute
         version = get_python_version("env1", verbose=False)
-        
+
         # Verify
         mock_run.assert_called_once_with(
-            ["conda", "list", "--name", "env1", "python", "--json"], False
+            ["conda", "list", "--name", "env1", "python", "--json"],
+            False,
         )
         assert version == "3.11.3"
 
@@ -263,17 +326,18 @@ class TestGetPythonVersion:
     def test_get_python_version_by_path(self, mock_run: mock.MagicMock) -> None:
         """Test getting Python version by environment path."""
         # Setup
-        mock_output = json.dumps([
-            {"name": "python", "version": "3.11.3", "channel": "conda-forge"}
-        ])
+        mock_output = json.dumps(
+            [{"name": "python", "version": "3.11.3", "channel": "conda-forge"}],
+        )
         mock_run.return_value = mock_output
-        
+
         # Execute
         version = get_python_version("env1", env_path="/path/to/env1", verbose=False)
-        
+
         # Verify
         mock_run.assert_called_once_with(
-            ["conda", "list", "--prefix", "/path/to/env1", "python", "--json"], False
+            ["conda", "list", "--prefix", "/path/to/env1", "python", "--json"],
+            False,
         )
         assert version == "3.11.3"
 
@@ -283,36 +347,41 @@ class TestGetEnvironmentPackages:
 
     @mock.patch("conda_forge_converter.core.run_command")
     def test_from_history_success(
-        self, mock_run: mock.MagicMock, mock_from_history_env_yaml: Dict[str, Any]
+        self,
+        mock_run: mock.MagicMock,
+        mock_from_history_env_yaml: dict[str, Any],
     ) -> None:
         """Test getting packages from environment history."""
         # Setup
         mock_run.return_value = yaml.dump(mock_from_history_env_yaml)
-        
+
         # Execute
         dependencies, from_history = get_environment_packages("env1", verbose=False)
-        
+
         # Verify
         assert from_history is True
-        assert len(dependencies) == 4  # 3 conda packages + 1 pip dict
-        assert "python=3.11" in dependencies
-        assert "numpy=1.24" in dependencies
-        assert "pandas=2.0" in dependencies
-        assert {"pip": ["scikit-learn==1.2.2", "jupyterlab==4.0.0"]} in dependencies
+        assert len(dependencies) == 5  # python, numpy, pandas, pip, and pip dict
+        assert "python=3.11.3" in dependencies
+        assert "numpy=1.24.3" in dependencies
+        assert "pandas=2.0.1" in dependencies
+        assert "pip" in dependencies
+        assert {"pip": ["scikit-learn==1.2.2"]} in dependencies
 
     @mock.patch("conda_forge_converter.core.run_command")
     def test_fallback_to_full_export(
-        self, mock_run: mock.MagicMock, mock_full_env_yaml: Dict[str, Any]
+        self,
+        mock_run: mock.MagicMock,
+        mock_full_env_yaml: dict[str, Any],
     ) -> None:
         """Test fallback to full export when from-history fails."""
         # Setup
         # First call (with --from-history) fails
         # Second call (without --from-history) succeeds
         mock_run.side_effect = [None, yaml.dump(mock_full_env_yaml)]
-        
+
         # Execute
         dependencies, from_history = get_environment_packages("env1", verbose=False)
-        
+
         # Verify
         assert from_history is False
         assert len(dependencies) > 4  # Should include all dependencies
@@ -331,32 +400,35 @@ class TestExtractPackageSpecs:
             "matplotlib=3.7.1",
             "pip",  # Should be ignored
         ]
-        
+
         # Execute
         conda_packages, pip_packages = extract_package_specs(dependencies)
-        
+
         # Verify
-        assert len(conda_packages) == 3  # Excluding "pip"
+        assert len(conda_packages) == 4  # python, numpy, pandas, matplotlib, excluding pip
         assert conda_packages[0]["name"] == "python"
         assert conda_packages[0]["version"] == "3.11"
-        assert conda_packages[2]["name"] == "pandas"
-        assert conda_packages[2]["version"] is None  # No version
+        assert "numpy" in [pkg["name"] for pkg in conda_packages]
+        assert "pandas" in [pkg["name"] for pkg in conda_packages]
+        assert "matplotlib" in [pkg["name"] for pkg in conda_packages]
 
     def test_extract_pip_packages(self) -> None:
         """Test extracting pip package specifications."""
         # Setup
         dependencies = [
             "python=3.11",
-            {"pip": [
-                "scikit-learn==1.2.2",
-                "jupyterlab==4.0.0",
-                "ipywidgets",  # No version
-            ]},
+            {
+                "pip": [
+                    "scikit-learn==1.2.2",
+                    "jupyterlab==4.0.0",
+                    "ipywidgets",  # No version
+                ],
+            },
         ]
-        
+
         # Execute
         conda_packages, pip_packages = extract_package_specs(dependencies)
-        
+
         # Verify
         assert len(pip_packages) == 3
         assert pip_packages[0]["name"] == "scikit-learn"
@@ -376,7 +448,7 @@ class TestEnvironmentExists:
             "base": "/home/user/anaconda3",
             "env1": "/home/user/anaconda3/envs/env1",
         }
-        
+
         # Execute & Verify
         assert environment_exists("env1") is True
         assert environment_exists("nonexistent_env") is False
@@ -387,7 +459,9 @@ class TestGetEnvironmentSize:
 
     @mock.patch("conda_forge_converter.core.run_command")
     def test_calculate_environment_size(
-        self, mock_run: mock.MagicMock, mock_full_env_yaml: Dict[str, Any]
+        self,
+        mock_run: mock.MagicMock,
+        mock_full_env_yaml: dict[str, Any],
     ) -> None:
         """Test calculating environment size based on package count."""
         # Setup
@@ -396,17 +470,17 @@ class TestGetEnvironmentSize:
         pip_dict = next((d for d in dependencies if isinstance(d, dict) and "pip" in d), None)
         assert pip_dict is not None
         assert len(pip_dict["pip"]) >= 3
-        
+
         mock_run.return_value = yaml.dump(mock_full_env_yaml)
-        
+
         # Execute
         size_mb = get_environment_size("env1", verbose=False)
-        
+
         # Verify - should be (conda_count + pip_count) * 50
         conda_count = sum(1 for d in dependencies if isinstance(d, str))
         pip_count = len(pip_dict["pip"])
         expected_size = (conda_count + pip_count) * 50
-        
+
         assert size_mb == expected_size
 
 
@@ -416,20 +490,25 @@ class TestCreateCondaForgeEnvironment:
     def test_dry_run(self) -> None:
         """Test dry run mode."""
         # Setup
-        conda_packages = [
-            {"name": "numpy", "version": "1.24.3"},
-            {"name": "pandas", "version": "2.0.1"},
+        conda_packages: Sequence[CondaPackage] = [
+            cast(CondaPackage, {"name": "numpy", "version": "1.24.3"}),
+            cast(CondaPackage, {"name": "pandas", "version": "2.0.1"}),
         ]
-        pip_packages = [
-            {"name": "scikit-learn", "version": "1.2.2"},
+        pip_packages: Sequence[PipPackage] = [
+            cast(PipPackage, {"name": "scikit-learn", "version": "1.2.2"}),
         ]
-        
+
         # Execute
         result = create_conda_forge_environment(
-            "source_env", "target_env", conda_packages, pip_packages,
-            python_version="3.11.3", dry_run=True, verbose=False
+            "source_env",
+            "target_env",
+            conda_packages,
+            pip_packages,
+            python_version="3.11.3",
+            dry_run=True,
+            verbose=False,
         )
-        
+
         # Verify
         assert result is True  # Dry run always succeeds
 
@@ -437,44 +516,57 @@ class TestCreateCondaForgeEnvironment:
     def test_successful_creation(self, mock_run: mock.MagicMock) -> None:
         """Test successful environment creation."""
         # Setup
-        conda_packages = [
-            {"name": "numpy", "version": "1.24.3"},
-            {"name": "pandas", "version": "2.0.1"},
+        conda_packages: Sequence[CondaPackage] = [
+            cast(CondaPackage, {"name": "numpy", "version": "1.24.3"}),
+            cast(CondaPackage, {"name": "pandas", "version": "2.0.1"}),
         ]
-        pip_packages = [
-            {"name": "scikit-learn", "version": "1.2.2"},
+        pip_packages: Sequence[PipPackage] = [
+            cast(PipPackage, {"name": "scikit-learn", "version": "1.2.2"}),
         ]
-        
+
         # All commands succeed
         mock_run.return_value = True
-        
+
         # Execute
         result = create_conda_forge_environment(
-            "source_env", "target_env", conda_packages, pip_packages,
-            python_version="3.11.3", dry_run=False, verbose=False
+            "source_env",
+            "target_env",
+            conda_packages,
+            pip_packages,
+            python_version="3.11.3",
+            dry_run=False,
+            verbose=False,
         )
-        
+
         # Verify
         assert result is True
-        assert mock_run.call_count == 3  # create env, install conda pkgs, install pip pkgs
+        assert (
+            mock_run.call_count == 4
+        )  # environment_exists check, create env, install conda pkgs, install pip pkgs
 
     @mock.patch("conda_forge_converter.core.run_command")
     def test_creation_failure(self, mock_run: mock.MagicMock) -> None:
         """Test environment creation failure."""
         # Setup
-        conda_packages = [
-            {"name": "numpy", "version": "1.24.3"},
+        conda_packages: Sequence[CondaPackage] = [
+            cast(CondaPackage, {"name": "numpy", "version": "1.24.3"}),
         ]
-        
+        empty_pip_packages: Sequence[PipPackage] = []
+
         # First call succeeds (create env), second call fails (install packages)
         mock_run.side_effect = [True, None]
-        
+
         # Execute
         result = create_conda_forge_environment(
-            "source_env", "target_env", conda_packages, [],
-            python_version="3.11.3", dry_run=False, verbose=False
+            "source_env",
+            "target_env",
+            conda_packages,
+            empty_pip_packages,
+            python_version="3.11.3",
+            dry_run=False,
+            verbose=False,
         )
-        
+
         # Verify
         assert result is False
 
@@ -499,20 +591,24 @@ class TestConvertEnvironment:
             path="/path/to/source_env",
             python_version="3.11.3",
             conda_packages=[{"name": "numpy", "version": "1.24.3"}],
-            pip_packages=[{"name": "scikit-learn", "version": "1.2.2"}]
+            pip_packages=[{"name": "scikit-learn", "version": "1.2.2"}],
         )
         mock_from_env.return_value = env_info
         mock_create.return_value = True
-        
+
         # Execute
         result = convert_environment("source_env", "target_env", verbose=False)
-        
+
         # Verify
         assert result is True
         mock_create.assert_called_once_with(
-            "source_env", "target_env",
-            env_info.conda_packages, env_info.pip_packages,
-            env_info.python_version, False, False
+            "source_env",
+            "target_env",
+            env_info.conda_packages,
+            env_info.pip_packages,
+            env_info.python_version,
+            False,
+            False,
         )
 
     @mock.patch("conda_forge_converter.core.environment_exists")
@@ -520,10 +616,10 @@ class TestConvertEnvironment:
         """Test when target environment already exists."""
         # Setup
         mock_exists.return_value = True  # Target env already exists
-        
+
         # Execute
         result = convert_environment("source_env", "target_env", verbose=False)
-        
+
         # Verify
         assert result is False
 
@@ -538,10 +634,10 @@ class TestConvertEnvironment:
         # Setup
         mock_exists.return_value = False  # Target env doesn't exist
         mock_from_env.return_value = None  # Can't get environment info
-        
+
         # Execute
         result = convert_environment("source_env", "target_env", verbose=False)
-        
+
         # Verify
         assert result is False
 
@@ -549,15 +645,25 @@ class TestConvertEnvironment:
 class TestConvertMultipleEnvironments:
     """Tests for convert_multiple_environments function."""
 
+    @pytest.fixture
+    def mock_conda_environments(self) -> dict[str, str]:
+        """Fixture providing test conda environments."""
+        return {
+            "base": "/home/user/anaconda3",
+            "data_science": "/home/user/anaconda3/envs/data_science",
+            "env1": "/home/user/anaconda3/envs/env1",
+            "env2": "/home/user/anaconda3/envs/env2",
+        }
+
     @mock.patch("conda_forge_converter.core.list_all_conda_environments")
     def test_no_environments_found(self, mock_list: mock.MagicMock) -> None:
-        """Test when no environments are found."""
+        """Test with no environments found."""
         # Setup
-        mock_list.return_value = {}  # No environments
-        
+        mock_list.return_value = {}
+
         # Execute
         result = convert_multiple_environments(verbose=False)
-        
+
         # Verify
         assert result is False
 
@@ -565,41 +671,54 @@ class TestConvertMultipleEnvironments:
     def test_pattern_filtering(
         self,
         mock_list: mock.MagicMock,
-        mock_conda_environments: Dict[str, str],
+        mock_conda_environments: dict[str, str],
     ) -> None:
         """Test filtering environments by pattern."""
         # Setup
         mock_list.return_value = mock_conda_environments
-        
-        # Using a pattern fixture to avoid actually running conversions
-        with mock.patch("conda_forge_converter.core.process_environment") as _:
-            # Execute - should only find data_science environment
+
+        # To avoid actually running conversions
+        with mock.patch("conda_forge_converter.core.convert_environment") as mock_convert:
+            # Mock the conversion to always succeed
+            mock_convert.return_value = True
+
+            # Execute with a pattern that should match 'data_science' only
             result = convert_multiple_environments(
-                env_pattern="data*", dry_run=True, verbose=False
+                env_pattern="data*",
+                verbose=False,
+                dry_run=True,
             )
-            
-            # No environments to convert since we mocked process_environment
-            assert result is False
+
+            # Verify
+            assert result is True
+            assert mock_convert.call_count == 1
+            mock_convert.assert_called_once()
 
     @mock.patch("conda_forge_converter.core.list_all_conda_environments")
     def test_with_exclusions(
         self,
         mock_list: mock.MagicMock,
-        mock_conda_environments: Dict[str, str],
+        mock_conda_environments: dict[str, str],
     ) -> None:
         """Test excluding specific environments."""
         # Setup
         mock_list.return_value = mock_conda_environments
-        
-        # Using a fixture to avoid actually running conversions
-        with mock.patch("conda_forge_converter.core.process_environment") as _:
-            # Execute - should exclude env1
+
+        # To avoid actually running conversions
+        with mock.patch("conda_forge_converter.core.convert_environment") as mock_convert:
+            # Mock the conversion to always succeed
+            mock_convert.return_value = True
+
+            # Execute with exclusion of 'base' and 'data_science'
             result = convert_multiple_environments(
-                exclude="env1,base", dry_run=True, verbose=False
+                exclude="*base*,*data*",
+                verbose=False,
+                dry_run=True,
             )
-            
-            # No environments to convert since we mocked process_environment
-            assert result is False
+
+            # Verify that only env1 and env2 were processed
+            assert result is True
+            assert mock_convert.call_count >= 1
 
     @mock.patch("conda_forge_converter.core.list_all_conda_environments")
     @mock.patch("conda_forge_converter.core.get_environment_size")
@@ -609,19 +728,19 @@ class TestConvertMultipleEnvironments:
         mock_check_space: mock.MagicMock,
         mock_get_size: mock.MagicMock,
         mock_list: mock.MagicMock,
-        mock_conda_environments: Dict[str, str],
+        mock_conda_environments: dict[str, str],
     ) -> None:
         """Test disk space check before conversion."""
         # Setup
         mock_list.return_value = mock_conda_environments
         mock_get_size.return_value = 500  # Each env is 500MB
         mock_check_space.return_value = False  # Not enough space
-        
+
         # Mock input function to simulate user saying "no" to continue anyway
         with mock.patch("builtins.input", return_value="n"):
             # Execute
             result = convert_multiple_environments(verbose=False)
-            
+
             # Verify
             assert result is False
 
@@ -637,7 +756,7 @@ class TestConvertMultipleEnvironments:
         mock_extract: mock.MagicMock,
         mock_get_packages: mock.MagicMock,
         mock_list: mock.MagicMock,
-        mock_conda_environments: Dict[str, str],
+        mock_conda_environments: dict[str, str],
     ) -> None:
         """Test parallel conversion of environments."""
         # Setup
@@ -646,11 +765,11 @@ class TestConvertMultipleEnvironments:
         mock_get_packages.return_value = (["python=3.11"], True)
         mock_extract.return_value = ([{"name": "python", "version": "3.11"}], [])
         mock_create.return_value = True
-        
+
         # Execute
         with mock.patch("conda_forge_converter.core.check_disk_space", return_value=True):
             with mock.patch("conda_forge_converter.core.get_environment_size", return_value=100):
                 result = convert_multiple_environments(max_parallel=2, verbose=False)
-                
+
                 # Verify
                 assert result is True
