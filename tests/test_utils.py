@@ -47,6 +47,7 @@ class TestRunCommand:
             capture_output=True,
             text=True,
             check=True,
+            timeout=None,
         )
         assert result == "command output"
 
@@ -57,7 +58,7 @@ class TestRunCommand:
         result = run_command(["echo", "test"], verbose=False, capture=False)
 
         # Verify
-        mock_run.assert_called_once_with(["echo", "test"], check=True)
+        mock_run.assert_called_once_with(["echo", "test"], check=True, timeout=None)
         assert result is True
 
     @mock.patch("subprocess.run")

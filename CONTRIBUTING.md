@@ -1,77 +1,37 @@
 # Contributing to conda-forge-converter
 
-Thank you for considering contributing to conda-forge-converter! This document provides guidelines and instructions for contributing.
+Thank you for considering contributing to conda-forge-converter! This document provides a brief overview of the contribution process.
 
-## Development Environment
+For comprehensive contribution guidelines, please refer to the [Contributing Guide](https://conda-forge-converter.readthedocs.io/en/latest/dev/contributing/) in our documentation.
 
-We recommend using hatch to set up your development environment:
+## Quick Start
 
 ```bash
 # Clone the repository
 git clone https://github.com/yourusername/conda-forge-converter.git
 cd conda-forge-converter
 
-# Set up development environment using hatch
+# Set up development environment using hatch (recommended)
+pip install hatch
 hatch env create
-```
 
-Alternatively, you can use uv:
-
-```bash
-# Clone the repository
-git clone https://github.com/yourusername/conda-forge-converter.git
-cd conda-forge-converter
-
-# Create and activate a virtual environment
-uv venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-
-# Install in development mode
-uv pip install -e ".[dev]"
-```
-
-## Running Tests
-
-We use pytest for testing:
-
-```bash
-# Using hatch
+# Run tests
 hatch run test
 
-# Using pytest directly
-pytest
-```
-
-## Code Style
-
-We use black, isort, and ruff for code formatting and linting:
-
-```bash
-# Format code with hatch
+# Format code
 hatch run lint:fmt
 
-# Or manually
-black src tests
-isort src tests
-ruff src tests
+# Check linting
+hatch run lint:check
 ```
 
-## Submitting Changes
+## Key Guidelines
 
 1. Fork the repository
-2. Create a new branch (`git checkout -b feature/your-feature-name`)
-3. Make your changes
-4. Run tests (`hatch run test`)
-5. Commit your changes (`git commit -am 'Add new feature'`)
-6. Push to the branch (`git push origin feature/your-feature-name`)
-7. Create a new Pull Request
-
-## Pull Request Process
-
-1. Update the README.md with details of your changes if applicable
-2. Make sure all tests pass
-3. Update documentation if necessary
-4. The PR will be merged once it receives approval from maintainers
+1. Create a feature branch
+1. Make your changes
+1. Run tests and linting
+1. Submit a pull request
 
 ## Code of Conduct
 

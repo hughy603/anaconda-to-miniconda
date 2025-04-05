@@ -8,9 +8,22 @@ import sys
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Annotated, Any, Self, TypeAlias, TypedDict, cast
+from typing import (
+    Annotated,
+    Self,
+    TypeAlias,
+    TypedDict,
+    cast,
+)
 
-import yaml  # type: ignore # noqa
+# Import yaml with proper error handling
+try:
+    import yaml
+    from yaml import YAMLError
+except ImportError:
+    raise ImportError(
+        "PyYAML is required for this application. Please install it with: pip install pyyaml"
+    )
 
 from .utils import (
     PathLike,
@@ -44,6 +57,21 @@ class ConversionResults(TypedDict):
     success: list[tuple[str, str]]  # (source_env, target_env)
     failed: list[tuple[str, str]]  # (source_env, reason)
     skipped: list[tuple[str, str]]  # (source_env, reason)
+
+
+# YAML environment structure types
+class PipDependencies(TypedDict):
+    """Represents pip dependencies section in environment.yml."""
+
+    pip: list[str]
+
+
+class EnvironmentYaml(TypedDict):
+    """Represents the structure of environment.yml files."""
+
+    name: str
+    channels: list[str]
+    dependencies: list[str | PipDependencies]
 
 
 @dataclass
@@ -283,37 +311,46 @@ def get_environment_packages(
     env_name: str,
     env_path: PathLike | None = None,
     verbose: bool = False,
-) -> tuple[list[Any], bool]:
-    """Get packages that were explicitly installed by the user.
+) -> tuple[list[str | PipDependencies], bool]:
+    """Get a list of packages in a conda environment.
 
     Args:
     ----
         env_name: Name of the environment
-        env_path: Path to the environment (if known)
+        env_path: Path to the environment, if not using a named environment
         verbose: Whether to log detailed information
 
     Returns:
     -------
-        Tuple of (dependencies, from_history) where:
-            - dependencies is a list of package specifications
-            - from_history is True if the dependencies were from the environment history
+        Tuple of (list of dependencies, from_history flag)
+        The from_history flag indicates if we got the environment from history
+
+    Raises:
+    ------
+        RuntimeError: If unable to export environment data using conda commands
 
     """
     # Prepare base command based on whether we have a path or just a name
     if env_path:
         base_cmd = ["conda", "env", "export", "--prefix", str(env_path)]
+        env_identifier = f"at path {env_path}"
     else:
         base_cmd = ["conda", "env", "export", "--name", env_name]
+        env_identifier = f"named '{env_name}'"
 
     # Try with --from-history first
     output = run_command(base_cmd + ["--from-history"], verbose)
 
     if is_command_output_str(output):
         try:
-            env_yaml = yaml.safe_load(output)
-            return env_yaml.get("dependencies", []), True
-        except yaml.YAMLError:
-            logger.error("Error parsing YAML output from conda env export")
+            env_yaml: EnvironmentYaml = yaml.safe_load(output)
+            dependencies = env_yaml.get("dependencies", [])
+            if dependencies:
+                logger.debug(f"Successfully exported environment {env_identifier} with history")
+                return dependencies, True
+            logger.warning(f"Environment {env_identifier} has no dependencies in history")
+        except YAMLError as e:
+            logger.error(f"Error parsing YAML output from conda env export: {str(e)}")
 
     # If --from-history fails, try regular export
     logger.warning("Could not get environment history.")
@@ -324,56 +361,77 @@ def get_environment_packages(
 
     if is_command_output_str(output):
         try:
-            env_yaml = yaml.safe_load(output)
-            return env_yaml.get("dependencies", []), False
-        except yaml.YAMLError:
-            logger.error("Error parsing YAML output from conda env export")
+            env_yaml: EnvironmentYaml = yaml.safe_load(output)
+            dependencies = env_yaml.get("dependencies", [])
+            if dependencies:
+                logger.debug(f"Successfully exported environment {env_identifier}")
+                return dependencies, False
+            logger.warning(f"Environment {env_identifier} has no dependencies")
+        except YAMLError as e:
+            logger.error(f"Error parsing YAML output from conda env export: {str(e)}")
+            raise RuntimeError(f"Failed to parse conda environment {env_identifier}: {str(e)}")
 
-    return [], False
+    error_msg = (
+        f"Failed to export environment {env_identifier}. Make sure it exists and is accessible."
+    )
+    logger.error(error_msg)
+    raise RuntimeError(error_msg)
 
 
-def extract_package_specs(dependencies: list[Any]) -> tuple[CondaPackages, PipPackages]:
-    """Extract conda and pip package specifications from a dependencies list.
+def extract_package_specs(
+    dependencies: list[str | PipDependencies],
+) -> tuple[CondaPackages, PipPackages]:
+    """Extract package specifications from conda environment export data.
+
+    Parses the raw environment data to extract conda and pip package specs.
 
     Args:
     ----
-        dependencies: List of package specifications (strings or dicts)
+        dependencies: List of dependencies from environment.yml or conda env export
 
     Returns:
     -------
-        Tuple of (conda_packages, pip_packages) lists
+        Tuple containing (conda_packages, pip_packages) where each is a list of
+        dicts with 'name' and 'version' keys
 
     """
     conda_packages: CondaPackages = []
     pip_packages: PipPackages = []
 
-    # First parse the conda packages
+    if not dependencies:
+        logger.warning("No dependencies provided to extract package specifications")
+        return conda_packages, pip_packages
+
+    # Process main conda packages
     for dep in dependencies:
-        # Handle pip sub-dependencies
-        if isinstance(dep, dict) and "pip" in dep:
-            for pip_spec in dep["pip"]:
-                # Typically in format: package==version
-                parts = pip_spec.split("==")
-                name = parts[0]
-                version = parts[1] if len(parts) > 1 else None
-                pip_packages.append({"name": name, "version": version})
-        # Regular conda dependencies
-        elif isinstance(dep, str) and not dep.startswith("pip"):
-            # Typically in format: package=version or package
-            parts = dep.split("=", 1)  # Split on first = only
-            name = parts[0]
-            version = parts[1] if len(parts) > 1 else None
-            conda_packages.append({"name": name, "version": version})
+        if isinstance(dep, str):
+            # Simple string dependency like "numpy=1.19.2" or just "numpy"
+            parts = dep.split("=", 1)
+            pkg_name = parts[0].strip()
+            pkg_version = parts[1].strip() if len(parts) > 1 else None
 
-    # Ensure python is the first package if it exists
-    python_pkg = None
-    for i, pkg in enumerate(conda_packages):
-        if pkg["name"] == "python":
-            python_pkg = conda_packages.pop(i)
-            break
+            # Skip conda channels and metapackages
+            if pkg_name not in [
+                "conda-forge",
+                "defaults",
+                "pip",
+                "conda",
+            ] and not pkg_name.startswith("_"):
+                conda_packages.append({"name": pkg_name, "version": pkg_version})
+        elif isinstance(dep, dict) and "pip" in dep:
+            # Process pip packages section
+            pip_deps = cast(PipDependencies, dep)
+            for pip_dep in pip_deps["pip"]:
+                if isinstance(pip_dep, str):
+                    # Handle pip packages with format "package==version" or just "package"
+                    parts = pip_dep.split("==", 1)
+                    pip_name = parts[0].strip()
+                    pip_version = parts[1].strip() if len(parts) > 1 else None
 
-    if python_pkg:
-        conda_packages.insert(0, python_pkg)
+                    pip_packages.append({"name": pip_name, "version": pip_version})
+
+    if not conda_packages and not pip_packages:
+        logger.warning("No valid packages found in dependencies")
 
     return conda_packages, pip_packages
 
@@ -394,27 +452,34 @@ def get_environment_size(env_name: str, verbose: bool = False) -> int:
     output = run_command(["conda", "env", "export", "--name", env_name], verbose)
 
     if not is_command_output_str(output):
+        logger.warning(f"Failed to get environment information for '{env_name}'")
         return 0
 
     # Crude estimation based on the number of packages
     try:
-        env_yaml = yaml.safe_load(output)  # type: ignore
-        env_dict = cast(dict[str, Any], env_yaml)
-        dependencies = env_dict.get("dependencies", [])
+        env_yaml: EnvironmentYaml = yaml.safe_load(output)
+        dependencies = env_yaml.get("dependencies", [])
 
         # Count pip packages
         pip_count = 0
         for dep in dependencies:
             if isinstance(dep, dict) and "pip" in dep:
-                dep_dict = cast(dict[str, list[Any]], dep)
-                pip_count += len(dep_dict["pip"])
+                pip_deps = cast(PipDependencies, dep)
+                pip_count += len(pip_deps["pip"])
 
         # Count conda packages
         conda_count = sum(1 for dep in dependencies if isinstance(dep, str))
 
+        total_packages = conda_count + pip_count
+        if verbose:
+            logger.debug(
+                f"Environment '{env_name}' has {conda_count} conda packages and {pip_count} pip packages"
+            )
+
         # Rough estimate: 50MB per package on average
-        return (conda_count + pip_count) * 50
-    except Exception:
+        return total_packages * 50
+    except Exception as e:
+        logger.error(f"Error estimating environment size: {str(e)}")
         return 100  # Default guess if we can't parse
 
 
@@ -432,122 +497,140 @@ def create_conda_forge_environment(
 ) -> bool:
     """Create a new conda-forge environment with specified packages.
 
+    Steps:
+    1. Create a new environment with Python
+    2. Install conda packages from conda-forge
+    3. Install pip packages
+
     Args:
-    ----
-        source_env: Source environment name (for reference)
-        target_env: Target environment name
+        source_env: Name of the source environment
+        target_env: Name of the target environment
         conda_packages: List of conda packages to install
         pip_packages: List of pip packages to install
-        python_version: Python version to install (if None, determined from conda_packages)
-        dry_run: Whether to just log commands without executing
+        python_version: Python version to use (defaults to source env's version)
+        dry_run: If True, only simulate the operation
         verbose: Whether to log detailed information
 
     Returns:
-    -------
-        True if environment creation succeeded, False otherwise
+        True if the operation succeeded, False otherwise
 
     """
-    # Log what we're doing
-    logger.info(
-        f"Creating conda-forge environment '{target_env}' based on '{source_env}'",
-    )
-
-    # Handle empty package lists
-    if not conda_packages and not python_version:
-        logger.error("No packages specified and no Python version provided")
-        return False
-
-    # Extract Python version if it wasn't explicitly provided
-    if not python_version:
-        for pkg in conda_packages:
-            if pkg["name"] == "python" and pkg["version"] is not None:
-                python_version = pkg["version"]
-                break
-
-    # Log environment creation - always do this in verbose mode
-    if dry_run or verbose:
-        logger.info(f"Python version: {python_version}")
-        logger.info(f"Conda packages: {len(conda_packages)}")
-        logger.info(f"Pip packages: {len(pip_packages)}")
-
     if dry_run:
-        # Just log what would be done
-        logger.info("Dry run - not executing commands")
+        # Log what would be created
+        logger.info(f"Would create conda-forge environment: {target_env}")
+        logger.info(f"Based on: {source_env}")
+
+        if python_version:
+            logger.info(f"Python version: {python_version}")
+
+        if conda_packages:
+            logger.info(f"Conda packages to install ({len(conda_packages)}):")
+            for pkg in conda_packages[:10]:  # Show first 10 only
+                version_str = f"={pkg['version']}" if pkg["version"] else ""
+                logger.info(f"  {pkg['name']}{version_str}")
+            if len(conda_packages) > 10:
+                logger.info(f"  ... and {len(conda_packages) - 10} more")
+
+        if pip_packages:
+            logger.info(f"Pip packages to install ({len(pip_packages)}):")
+            for pkg in pip_packages[:10]:  # Show first 10 only
+                version_str = f"=={pkg['version']}" if pkg["version"] else ""
+                logger.info(f"  {pkg['name']}{version_str}")
+            if len(pip_packages) > 10:
+                logger.info(f"  ... and {len(pip_packages) - 10} more")
+
         return True
 
-    # 1. Create base environment with Python and conda-forge channels
-    create_cmd = [
-        "conda",
-        "create",
-        "--name",
-        target_env,
-        "--channel",
-        "conda-forge",
-        "--override-channels",
-    ]
+    # Check if environment already exists
+    if environment_exists(target_env, verbose):
+        logger.error(f"Environment '{target_env}' already exists")
+        return False
 
-    # Add python if we have a version
-    if python_version:
-        create_cmd.extend(["python=" + python_version])
-
-    # Only run this command if there's no existing environment
-    if not environment_exists(target_env, verbose):
-        result = run_command(create_cmd, verbose)
-        if not result:
-            logger.error(f"Failed to create environment '{target_env}'")
-            return False
+    # 1. Create base environment with Python
+    if _create_base_environment(target_env, python_version, verbose) is False:
+        return False
 
     # 2. Install conda packages
-    if conda_packages:
-        conda_pkg_specs = []
-        for pkg in conda_packages:
-            if pkg["name"] != "python":  # Skip python, already installed
-                spec = pkg["name"]
-                if pkg["version"]:
-                    spec += "=" + pkg["version"]
-                conda_pkg_specs.append(spec)
-
-        if conda_pkg_specs:
-            install_cmd = [
-                "conda",
-                "install",
-                "--name",
-                target_env,
-                "--channel",
-                "conda-forge",
-                "--override-channels",
-            ]
-            install_cmd.extend(conda_pkg_specs)
-            result = run_command(install_cmd, verbose)
-            if not result:
-                logger.error(f"Failed to install conda packages in '{target_env}'")
-                return False
+    if conda_packages and not _install_conda_packages(target_env, conda_packages, verbose):
+        return False
 
     # 3. Install pip packages
-    if pip_packages:
-        pip_pkg_specs = []
-        for pkg in pip_packages:
-            spec = pkg["name"]
-            if pkg["version"]:
-                spec += "==" + pkg["version"]
-            pip_pkg_specs.append(spec)
-
-        if pip_pkg_specs:
-            pip_cmd = [
-                "conda",
-                "run",
-                "--name",
-                target_env,
-                "pip",
-                "install",
-            ]
-            pip_cmd.extend(pip_pkg_specs)
-            result = run_command(pip_cmd, verbose)
-            if not result:
-                logger.error(f"Failed to install pip packages in '{target_env}'")
-                return False
+    if pip_packages and not _install_pip_packages(target_env, pip_packages, verbose):
+        return False
 
     logger.info(f"Successfully created conda-forge environment '{target_env}'")
+    return True
+
+
+def _create_base_environment(target_env: str, python_version: str | None, verbose: bool) -> bool:
+    """Create the base environment with Python."""
+    create_cmd = ["conda", "create", "--name", target_env, "--channel", "conda-forge", "--yes"]
+
+    # Add Python version if specified
+    if python_version:
+        create_cmd.append(f"python={python_version}")
+    else:
+        create_cmd.append("python")
+
+    result = run_command(create_cmd, verbose)
+    if not result:
+        logger.error(f"Failed to create environment '{target_env}'")
+        return False
+    return True
+
+
+def _install_conda_packages(target_env: str, conda_packages: CondaPackages, verbose: bool) -> bool:
+    """Install conda packages into the target environment."""
+    conda_pkg_specs = []
+    for pkg in conda_packages:
+        if pkg["name"] != "python":  # Skip python, already installed
+            spec = pkg["name"]
+            if pkg["version"]:
+                spec += "=" + pkg["version"]
+            conda_pkg_specs.append(spec)
+
+    if conda_pkg_specs:
+        install_cmd = [
+            "conda",
+            "install",
+            "--name",
+            target_env,
+            "--channel",
+            "conda-forge",
+            "--override-channels",
+            "--yes",
+        ]
+        install_cmd.extend(conda_pkg_specs)
+        result = run_command(install_cmd, verbose)
+        if not result:
+            logger.error(f"Failed to install conda packages in '{target_env}'")
+            return False
+    return True
+
+
+def _install_pip_packages(target_env: str, pip_packages: PipPackages, verbose: bool) -> bool:
+    """Install pip packages into the target environment."""
+    pip_pkg_specs = []
+    for pkg in pip_packages:
+        spec = pkg["name"]
+        if pkg["version"]:
+            spec += "==" + pkg["version"]
+        pip_pkg_specs.append(spec)
+
+    if pip_pkg_specs:
+        pip_cmd = [
+            "conda",
+            "run",
+            "--name",
+            target_env,
+            "pip",
+            "install",
+        ]
+        pip_cmd.extend(pip_pkg_specs)
+        result = run_command(pip_cmd, verbose)
+        if not result:
+            logger.error(f"Failed to install pip packages in '{target_env}'")
+            return False
     return True
 
 
@@ -561,18 +644,60 @@ def convert_environment(
 ) -> bool:
     """Convert a single environment from Anaconda to conda-forge.
 
+    This function performs the core conversion process from an Anaconda-based environment
+    to an equivalent conda-forge environment. The process follows these steps:
+
+    1. Validate source and target environment names
+    2. Extract package specifications from the source environment
+    3. Create a new environment with the same packages from conda-forge channel
+    4. Install pip packages if any were present in the source environment
+
+    The conversion prioritizes user-installed packages (via --from-history when available)
+    rather than including all transitive dependencies. This results in a cleaner environment
+    that more closely matches the user's intent.
+
     Args:
     ----
-        source_env: Name of the source environment
-        target_env: Name of the target environment
-        python_version: Python version to use
-        dry_run: Whether to simulate the operation
-        verbose: Whether to log detailed information
-        env_path: Path to the source environment
+        source_env: Name of the source Anaconda environment to convert
+        target_env: Name for the new conda-forge environment (defaults to source_env + "_forge")
+        python_version: Specific Python version to use in the new environment. If None,
+            will use the same version as the source environment.
+        dry_run: If True, only shows what would be done without actually creating environments
+        verbose: If True, displays detailed logging information during the conversion process
+        env_path: Optional direct path to the source environment if it's not a named environment
 
     Returns:
     -------
-        True if the operation succeeded, False otherwise
+        True if the conversion completed successfully, False if any errors occurred
+
+    Raises:
+    ------
+        No exceptions are raised directly; errors are logged and reflected in the return value.
+
+    Examples:
+    --------
+        # Basic conversion with default target name
+        >>> convert_environment("data_science")
+        # Would create "data_science_forge" with conda-forge packages
+
+        # Conversion with custom target name
+        >>> convert_environment("py38_env", "py38_forge")
+
+        # Conversion with specific Python version
+        >>> convert_environment("legacy_env", "modern_env", python_version="3.11")
+
+        # Dry run to preview conversion
+        >>> convert_environment("my_env", dry_run=True, verbose=True)
+
+        # Convert environment located at a specific path
+        >>> convert_environment("custom_env", env_path="/path/to/env")
+
+    Notes:
+    -----
+        - If the target environment already exists, the conversion will be skipped.
+        - Non-conda packages (installed via pip) will be carried over to the new environment.
+        - The function attempts to use --from-history to only convert directly installed
+          packages, falling back to the full dependency list if history is not available.
 
     """
     if not target_env:
@@ -643,11 +768,53 @@ def convert_multiple_environments(
         True if all conversions succeeded, False otherwise
 
     """
+    # Get and filter environments
+    env_dict, envs_to_convert = _get_and_filter_environments(
+        env_pattern, exclude, search_paths, verbose
+    )
+    if not envs_to_convert:
+        return False
+
+    # Create backup directory if needed
+    backup_dir = _create_backup_directory(backup, dry_run)
+
+    # Check disk space
+    _check_disk_space()
+
+    # Process environments and collect results
+    results = _process_environments(
+        env_dict, envs_to_convert, target_suffix, dry_run, verbose, max_parallel, backup_dir
+    )
+
+    # Log results summary
+    _log_results_summary(results, verbose)
+
+    # Return True if all attempted conversions were successful (ignoring skipped)
+    success_count = len(results["success"])
+    failed_count = len(results["failed"])
+    return failed_count == 0 and success_count > 0
+
+
+def _get_and_filter_environments(
+    env_pattern: str | None, exclude: str | None, search_paths: list[PathLike] | None, verbose: bool
+) -> tuple[EnvMapping, list[str]]:
+    """Get all environments and filter them based on patterns.
+
+    Args:
+        env_pattern: Pattern to match environment names
+        exclude: Pattern to exclude environment names
+        search_paths: Additional paths to search
+        verbose: Whether to log detailed information
+
+    Returns:
+        Tuple of (env_dict, envs_to_convert)
+
+    """
     # Get all available environments
     env_dict = list_all_conda_environments(search_paths, verbose)
     if not env_dict:
         logger.error("No conda environments found")
-        return False
+        return {}, []
 
     # Filter environments by pattern
     if env_pattern:
@@ -657,30 +824,104 @@ def convert_multiple_environments(
 
     # Exclude environments by pattern
     if exclude:
-        envs_to_convert = [name for name in envs_to_convert if not fnmatch.fnmatch(name, exclude)]
+        # Handle comma-separated exclude patterns
+        exclude_patterns = [p.strip() for p in exclude.split(",")]
+        for pattern in exclude_patterns:
+            envs_to_convert = [
+                name for name in envs_to_convert if not fnmatch.fnmatch(name, pattern)
+            ]
 
     # Check if we have any environments to convert
     if not envs_to_convert:
         logger.error("No environments match the specified criteria")
-        return False
+        return env_dict, []
 
     logger.info(f"Found {len(envs_to_convert)} environments to convert")
+    return env_dict, envs_to_convert
 
-    # Create a backup directory if needed
-    backup_dir = None
-    if backup and not dry_run:
-        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        backup_dir = f"conda_env_backups_{timestamp}"
-        os.makedirs(backup_dir, exist_ok=True)
-        logger.info(f"Backing up environment specifications to {backup_dir}")
 
-    # Check disk space
+def _create_backup_directory(backup: bool, dry_run: bool) -> str | None:
+    """Create a backup directory for environment specifications.
+
+    Args:
+        backup: Whether to backup environment specs
+        dry_run: Whether this is a dry run
+
+    Returns:
+        Path to backup directory or None if backup not needed
+
+    """
+    if not backup or dry_run:
+        return None
+
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    backup_dir = f"conda_env_backups_{timestamp}"
+    os.makedirs(backup_dir, exist_ok=True)
+    logger.info(f"Backing up environment specifications to {backup_dir}")
+    return backup_dir
+
+
+def _check_disk_space() -> None:
+    """Check if there's enough disk space available."""
     if not check_disk_space(needed_gb=5):
         logger.warning(
             "Not enough disk space available. Required: 5 GB minimum. "
-            "You might run out of space during the conversion.",
+            "You might run out of space during the conversion."
         )
 
+
+def _backup_environment(env_name: str, backup_dir: str | None, verbose: bool) -> None:
+    """Backup environment specification to a file.
+
+    Args:
+        env_name: Name of environment to backup
+        backup_dir: Directory to store backup
+        verbose: Whether to log detailed information
+
+    """
+    if not backup_dir:
+        return
+
+    output = run_command(["conda", "env", "export", "--name", env_name, "--no-builds"], verbose)
+
+    if not is_command_output_str(output):
+        logger.warning(f"Failed to export environment '{env_name}'")
+        return
+
+    backup_file = os.path.join(backup_dir, f"{env_name}.yml")
+    try:
+        with open(backup_file, "w") as f:
+            f.write(output)
+        if verbose:
+            logger.debug(f"Backed up environment '{env_name}' to {backup_file}")
+    except Exception as e:
+        logger.warning(f"Failed to write backup for '{env_name}': {e}")
+
+
+def _process_environments(
+    env_dict: EnvMapping,
+    envs_to_convert: list[str],
+    target_suffix: str,
+    dry_run: bool,
+    verbose: bool,
+    max_parallel: int,
+    backup_dir: str | None,
+) -> ConversionResults:
+    """Process all environments for conversion.
+
+    Args:
+        env_dict: Dictionary of environment names to paths
+        envs_to_convert: List of environment names to convert
+        target_suffix: Suffix for target environment names
+        dry_run: Whether this is a dry run
+        verbose: Whether to log detailed information
+        max_parallel: Maximum number of parallel conversions
+        backup_dir: Directory for backups or None
+
+    Returns:
+        Dictionary with conversion results
+
+    """
     # For storing results of conversion
     results: ConversionResults = {
         "success": [],
@@ -690,26 +931,31 @@ def convert_multiple_environments(
 
     # Keep track of processed environments
     processed_envs: set[str] = set()
+    total_count = len(envs_to_convert)
 
     def process_environment(source_env: str) -> None:
-        """Process a single environment for conversion.
-
-        Args:
-        ----
-            source_env: Name of the source environment to process
-
-        """
+        """Process a single environment for conversion."""
         if source_env in processed_envs:
             return
+
+        # Backup the environment if requested
+        if backup_dir and not dry_run:
+            _backup_environment(source_env, backup_dir, verbose)
 
         # Get the target environment name
         target_env = f"{source_env}{target_suffix}"
 
-        # Check if target already exists
-        if environment_exists(target_env, verbose):
+        # Skip if target already exists
+        if environment_exists(target_env, verbose) and not dry_run:
             results["skipped"].append((source_env, f"Target '{target_env}' already exists"))
             logger.info(f"Skipping '{source_env}': Target '{target_env}' already exists")
+            processed_envs.add(source_env)
             return
+
+        # Get environment size for logging
+        if not dry_run and verbose:
+            size_mb = get_environment_size(source_env, False) / (1024 * 1024)
+            logger.info(f"Converting '{source_env}' (estimated size: {size_mb:.1f} MB)")
 
         # Run the conversion
         success = convert_environment(
@@ -731,6 +977,10 @@ def convert_multiple_environments(
         # Mark as processed
         processed_envs.add(source_env)
 
+        # Log progress
+        completed = len(processed_envs)
+        logger.info(f"Progress: {completed}/{total_count} environments processed")
+
     # Process environments (in parallel if requested)
     if max_parallel > 1 and not dry_run:
         logger.info(f"Converting environments using {max_parallel} parallel processes")
@@ -740,7 +990,17 @@ def convert_multiple_environments(
         for env in envs_to_convert:
             process_environment(env)
 
-    # Log summary
+    return results
+
+
+def _log_results_summary(results: ConversionResults, verbose: bool) -> None:
+    """Log summary of conversion results.
+
+    Args:
+        results: Dictionary with conversion results
+        verbose: Whether to log detailed information
+
+    """
     success_count = len(results["success"])
     failed_count = len(results["failed"])
     skipped_count = len(results["skipped"])
@@ -766,9 +1026,6 @@ def convert_multiple_environments(
         logger.info("Skipped conversions:")
         for src, reason in results["skipped"]:
             logger.info(f"  {src}: {reason}")
-
-    # Return True if all attempted conversions were successful (ignoring skipped)
-    return failed_count == 0 and success_count > 0
 
 
 def is_conda_environment(path: PathLike) -> bool:

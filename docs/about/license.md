@@ -1,3 +1,8 @@
+# License
+
+Conda-Forge Converter is licensed under a proprietary software license.
+
+```
 PROPRIETARY SOFTWARE LICENSE
 
 Copyright (c) 2024 Company Name. All Rights Reserved.
@@ -11,3 +16,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 This agreement shall be governed by and construed in accordance with the laws of the United States and the State of [State], without giving effect to any choice of law or conflict of law provisions.
 
 Unauthorized use, reproduction, or distribution of this Software, or any portion of it, may result in severe civil and criminal penalties, and will be prosecuted to the maximum extent possible under the law.
+```
+
+For the most up-to-date license information, please see the [LICENSE](https://github.com/yourusername/conda-forge-converter/blob/main/LICENSE) file in the repository.

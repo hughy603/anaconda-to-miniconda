@@ -1,0 +1,78 @@
+site_name: Conda-Forge Converter
+site_description: A tool to convert Anaconda environments to conda-forge environments
+site_author: Your Name
+repo_url: https://github.com/yourusername/conda-forge-converter
+repo_name: yourusername/conda-forge-converter
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  palette:
+    primary: blue
+    accent: blue
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.expand
+    - navigation.indexes
+    - navigation.top
+    - toc.follow
+    - content.code.copy
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - admonition
+  - tables
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - User Guide:
+    - Getting Started: user/getting-started.md
+    - CLI Reference: user/cli-reference.md
+    - Common Workflows: user/workflows.md
+    - Troubleshooting: user/troubleshooting.md
+  - Developer Guide:
+    - Architecture: dev/architecture.md
+    - Contributing: dev/contributing.md
+    - Testing: dev/testing.md
+    - Releasing: dev/releasing.md
+    - Documentation: dev/documentation.md
+  - API Reference:
+    - Overview: api/index.md
+    - Core Module: api/core.md
+  - Design Docs:
+    - Design Overview: design/overview.md
+    - Planned Improvements: design/improvements.md
+  - About:
+    - License: about/license.md
+    - Changelog: about/changelog.md
+  - Project Management:
+    - Documentation TODO: TODO.md
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          selection:
+            docstring_style: google
+          rendering:
+            show_source: true
+            show_root_heading: true
+            show_category_heading: true
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/yourusername/conda-forge-converter

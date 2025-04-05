@@ -146,7 +146,7 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401", "E402"]
-"tests/*" = ["S101", "ANN", "PT004", "T201"]
+"tests/*" = ["S101", "ANN", "T201"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["conda_forge_converter"]
@@ -181,6 +181,27 @@ pythonpath = ["src"]
 markers = [
     "unit: marks tests as unit tests",
     "integration: marks tests as integration tests",
+]
+
+[tool.pydocstyle]
+convention = "google"
+match = "(?!test_).*\\.py"
+match-dir = "(?!\\.)(?!tests)(?!docs).*"
+add-ignore = [
+    "D100",  # Missing docstring in public module
+    "D104",  # Missing docstring in public package
+    "D107",  # Missing docstring in __init__
+    "D203",  # 1 blank line required before class docstring
+    "D213",  # Multi-line docstring summary should start at the second line
+]
+add-select = [
+    "D211",  # No blank lines allowed before class docstring
+    "D214",  # Section is over-indented
+    "D406",  # Section name should end with a newline
+    "D407",  # Missing dashed underline after section
+    "D408",  # Section underline should be in the line following the section's name
+    "D409",  # Section underline should match the length of its name
+    "D413",  # Missing blank line after last section
 ]
 
 [dependency-groups]

@@ -1,0 +1,41 @@
+{
+  "plugins": {
+    "max-line-length": {
+      "enabled": true,
+      "line_length": 120,
+      "code_blocks": false,
+      "tables": false,
+      "headings": false
+    },
+    "no-duplicate-heading": {
+      "enabled": true,
+      "siblings_only": true
+    },
+    "no-trailing-spaces": {
+      "enabled": true
+    },
+    "proper-names": {
+      "enabled": true,
+      "names": [
+        "Python",
+        "Conda",
+        "Miniconda",
+        "Anaconda",
+        "MkDocs",
+        "PyPI",
+        "conda-forge",
+        "GitHub",
+        "YAML"
+      ]
+    },
+    "first-line-heading": {
+      "enabled": false
+    },
+    "required-headers": {
+      "enabled": false
+    },
+    "no-inline-html": {
+      "enabled": false
+    }
+  }
+}
