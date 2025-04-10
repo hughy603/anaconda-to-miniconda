@@ -16,4 +16,3 @@ echo "Testing workflow with Python 3.11..."
 echo ""
 echo "Testing workflow with Python 3.12..."
 .github/local-testing/test-workflow.sh "$WORKFLOW_FILE" "$EVENT_TYPE" "python-version=3.12"
-

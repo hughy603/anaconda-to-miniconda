@@ -41,10 +41,13 @@ if [ -n "$MATRIX_OVERRIDE" ]; then
 
   # Run with matrix override
   echo "Testing workflow: $WORKFLOW_FILE with event: $EVENT_TYPE and matrix: $MATRIX_OVERRIDE"
-  act -W "$WORKFLOW_FILE" -e .github/local-testing/events/$EVENT_TYPE.json --input-file .github/local-testing/matrix-input.json
+
+  # Run act using the consolidated PowerShell script
+  powershell.exe -ExecutionPolicy Bypass -File .github/local-testing/act-runner.ps1 -WorkflowFile "$WORKFLOW_FILE" -EventFile ".github/local-testing/events/$EVENT_TYPE.json" -MatrixFile ".github/local-testing/matrix-input.json"
 else
   # Run without matrix override
   echo "Testing workflow: $WORKFLOW_FILE with event: $EVENT_TYPE"
-  act -W "$WORKFLOW_FILE" -e .github/local-testing/events/$EVENT_TYPE.json
-fi
 
+  # Run act using the consolidated PowerShell script
+  powershell.exe -ExecutionPolicy Bypass -File .github/local-testing/act-runner.ps1 -WorkflowFile "$WORKFLOW_FILE" -EventFile ".github/local-testing/events/$EVENT_TYPE.json"
+fi

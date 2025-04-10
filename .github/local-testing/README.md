@@ -1,116 +1,152 @@
-# GitHub Actions Testing
+# GitHub Actions Local Testing
 
-This directory contains tools and documentation for testing GitHub Actions workflows.
+This directory contains tools for testing GitHub Actions workflows locally before committing changes.
+
+## Overview
+
+The local testing tools allow you to:
+
+- Test GitHub Actions workflows locally without pushing to GitHub
+- Test with specific matrix configurations (e.g., Python versions)
+- Test with different event types (push, pull_request, etc.)
+- Validate workflows before committing changes
 
 ## Prerequisites
 
-1. Install actionlint: <https://github.com/rhysd/actionlint#installation>
-1. Configure GitHub repository environments (optional but recommended)
+1. [Docker Desktop](https://www.docker.com/products/docker-desktop/) - Required to run the workflow containers
+1. [act](https://github.com/nektos/act#installation) - Tool for running GitHub Actions locally
+1. PowerShell - Used by the scripts to run act
 
-## Workflow Testing Approach
+## Installation
 
-### 1. Local Validation with Actionlint
+### Installing act
 
-Actionlint is a static checker/linter for GitHub Actions workflow files that helps identify issues before pushing to GitHub.
+#### Windows
+
+```powershell
+# Using Chocolatey
+choco install act-cli
+
+# Using Scoop
+scoop install act
+```
+
+#### macOS
 
 ```bash
-# Validate a specific workflow
-actionlint .github/workflows/ci.yml
-
-# Validate all workflows
-actionlint .github/workflows/*.yml
+# Using Homebrew
+brew install act
 ```
 
-### 2. GitHub's Built-in Workflow Validation
+#### Linux
 
-GitHub automatically validates workflow syntax when you push changes. This is the most reliable way to test workflows.
-
-1. Create a feature branch for testing:
-
-   ```bash
-   git checkout -b workflow-test-feature
-   ```
-
-1. Make your changes to workflow files
-
-1. Push the changes to trigger validation:
-
-   ```bash
-   git add .github/workflows/
-   git commit -m "test: Test workflow changes"
-   git push -u origin workflow-test-feature
-   ```
-
-1. Check the Actions tab in your GitHub repository to see if the workflows run correctly
-
-### 3. Using GitHub Actions Environments for Testing
-
-GitHub Actions environments provide a way to control workflow execution and add protection rules.
-
-#### Setting Up Environments
-
-1. Go to your repository on GitHub
-1. Navigate to Settings > Environments
-1. Click "New environment"
-1. Create environments like:
-   - `testing` (for workflow testing)
-   - `staging` (for pre-production)
-   - `production` (for production deployments)
-
-#### Environment Protection Rules
-
-For each environment, you can configure:
-
-- Required reviewers
-- Wait timer
-- Deployment branches
-- Environment secrets
-
-#### Using Environments in Workflows
-
-```yaml
-name: Deploy
-
-on:
-  push:
-    branches: [main]
-  workflow_dispatch:
-
-jobs:
-  deploy-testing:
-    name: Deploy to Testing
-    runs-on: ubuntu-latest
-    environment: testing
-    steps:
-      - uses: actions/checkout@v4
-      # Your deployment steps here
-
-  deploy-production:
-    name: Deploy to Production
-    needs: [deploy-testing]
-    runs-on: ubuntu-latest
-    environment: production
-    steps:
-      - uses: actions/checkout@v4
-      # Your production deployment steps here
+```bash
+# Using the install script
+curl -s https://raw.githubusercontent.com/nektos/act/master/install.sh | sudo bash
 ```
 
-## Best Practices
+## Usage
 
-1. **Always validate workflows locally** with actionlint before pushing
-1. **Use feature branches** for testing workflow changes
-1. **Set up environments** with protection rules for sensitive workflows
-1. **Use environment secrets** instead of repository secrets when possible
-1. **Add required reviewers** to production environments
-1. **Test workflows with different event types** (push, pull_request, workflow_dispatch)
-1. **Use conditional jobs** that depend on previous job results
-1. **Monitor workflow runs** in the Actions tab to identify issues
+### Using PowerShell (Recommended)
 
-## VSCode Integration
+#### Test a workflow
 
-This repository includes VSCode tasks for workflow validation and testing. Press `Ctrl+Shift+P` and type "Tasks: Run Task" to see available tasks:
+```powershell
+# Test with default push event
+.\github\local-testing\test-workflow.ps1 -WorkflowFile .github/workflows/ci.yml
 
-- Validate Workflow with Actionlint
-- Validate All Workflows
-- Create Feature Branch for Workflow Testing
-- Push Workflow Changes for Testing
+# Test with pull_request event
+.\github\local-testing\test-workflow.ps1 -WorkflowFile .github/workflows/ci.yml -EventType pull_request
+
+# Test with specific Python version
+.\github\local-testing\test-workflow.ps1 -WorkflowFile .github/workflows/ci.yml -MatrixOverride "python-version=3.11"
+
+# Test with specific job
+.\github\local-testing\test-workflow.ps1 -WorkflowFile .github/workflows/ci.yml -JobFilter "test"
+
+# Test without Docker (dry run mode)
+.\github\local-testing\test-workflow.ps1 -WorkflowFile .github/workflows/ci.yml -DryRun
+```
+
+#### Test with multiple Python versions
+
+```powershell
+# Test with Python 3.11 and 3.12
+.\github\local-testing\test-python-versions.ps1 -WorkflowFile .github/workflows/ci.yml
+```
+
+### Using Bash
+
+#### Test a workflow
+
+```bash
+# Test with default push event
+bash .github/local-testing/test-workflow.sh .github/workflows/ci.yml
+
+# Test with pull_request event
+bash .github/local-testing/test-workflow.sh .github/workflows/ci.yml pull_request
+
+# Test with specific Python version
+bash .github/local-testing/test-workflow.sh .github/workflows/ci.yml push python-version=3.11
+```
+
+#### Test with multiple Python versions
+
+```bash
+# Test with Python 3.11 and 3.12
+bash .github/local-testing/test-python-versions.sh .github/workflows/ci.yml
+```
+
+## How It Works
+
+The scripts:
+
+1. Create a temporary directory in your home folder
+1. Copy the repository files to the temporary directory
+1. Initialize a git repository in the temporary directory
+1. Create event and matrix configuration files as needed
+1. Run act with the appropriate parameters
+1. Clean up the temporary directory when done
+
+This approach avoids issues with UNC paths and ensures a clean environment for each test run.
+
+## Advanced Usage
+
+### Using the act-runner.ps1 Script Directly
+
+For more control, you can use the `act-runner.ps1` script directly:
+
+```powershell
+# Basic usage
+.\github\local-testing\act-runner.ps1 -WorkflowFile .github/workflows/ci.yml -EventFile .github/local-testing/events/push.json
+
+# With matrix override
+.\github\local-testing\act-runner.ps1 -WorkflowFile .github/workflows/ci.yml -EventFile .github/local-testing/events/push.json -MatrixFile .github/local-testing/matrix-input.json
+
+# Keep the temporary directory for debugging
+.\github\local-testing\act-runner.ps1 -WorkflowFile .github/workflows/ci.yml -EventFile .github/local-testing/events/push.json -KeepTemp
+
+# Specify a different platform and Docker image
+.\github\local-testing\act-runner.ps1 -WorkflowFile .github/workflows/ci.yml -EventFile .github/local-testing/events/push.json -Platform ubuntu-22.04 -DockerImage ghcr.io/catthehacker/ubuntu:act-22.04
+
+# Run without Docker (dry run mode)
+.\github\local-testing\act-runner.ps1 -WorkflowFile .github/workflows/ci.yml -EventFile .github/local-testing/events/push.json -DryRun
+```
+
+## Troubleshooting
+
+### Docker Issues
+
+- Ensure Docker Desktop is running
+- Make sure you have enough disk space for the Docker images
+- If you see permission errors, try running Docker Desktop as administrator
+
+### Path Issues
+
+- The scripts handle path conversion automatically
+- If you see path-related errors, try using the PowerShell scripts instead of bash
+
+### Git Issues
+
+- The scripts initialize a git repository in the temporary directory
+- If you see git-related errors, make sure git is installed and in your PATH
