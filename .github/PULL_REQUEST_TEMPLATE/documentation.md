@@ -1,12 +1,24 @@
 ---
 name: Documentation Update
 about: Improve project documentation
-title: '[DOCS] '
+title: 'docs: '
 labels: [documentation]
 assignees: ''
 ---
 
 # Documentation Pull Request
+
+## PR Title Format
+
+<!--
+IMPORTANT: Your PR title should follow the Conventional Commit format:
+docs(<optional scope>): <description>
+
+Examples:
+- docs(user): update installation instructions
+- docs(dev): add contribution guidelines
+- docs: fix typos in README
+-->
 
 ## Description
 

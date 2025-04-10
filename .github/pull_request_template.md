@@ -1,5 +1,18 @@
 # Pull Request
 
+## PR Title Format
+
+<!--
+IMPORTANT: Your PR title should follow the Conventional Commit format:
+<type>(<optional scope>): <description>
+
+Examples:
+- feat(cli): add new validation command
+- fix(core): resolve environment parsing issue
+- docs: update installation instructions
+- refactor(utils): improve error handling
+-->
+
 ## Description
 
 <!-- Provide a clear and concise description of the changes in this PR -->
@@ -14,17 +27,18 @@
 
 ## Type of Change
 
-<!-- Put an x in the boxes that apply -->
+<!-- Put an x in the boxes that apply. This should match the type in your PR title. -->
 
-- [ ] Bug fix (non-breaking change that fixes an issue)
-- [ ] New feature (non-breaking change that adds functionality)
-- [ ] Breaking change (fix or feature that would cause existing functionality to change)
-- [ ] Documentation update (changes to documentation only)
-- [ ] Code refactoring (no functional changes)
-- [ ] Performance improvement (non-functional change that improves performance)
-- [ ] Test coverage improvement (changes that improve test coverage)
-- [ ] CI/CD improvement (changes to CI/CD configuration files/workflows)
-- [ ] Other (please describe):
+- [ ] feat: New feature (adds functionality)
+- [ ] fix: Bug fix (fixes an issue)
+- [ ] docs: Documentation changes
+- [ ] style: Changes that don't affect code functionality (formatting, etc.)
+- [ ] refactor: Code changes that neither fix bugs nor add features
+- [ ] perf: Performance improvements
+- [ ] test: Adding or improving tests
+- [ ] build: Changes to build system or dependencies
+- [ ] ci: Changes to CI configuration
+- [ ] chore: Other changes that don't modify src or test files
 
 ## Implementation Details
 
@@ -71,7 +85,8 @@
 - [ ] I have added tests that prove my fix is effective or that my feature works
 - [ ] All new and existing tests pass locally
 - [ ] Any dependent changes have been merged and published
-- [ ] My commits follow the [conventional commits](https://www.conventionalcommits.org/) standard
+- [ ] My commits follow the [Conventional Commits](https://www.conventionalcommits.org/) standard
+- [ ] My PR title follows the Conventional Commits format
 - [ ] I have updated the documentation accordingly
 
 ## Additional Notes
