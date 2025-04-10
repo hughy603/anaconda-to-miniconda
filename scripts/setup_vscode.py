@@ -518,6 +518,41 @@ Feel free to customize these configurations to suit your workflow:
     print_colored("Created README.md", GREEN)
 
 
+def configure_git_settings() -> bool | None:
+    """Configure Git settings for the project.
+
+    Returns:
+        Optional[bool]: True if successful, False if failed, None if git not found
+    """
+    print_colored("Configuring Git settings...", BLUE)
+
+    # Check if git is installed
+    try:
+        subprocess.run(
+            ["git", "--version"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except (subprocess.SubprocessError, FileNotFoundError):
+        print_colored("Git not found. Skipping Git configuration.", YELLOW)
+        return None
+
+    # Configure git pull.rebase to false for this repository
+    try:
+        subprocess.run(
+            ["git", "config", "pull.rebase", "false"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        print_colored("Git pull.rebase set to false for this repository.", GREEN)
+        return True
+    except subprocess.SubprocessError:
+        print_colored("Failed to configure Git settings.", RED)
+        return False
+
+
 def main() -> None:
     """Main function."""
     print_colored("Setting up VSCode configuration for conda-forge-converter...", BLUE, bold=True)
@@ -554,9 +589,19 @@ def main() -> None:
     create_extensions_json(vscode_dir)
     create_readme(vscode_dir)
 
+    # Configure Git settings
+    git_result = configure_git_settings()
+
     print_colored("\nVSCode configuration setup complete!", GREEN, bold=True)
     print_colored("Open the project in VSCode to use the new configuration.", BLUE)
     print_colored("See .vscode/README.md for more information.", BLUE)
+
+    if git_result is True:
+        print_colored("\nGit configuration:", GREEN, bold=True)
+        print_colored("- pull.rebase = false (prevents divergent branch issues)", GREEN)
+    elif git_result is False:
+        print_colored("\nWarning: Failed to configure Git settings.", YELLOW, bold=True)
+        print_colored("Please manually run: git config pull.rebase false", YELLOW)
 
 
 if __name__ == "__main__":

@@ -25,6 +25,10 @@ uv pip install -e ".[dev,test]"
 
 # Install pre-commit hooks
 pre-commit install
+pre-commit install --hook-type commit-msg
+
+# Configure Git to use merge strategy for pulls (important for this project)
+git config pull.rebase false
 
 # Set up VSCode configuration (if using VSCode)
 ./scripts/setup_vscode.py
@@ -49,6 +53,22 @@ If you're using VSCode, we provide pre-configured settings to help you get start
 
 1. For detailed information on debugging with VSCode, see the [VSCode Debugging Guide](docs/dev/vscode-debugging.md).
 
+## Git Configuration
+
+To prevent issues with divergent branches when working with this project, it's important to configure Git to use the merge strategy for pulls:
+
+```bash
+git config pull.rebase false
+```
+
+You can also set this globally for all repositories:
+
+```bash
+git config --global pull.rebase false
+```
+
+This ensures that when you pull changes that include automatic version bump commits, Git will automatically create a merge commit instead of failing with divergent branch errors.
+
 ## Development Workflow Summary
 
 1. **Create a feature branch**: `git checkout -b feature/your-feature-name`
@@ -56,6 +76,7 @@ If you're using VSCode, we provide pre-configured settings to help you get start
 1. **Run pre-commit checks**: `pre-commit run --all-files`
 1. **Run tests**: `pytest`
 1. **Commit your changes**: Use conventional commit format (see below)
+1. **Pull before pushing**: `git pull` (this will merge any remote changes)
 1. **Push your changes**: `git push origin feature/your-feature-name`
 1. **Submit a pull request**: Create a PR from your branch to the develop branch
 
