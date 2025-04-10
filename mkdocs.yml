@@ -5,6 +5,10 @@ repo_url: https://github.com/yourusername/conda-forge-converter
 repo_name: yourusername/conda-forge-converter
 edit_uri: edit/main/docs/
 
+# GitHub Pages configuration
+site_url: https://yourusername.github.io/conda-forge-converter/
+use_directory_urls: false
+
 theme:
   name: material
   palette:
@@ -40,25 +44,54 @@ nav:
   - User Guide:
     - Getting Started: user/getting-started.md
     - CLI Reference: user/cli-reference.md
+    - System Administrator Guide: user/cli-admin-guide.md
+    - Root User Guide: user/root-user-guide.md
     - Common Workflows: user/workflows.md
+    - Quick Reference: user/cli-quick-reference.md
+    - CLI Cheat Sheet: user/cli-cheatsheet.md
     - Troubleshooting: user/troubleshooting.md
+    - FAQ: user/faq.md
+    - Glossary: user/glossary.md
   - Developer Guide:
+    - Overview: dev/README.md
+    - Getting Started:
+      - Setup: dev/setup.md
+      - Contributing: dev/contributing.md
+    - Development Process:
+      - Workflow: dev/workflow.md
+      - Conventional Commits: dev/conventional-commits.md
+      - Pull Request Process: dev/pr-process.md
+      - Testing: dev/testing.md
+      - Releasing: dev/releasing.md
+    - Tools and Configuration:
+      - Build Tools: dev/build-tools.md
+      - Documentation: dev/documentation.md
+      - Quick Reference: dev/quick-reference.md
+    - Documentation:
+      - Documentation Guide: dev/documentation.md
+      - CLI Documentation Guide: dev/cli-documentation-guide.md
+      - Docstring-Driven Documentation: dev/docstring-documentation-guide.md
+      - Documentation Contribution: dev/doc-contributing.md
     - Architecture: dev/architecture.md
-    - Contributing: dev/contributing.md
-    - Testing: dev/testing.md
-    - Releasing: dev/releasing.md
-    - Documentation: dev/documentation.md
+    - Documentation Improvements: dev/documentation-improvements.md
   - API Reference:
     - Overview: api/index.md
     - Core Module: api/core.md
+    - CLI Module: api/cli.md
+    - Utils Module: api/utils.md
+    - Health Module: api/health.md
+    - Reporting Module: api/reporting.md
+    - Incremental Module: api/incremental.md
   - Design Docs:
-    - Design Overview: design/overview.md
-    - Planned Improvements: design/improvements.md
+    - System Design: design/system-design.md
+    - Error Handling: design/error-handling.md
+    - Package Resolution: design/package-resolution.md
   - About:
     - License: about/license.md
     - Changelog: about/changelog.md
   - Project Management:
     - Documentation TODO: TODO.md
+    - Improvement Plan: improvement-plan.md
 
 plugins:
   - search
@@ -71,8 +104,18 @@ plugins:
             show_source: true
             show_root_heading: true
             show_category_heading: true
+  - minify:
+      minify_html: true
+      minify_js: true
+      minify_css: true
+  - redirects:
+      redirect_maps:
+        "index.html": "index.md"
+        "404.html": "404.md"
 
 extra:
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/yourusername/conda-forge-converter
+  version:
+    provider: mike

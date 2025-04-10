@@ -1,10 +1,37 @@
-"""Command-line interface for the conda-forge-converter package."""
+"""Command-line interface for the conda-forge-converter package.
+
+This module provides the command-line interface for the conda-forge-converter tool.
+It handles argument parsing, command execution, and orchestrates the entire conversion
+process by integrating functionality from other modules.
+
+The CLI module is organized into the following functional areas:
+
+Command-Line Parsing:
+  - parse_args: Parse command-line arguments for the conda-forge-converter tool
+
+Help and Documentation:
+  - show_help: Show detailed help on specific topics with examples
+
+Main Entry Point:
+  - main: Main entry point for the conda-forge-converter command-line interface
+
+The CLI supports several commands and modes of operation:
+  - Default mode: Convert a single environment or batch of environments
+  - help: Show detailed help with examples and workflows
+  - health: Check the health of a conda environment
+  - report: Generate a detailed report about a conversion
+  - update: Update an existing conda-forge environment
+
+Each command has its own set of options and arguments, which are documented
+in the help text and in the parse_args function.
+"""
 
 import argparse
 import json
 import sys
 from collections.abc import Sequence
 from datetime import datetime
+from pathlib import Path
 
 from .core import (
     convert_environment,
@@ -14,7 +41,11 @@ from .core import (
 )
 from .health import check_environment_health, verify_environment
 from .incremental import detect_drift, update_conda_forge_environment
-from .reporting import generate_conversion_report, generate_summary_report, print_report_summary
+from .reporting import (
+    generate_conversion_report,
+    generate_summary_report,
+    print_report_summary,
+)
 from .utils import logger, setup_logging
 
 
@@ -125,6 +156,22 @@ def parse_args(args: Sequence[str] | None = None) -> argparse.Namespace:
         action="store_true",
         help="Skip backing up environment specifications",
     )
+    parser.add_argument(
+        "--no-fast-solver",
+        action="store_true",
+        help="Disable using faster conda solvers (libmamba or mamba)",
+    )
+    parser.add_argument(
+        "--no-preserve-ownership",
+        action="store_true",
+        help="Disable automatic preservation of source environment ownership when running as root",
+    )
+    parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=20,
+        help="Number of packages to install in each batch (default: 20)",
+    )
 
     # Python version
     parser.add_argument("--python", help="Specify Python version for the new environment")
@@ -195,6 +242,8 @@ def show_help(topic: str | None = None) -> None:
 
     if topic == "advanced" or topic is None:
         print("\n=== Advanced Options ===")
+        print("\nRoot user options:")
+        print("  conda-forge-converter -s myenv -t myenv_forge --no-preserve-ownership")
         print("\nParallel conversion:")
         print("  conda-forge-converter --batch --max-parallel 4")
         print("\nSearch custom paths:")
@@ -203,6 +252,10 @@ def show_help(topic: str | None = None) -> None:
         )
         print("\nSkip backup:")
         print("  conda-forge-converter --batch --no-backup")
+        print("\nDisable fast solver:")
+        print("  conda-forge-converter -s myenv -t myenv_forge --no-fast-solver")
+        print("\nCustomize batch size:")
+        print("  conda-forge-converter -s myenv -t myenv_forge --batch-size 10")
         print("\nDetailed logging:")
         print("  conda-forge-converter -s myenv -t myenv_forge --verbose --log-file conversion.log")
 
@@ -259,9 +312,11 @@ def show_help(topic: str | None = None) -> None:
         print(
             "  conda-forge-converter -s myenv -t myenv_forge --health-check --verify --generate-report report.json"
         )
+        print("\nExample 6: Optimize conversion performance")
+        print("  conda-forge-converter -s myenv -t myenv_forge --batch-size 30")
 
 
-def main(args: Sequence[str] | None = None) -> int:
+def main(args: Sequence[str] | None = None) -> int:  # noqa: C901
     """Main entry point for the conda-forge-converter command-line interface.
 
     This function orchestrates the entire process of converting Anaconda environments to
@@ -311,6 +366,21 @@ def main(args: Sequence[str] | None = None) -> int:
     # Setup logging with global logger
     setup_logging(parsed_args.log_file, parsed_args.verbose)
 
+    # Determine if we should preserve ownership
+    preserve_ownership = not parsed_args.no_preserve_ownership
+
+    # Check if running as root and log ownership preservation status
+    try:
+        from conda_forge_converter.utils import is_root
+
+        if is_root():
+            if preserve_ownership:
+                logger.info("Running as root - will preserve original environment ownership")
+            else:
+                logger.info("Running as root - ownership preservation disabled")
+    except ImportError:
+        pass
+
     # Handle special commands
     if parsed_args.command == "help":
         show_help(parsed_args.topic)
@@ -334,11 +404,11 @@ def main(args: Sequence[str] | None = None) -> int:
         # Save results to file if requested
         if parsed_args.output:
             try:
-                with open(parsed_args.output, "w") as f:
+                with Path(parsed_args.output).open("w") as f:
                     json.dump(health_result, f, indent=2)
                 logger.info(f"Health check results saved to {parsed_args.output}")
             except Exception as e:
-                logger.error(f"Failed to save health check results: {str(e)}")
+                logger.error(f"Failed to save health check results: {e!s}")
 
         # Return success or failure
         return 0 if health_result["status"] != "ERROR" else 1
@@ -405,11 +475,11 @@ def main(args: Sequence[str] | None = None) -> int:
         # Save report if requested
         if parsed_args.report:
             try:
-                with open(parsed_args.report, "w") as f:
+                with Path(parsed_args.report).open("w") as f:
                     json.dump(update_result, f, indent=2)
                 logger.info(f"Update report saved to {parsed_args.report}")
             except Exception as e:
-                logger.error(f"Failed to save update report: {str(e)}")
+                logger.error(f"Failed to save update report: {e!s}")
 
         # Determine success based on whether any operations failed
         if (
@@ -427,22 +497,26 @@ def main(args: Sequence[str] | None = None) -> int:
             # Health checks will be performed in convert_multiple_environments
 
         results = convert_multiple_environments(
-            parsed_args.pattern,
-            parsed_args.target_suffix,
-            parsed_args.dry_run,
-            parsed_args.verbose,
-            parsed_args.exclude,
-            parsed_args.max_parallel,
-            not parsed_args.no_backup,
-            parsed_args.search_path,
+            source_envs=None,
+            target_envs=None,
+            python_version=parsed_args.python,
+            env_pattern=parsed_args.pattern,
+            exclude=parsed_args.exclude,
+            target_suffix=parsed_args.target_suffix,
+            dry_run=parsed_args.dry_run,
+            verbose=parsed_args.verbose,
+            max_parallel=parsed_args.max_parallel,
+            backup=not parsed_args.no_backup,
+            search_paths=parsed_args.search_path,
+            use_fast_solver=not parsed_args.no_fast_solver,
+            batch_size=parsed_args.batch_size,
+            preserve_ownership=preserve_ownership,
         )
 
         # Generate summary report if requested
-        if parsed_args.generate_report and results:
-            # Ensure results is a dictionary before passing to generate_summary_report
-            if isinstance(results, dict):
-                summary_report = generate_summary_report(results, parsed_args.generate_report)
-                logger.info(f"Conversion summary report saved to {parsed_args.generate_report}")
+        if parsed_args.generate_report and results and isinstance(results, dict):
+            _summary_report = generate_summary_report(results, parsed_args.generate_report)
+            logger.info(f"Conversion summary report saved to {parsed_args.generate_report}")
 
         success = bool(results)
     else:
@@ -462,9 +536,9 @@ def main(args: Sequence[str] | None = None) -> int:
                 return 1
 
             logger.info(f"Using environment at path: {parsed_args.source_env}")
-            env_path = parsed_args.source_env
+            _env_path = parsed_args.source_env
         else:
-            env_path = environments[parsed_args.source_env]
+            _env_path = environments[parsed_args.source_env]
 
         # Default target environment name if not specified
         target_env = parsed_args.target_env or f"{parsed_args.source_env}_forge"
@@ -492,7 +566,9 @@ def main(args: Sequence[str] | None = None) -> int:
             parsed_args.python,
             parsed_args.dry_run,
             parsed_args.verbose,
-            env_path,
+            use_fast_solver=not parsed_args.no_fast_solver,
+            batch_size=parsed_args.batch_size,
+            preserve_ownership=preserve_ownership,
         )
 
         if success and not parsed_args.dry_run:

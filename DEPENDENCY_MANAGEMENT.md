@@ -2,74 +2,63 @@
 
 This project uses modern Python dependency management tools to ensure reproducible builds and development environments.
 
+> **Note:** For a more comprehensive guide to our build and dependency management tools, please refer to the [Build Tools Guide](docs/dev/build-tools.md).
+
 ## Tools
 
-- **uv**: A fast Python package installer and resolver (v0.6.12+)
+- **UV**: A fast Python package installer and resolver (v0.6.12+)
+- **Hatch**: Build system and packaging tool
 - **pyproject.toml**: Single source of truth for dependencies
 - **pre-commit**: Automated checks including dependency locking
-- **hatch**: Project management tool
 
-## Setup
+## Quick Reference
 
-To set up the development environment:
+### Setup
 
 ```bash
 # Install required tools
 pipx install uv
 pipx install pre-commit
 
-# Run the setup script
-./scripts/setup_dev.sh
+# Install dependencies
+uv pip install -e ".[dev,test]"
+
+# Install pre-commit hooks
+pre-commit install
 ```
 
-## Dependency Management Workflow
+### Common Commands
 
-### Define dependencies in pyproject.toml
+```bash
+# Lock dependencies
+uv run deps-lock
+
+# Update dependencies
+uv run deps-update
+
+# Install from lock file
+uv pip install -r requirements.lock
+
+# Run tests with Hatch
+hatch run test:run
+
+# Run tests with coverage
+hatch run test:cov
+```
+
+### Dependency Structure
 
 - Regular dependencies under `project.dependencies`
 - Development dependencies under `project.optional-dependencies.dev`
 - Test dependencies under `project.optional-dependencies.test`
 
-### Lock dependencies
-
-- Dependencies are locked automatically via pre-commit hooks
-- Alternatively, run `python3 scripts/update_deps.py` manually
-
-### Generated files
-
-- `requirements/requirements.txt`: Production dependencies
-- `requirements/dev-requirements.txt`: Development dependencies
-- `requirements/test-requirements.txt`: Test dependencies
-- `requirements/ci-requirements.txt`: Combined dev and test for CI
-
-## Resolution Strategy
-
-This project uses the `highest` resolution strategy in uv, which resolves dependencies to their highest compatible
-versions available. This ensures we always use the latest compatible versions while maintaining stability.
-
-## CI/CD Integration
-
-For CI/CD pipelines, use the locked requirements files:
-
-```yaml
-# Example GitHub Actions workflow
-- name: Install dependencies
-  run: |
-    pip install -r requirements/ci-requirements.txt
-```
-
-## Upgrading Dependencies
-
-To upgrade dependencies:
-
-1. Update versions in `pyproject.toml`
-1. Run `python3 scripts/update_deps.py` to regenerate lock files
-1. Test the changes with `pre-commit run --all-files`
-
 ## Best Practices
 
-- Never modify the generated requirements files directly
+- Never modify the generated requirements.lock file directly
 - Always specify version constraints in `pyproject.toml`
 - Use `uv pip install -e ".[dev,test]"` for local development
+- Use Hatch for running tests: `hatch run test:cov`
 - Run tests after dependency updates to verify compatibility
-- Keep uv updated to the latest stable version
+- Keep UV updated to the latest stable version
+
+For detailed information about dependency management, including resolution strategy, CI/CD integration, and automated updates, please refer to the [Build Tools Guide](docs/dev/build-tools.md).

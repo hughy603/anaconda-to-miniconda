@@ -1,31 +1,68 @@
 ---
 name: Documentation Update
 about: Improve project documentation
-title: 'docs: '
-labels: documentation
+title: '[DOCS] '
+labels: [documentation]
 assignees: ''
 ---
 
-## Documentation PR
+# Documentation Pull Request
 
-### Description
+## Description
 
-<!-- Briefly describe what documentation you've added or changed -->
+<!-- Provide a clear and concise description of the documentation changes -->
 
-### Type of Change
+<!-- Explain why these changes are necessary or beneficial -->
 
-<!-- Check all that apply -->
+## Related Issues
 
-- [ ] New documentation
-- [ ] Documentation update
-- [ ] Documentation fix
-- [ ] Style/formatting improvements
+<!-- Link to any related issues this PR addresses -->
 
-### Related Issues
+<!-- Example: Closes #123 -->
 
-<!-- Reference any related issues (e.g., "Closes #123") -->
+## Type of Documentation Change
 
-### Checklist
+<!-- Put an x in the boxes that apply -->
+
+- [ ] New documentation (adds entirely new content)
+- [ ] Documentation update (improves or expands existing content)
+- [ ] Documentation fix (corrects errors or clarifies confusing information)
+- [ ] Reorganization (restructures existing content without changing meaning)
+- [ ] Style/formatting improvements (improves readability without changing content)
+- [ ] Translation (adds or updates non-English content)
+- [ ] Other (please describe):
+
+## Target Audience
+
+<!-- Indicate which user groups will benefit from these documentation changes -->
+
+- [ ] Package developers
+- [ ] System administrators
+- [ ] End users
+- [ ] New contributors
+- [ ] Other (please describe):
+
+## Changes Made
+
+<!-- Provide a summary of the specific changes made -->
+
+<!-- List the files that were added, modified, or deleted -->
+
+## Preview Links
+
+<!-- If applicable, provide links to rendered documentation previews -->
+
+<!-- For example, links to a documentation deployment preview -->
+
+## Screenshots
+
+<!-- If applicable, add screenshots showcasing the changes -->
+
+<!-- Before/after screenshots are particularly helpful -->
+
+## Checklist
+
+<!-- Put an x in the boxes that apply -->
 
 - [ ] Documentation follows our style guide (see docs/dev/documentation.md)
 - [ ] All files pass markdownlint checks
@@ -33,7 +70,12 @@ assignees: ''
 - [ ] Code examples (if any) have been tested
 - [ ] MkDocs builds successfully with changes
 - [ ] Added to navigation in mkdocs.yml (if applicable)
+- [ ] No broken links or references
+- [ ] No spelling or grammatical errors
+- [ ] Documentation is accessible and inclusive
 
-### Screenshots
+## Additional Notes
 
-<!-- If applicable, add screenshots or images showcasing the changes -->
+<!-- Add any other context about the documentation changes here -->
+
+<!-- Include any concerns or limitations -->

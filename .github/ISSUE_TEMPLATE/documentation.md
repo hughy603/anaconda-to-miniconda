@@ -1,30 +1,69 @@
 ---
 name: Documentation Issue
 about: Report issues with documentation or suggest improvements
-title: 'docs: '
-labels: documentation
+title: '[DOCS] '
+labels: [documentation, needs-triage]
 assignees: ''
 ---
 
 ## Documentation Issue
 
-### Current Documentation
+<!-- Describe what's wrong, unclear, or missing in the current documentation -->
 
-<!-- Describe what's wrong or missing in the current documentation. Include links if applicable. -->
+## Location
 
-### Proposed Improvement
+<!-- Provide links to the documentation pages that need improvement -->
 
-<!-- Describe how the documentation should be improved. -->
+<!-- For example: https://conda-forge-converter.readthedocs.io/en/latest/user/cli-reference.html -->
 
-### Why is this important?
+<!-- Or specify the file path: docs/user/cli-reference.md -->
 
-<!-- Explain why this documentation improvement matters. -->
+## Proposed Improvement
 
-### Additional context
+<!-- Describe how the documentation should be improved -->
 
-<!-- Any other information that might be helpful. -->
+<!-- Be as specific as possible -->
 
-### Checklist
+<!-- If you're suggesting new content, describe what should be included -->
 
-- [ ] I've searched existing issues to make sure this isn't a duplicate
-- [ ] I've checked the documentation style guide in docs/dev/documentation.md
+## Why This Matters
+
+<!-- Explain why this documentation improvement is important -->
+
+<!-- For example: "This would help new users understand..." -->
+
+<!-- Or: "This would clarify a confusing aspect of..." -->
+
+## Suggested Content
+
+<!-- If you have specific text suggestions, provide them here -->
+
+<!-- For code examples, use proper formatting -->
+
+```python
+# Example code suggestion
+def example_function():
+    """Example docstring."""
+    return True
+```
+
+## User Impact
+
+<!-- Describe which types of users would benefit from this improvement -->
+
+<!-- For example: package developers, system administrators, new users -->
+
+## Additional Context
+
+<!-- Add any other context about the documentation issue here -->
+
+<!-- Screenshots or diagrams can be helpful -->
+
+## Checklist
+
+<!-- Put an x in the boxes that apply -->
+
+- [ ] I've searched for similar documentation issues before creating this one
+- [ ] I've checked that this isn't already documented elsewhere
+- [ ] I've reviewed the documentation style guide in docs/dev/documentation.md
+- [ ] I've provided specific suggestions for improvement

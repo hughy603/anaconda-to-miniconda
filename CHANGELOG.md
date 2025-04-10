@@ -1,76 +1,107 @@
 # Changelog
 
-All notable changes to the Conda-Forge Converter project will be documented in this file.
+All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## \[Unreleased\]
+## [Unreleased]
+
+### Added
+
+### Changed
+
+### Fixed
+
+## [1.0.0-alpha.1] - 2025-04-10
+
+### Added
+
+### Changed
+
+### Fixed
+
+## [1.0.2] - 2025-04-10
+
+### Added
+
+### Changed
+
+### Fixed
+
+## [1.0.1] - 2025-04-10
+
+### Added
+
+### Changed
+
+### Fixed
+
+## [1.1.0] - 2025-04-10
+
+### Added
+
+### Changed
+
+### Fixed
+
+## [2.0.0] - 2025-04-10
+
+### Added
+
+### Changed
+
+### Fixed
+
+## [0.2.0] - 2025-04-10
+
+### Added
+
+- Standardized code quality tasks using UV
+- Simplified CI/CD pipelines with GitHub Actions
+- Improved documentation building with MkDocs
+- Configured pyright for static type checking
+- Fully leveraged UV for dependency management, locking, and script running
+
+### Changed
+
+- Replaced pylint with pyright for more robust static type checking
+- Moved from hatch to UV for comprehensive dependency management and script running
+- Simplified workflow configurations to use UV directly
+
+## [1.0.0] - 2025-04-05
 
 ### Added
 
 - Initial project setup
-- Basic environment conversion functionality
-- Package resolution system
-- Health verification
+- Basic conda environment conversion functionality
+- Support for Python 3.11 and 3.12
+- Comprehensive test suite with pytest
+- Code quality tools: ruff, pylint
+- CI/CD pipeline with GitHub Actions
+- Documentation with MkDocs
+- Security scanning with safety and bandit
 
 ### Changed
 
-- Improved documentation structure
-- Enhanced error handling
+- Switched to hatch for dependency management
+- Improved type hints and static analysis
+- Enhanced pre-commit hooks configuration
 
 ### Fixed
 
-- Fixed package version mapping issues
-- Resolved dependency conflicts
+- Version management using hatch-vcs
+- Dependency caching in CI pipeline
 
-## \[0.1.0\] - YYYY-MM-DD
+### Security
+
+- Added security scanning in CI
+- Added dependency vulnerability checks
+
+## [0.1.0] - 2024-04-06
 
 ### Added
 
 - Initial release
-- Basic environment conversion
-- Package resolution
-- Health verification
-
-## Template for Future Releases
-
-### \[X.Y.Z\] - YYYY-MM-DD
-
-#### Added
-
-- New features or capabilities
-
-#### Changed
-
-- Changes to existing functionality
-
-#### Deprecated
-
-- Soon-to-be removed features
-
-#### Removed
-
-- Removed features
-
-#### Fixed
-
-- Bug fixes
-
-#### Security
-
-- Security improvements
-
-## How to Update This Changelog
-
-1. Add a new section for the release version at the top
-1. Use the following categories:
-   - Added: New features
-   - Changed: Changes to existing functionality
-   - Deprecated: Soon-to-be removed features
-   - Removed: Removed features
-   - Fixed: Bug fixes
-   - Security: Security improvements
-1. Add a date in YYYY-MM-DD format
-1. Link to the release in the GitHub repository
-1. Update the Unreleased section as needed
+- Basic project structure
+- Core functionality for converting Anaconda environments to conda-forge

@@ -2,7 +2,13 @@
 
 Thank you for considering contributing to conda-forge-converter! This document provides a brief overview of the contribution process.
 
-For comprehensive contribution guidelines, please refer to the [Contributing Guide](https://conda-forge-converter.readthedocs.io/en/latest/dev/contributing/) in our documentation.
+For comprehensive contribution guidelines, please refer to the following documentation:
+
+- [Developer Workflow Guide](docs/dev/workflow.md) - Complete development process
+- [Conventional Commits Guide](docs/dev/conventional-commits.md) - How to format commit messages
+- [Build Tools Guide](docs/dev/build-tools.md) - Information about our build and version management tools
+- [Pull Request Process](docs/dev/pr-process.md) - How to submit and review PRs
+- [Quick Reference](docs/dev/quick-reference.md) - Cheat sheet for common tasks
 
 ## Quick Start
 
@@ -11,27 +17,72 @@ For comprehensive contribution guidelines, please refer to the [Contributing Gui
 git clone https://github.com/yourusername/conda-forge-converter.git
 cd conda-forge-converter
 
-# Set up development environment using hatch (recommended)
-pip install hatch
-hatch env create
+# Install UV (recommended to use pipx for global installation)
+pipx install uv
 
-# Run tests
-hatch run test
+# Set up development environment
+uv pip install -e ".[dev,test]"
 
-# Format code
-hatch run lint:fmt
+# Install pre-commit hooks
+pre-commit install
 
-# Check linting
-hatch run lint:check
+# Set up VSCode configuration (if using VSCode)
+./scripts/setup_vscode.py
 ```
 
-## Key Guidelines
+### VSCode Setup
 
-1. Fork the repository
-1. Create a feature branch
-1. Make your changes
-1. Run tests and linting
-1. Submit a pull request
+If you're using VSCode, we provide pre-configured settings to help you get started quickly:
+
+1. Run the setup script to configure VSCode:
+
+   ```bash
+   ./scripts/setup_vscode.py
+   ```
+
+1. This will create a `.vscode` directory with:
+
+   - Debug configurations for conda/mamba integration
+   - Recommended settings for Python development
+   - Tasks for common development operations
+   - Recommended extensions
+
+1. For detailed information on debugging with VSCode, see the [VSCode Debugging Guide](docs/dev/vscode-debugging.md).
+
+## Development Workflow Summary
+
+1. **Create a feature branch**: `git checkout -b feature/your-feature-name`
+1. **Make your changes**: Implement your feature or bug fix
+1. **Run pre-commit checks**: `pre-commit run --all-files`
+1. **Run tests**: `pytest`
+1. **Commit your changes**: Use conventional commit format (see below)
+1. **Push your changes**: `git push origin feature/your-feature-name`
+1. **Submit a pull request**: Create a PR from your branch to the develop branch
+
+## Conventional Commits
+
+We use the [Conventional Commits](https://www.conventionalcommits.org/) standard for commit messages. This is enforced by pre-commit hooks.
+
+Basic format:
+
+```
+type(scope): description
+```
+
+Common types:
+
+- `feat`: A new feature
+- `fix`: A bug fix
+- `docs`: Documentation changes
+- `refactor`: Code restructuring
+- `test`: Adding or updating tests
+- `chore`: Maintenance tasks
+
+For detailed examples and guidelines, see the [Conventional Commits Guide](docs/dev/conventional-commits.md).
+
+## Code Style
+
+We use Ruff for linting and formatting, and Pyright for type checking. These tools are configured in `pyproject.toml` and run automatically via pre-commit hooks.
 
 ## Code of Conduct
 

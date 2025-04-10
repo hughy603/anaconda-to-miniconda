@@ -1,0 +1,153 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Install Development Dependencies",
+            "type": "shell",
+            "command": "uv pip install -e \".[dev,test]\"",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "Run Tests",
+            "type": "shell",
+            "command": "pytest",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "Run Tests with Coverage",
+            "type": "shell",
+            "command": "pytest --cov=conda_forge_converter tests/",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Lint with Ruff",
+            "type": "shell",
+            "command": "ruff check .",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Format with Ruff",
+            "type": "shell",
+            "command": "ruff format .",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Type Check with Pyright",
+            "type": "shell",
+            "command": "pyright",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Lock Dependencies",
+            "type": "shell",
+            "command": "uv pip compile pyproject.toml --output-file=requirements.lock --extra=dev --extra=test",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Install Pre-commit Hooks",
+            "type": "shell",
+            "command": "pre-commit install",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Run Pre-commit Hooks",
+            "type": "shell",
+            "command": "pre-commit run --all-files",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Build Documentation",
+            "type": "shell",
+            "command": "mkdocs build",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Serve Documentation",
+            "type": "shell",
+            "command": "mkdocs serve",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Check Conda Environment",
+            "type": "shell",
+            "command": "conda info",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "List Conda Environments",
+            "type": "shell",
+            "command": "conda env list",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Check Mamba Installation",
+            "type": "shell",
+            "command": "mamba info",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        }
+    ]
+}

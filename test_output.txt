@@ -1,0 +1,172 @@
+============================= test session starts ==============================
+platform linux -- Python 3.11.11, pytest-8.3.5, pluggy-1.5.0 -- /home/arice/workspaces/anaconda-to-miniconda/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /home/arice/workspaces/anaconda-to-miniconda
+configfile: pytest.ini
+plugins: cov-6.1.1
+collecting ... collected 26 items
+
+tests/test_core.py::TestEnvironmentInfo::test_environment_info_init PASSED
+tests/test_core.py::TestEnvironmentInfo::test_from_environment_success PASSED
+tests/test_core.py::TestEnvironmentInfo::test_from_environment_failure PASSED
+tests/test_core.py::TestFindEnvironmentsInPath::test_find_valid_environments Checking if /path/to/envs is env: False
+Checking if /path/to/envs/env1 is env: True
+Checking if /path/to/envs/env2 is env: True
+Checking if /path/to/envs/not_an_env is env: False
+Checking if /path/to/envs/not_an_env is env: False
+Checking if /path/to/envs/env1 is env: True
+Checking if /path/to/envs/env2 is env: True
+Checking if /path/to/envs/not_an_env is env: False
+Checking if /path/to/envs/not_an_env is env: False
+Checking if /path/to/envs/env1 is env: True
+Checking if /path/to/envs/env2 is env: True
+Checking if /path/to/envs/not_an_env is env: False
+
+-------------------------------- live log call ---------------------------------
+2025-04-05 21:10:05 [    INFO] Found 2 conda environments in /path/to/envs (core.py:199)
+PASSED
+tests/test_core.py::TestFindEnvironmentsInPath::test_path_does_not_exist
+-------------------------------- live log call ---------------------------------
+2025-04-05 21:10:05 [ WARNING] Search path does not exist: /path/does/not/exist (core.py:157)
+PASSED
+tests/test_core.py::TestListAllCondaEnvironments::test_registered_environments PASSED
+tests/test_core.py::TestListAllCondaEnvironments::test_with_search_paths
+-------------------------------- live log call ---------------------------------
+2025-04-05 21:10:05 [    INFO] Found 2 registered conda environments (core.py:243)
+PASSED
+tests/test_core.py::TestGetPythonVersion::test_get_python_version_by_name PASSED
+tests/test_core.py::TestGetPythonVersion::test_get_python_version_by_path PASSED
+tests/test_core.py::TestGetEnvironmentPackages::test_from_history_success PASSED
+tests/test_core.py::TestGetEnvironmentPackages::test_fallback_to_full_export
+-------------------------------- live log call ---------------------------------
+2025-04-05 21:10:05 [ WARNING] Could not get environment history. (core.py:368)
+2025-04-05 21:10:05 [ WARNING] Attempting to use regular environment export instead. (core.py:369)
+2025-04-05 21:10:05 [ WARNING] Note: This may include dependencies that were not directly installed. (core.py:370)
+PASSED
+tests/test_core.py::TestExtractPackageSpecs::test_extract_conda_packages PASSED
+tests/test_core.py::TestExtractPackageSpecs::test_extract_pip_packages PASSED
+tests/test_core.py::TestEnvironmentExists::test_environment_exists PASSED
+tests/test_core.py::TestGetEnvironmentSize::test_calculate_environment_size PASSED
+tests/test_core.py::TestCreateCondaForgeEnvironment::test_dry_run
+-------------------------------- live log call ---------------------------------
+2025-04-05 21:10:05 [    INFO] Would create conda-forge environment: target_env (core.py:532)
+2025-04-05 21:10:05 [    INFO] Based on: source_env (core.py:533)
+2025-04-05 21:10:05 [    INFO] Python version: 3.11.3 (core.py:536)
+2025-04-05 21:10:05 [    INFO] Conda packages to install (2): (core.py:539)
+2025-04-05 21:10:05 [    INFO]   numpy=1.24.3 (core.py:542)
+2025-04-05 21:10:05 [    INFO]   pandas=2.0.1 (core.py:542)
+2025-04-05 21:10:05 [    INFO] Pip packages to install (1): (core.py:547)
+2025-04-05 21:10:05 [    INFO]   scikit-learn==1.2.2 (core.py:550)
+PASSED
+tests/test_core.py::TestCreateCondaForgeEnvironment::test_successful_creation
+-------------------------------- live log call ---------------------------------
+2025-04-05 21:10:05 [    INFO] Successfully created conda-forge environment 'target_env' (core.py:573)
+FAILED
+tests/test_core.py::TestCreateCondaForgeEnvironment::test_creation_failure
+-------------------------------- live log call ---------------------------------
+2025-04-05 21:10:06 [   ERROR] Error parsing JSON output from conda env list (core.py:245)
+2025-04-05 21:10:06 [   ERROR] Failed to create environment 'target_env' (core.py:600)
+PASSED
+tests/test_core.py::TestConvertEnvironment::test_successful_conversion
+-------------------------------- live log call ---------------------------------
+2025-04-05 21:10:25 [    INFO] Successfully converted environment 'source_env' to 'target_env' (core.py:772)
+FAILED
+tests/test_core.py::TestConvertEnvironment::test_target_already_exists
+-------------------------------- live log call ---------------------------------
+2025-04-05 21:10:25 [   ERROR] Target environment 'target_env' already exists (core.py:731)
+PASSED
+tests/test_core.py::TestConvertEnvironment::test_environment_info_failure
+-------------------------------- live log call ---------------------------------
+2025-04-05 21:10:25 [   ERROR] Failed to analyze environment 'source_env' (core.py:740)
+PASSED
+tests/test_core.py::TestConvertMultipleEnvironments::test_no_environments_found
+-------------------------------- live log call ---------------------------------
+2025-04-05 21:10:25 [   ERROR] No conda environments found (core.py:865)
+2025-04-05 21:10:25 [ WARNING] No environments found matching the criteria (core.py:823)
+PASSED
+tests/test_core.py::TestConvertMultipleEnvironments::test_pattern_filtering
+-------------------------------- live log call ---------------------------------
+2025-04-05 21:10:25 [    INFO] Found 1 environments to convert (core.py:888)
+2025-04-05 21:10:25 [    INFO] ======================================== (core.py:1061)
+2025-04-05 21:10:25 [    INFO] Conversion Summary: (core.py:1062)
+2025-04-05 21:10:25 [    INFO]   Successful: 1 (core.py:1063)
+2025-04-05 21:10:25 [    INFO]   Failed: 0 (core.py:1064)
+2025-04-05 21:10:25 [    INFO]   Skipped: 0 (core.py:1065)
+2025-04-05 21:10:25 [    INFO] ======================================== (core.py:1066)
+PASSED
+tests/test_core.py::TestConvertMultipleEnvironments::test_with_exclusions
+-------------------------------- live log call ---------------------------------
+2025-04-05 21:10:25 [    INFO] Found 2 environments to convert (core.py:888)
+2025-04-05 21:10:25 [    INFO] ======================================== (core.py:1061)
+2025-04-05 21:10:25 [    INFO] Conversion Summary: (core.py:1062)
+2025-04-05 21:10:25 [    INFO]   Successful: 2 (core.py:1063)
+2025-04-05 21:10:25 [    INFO]   Failed: 0 (core.py:1064)
+2025-04-05 21:10:25 [    INFO]   Skipped: 0 (core.py:1065)
+2025-04-05 21:10:25 [    INFO] ======================================== (core.py:1066)
+PASSED
+tests/test_core.py::TestConvertMultipleEnvironments::test_disk_space_check FAILED
+tests/test_core.py::TestConvertMultipleEnvironments::test_parallel_conversion FAILED
+
+=================================== FAILURES ===================================
+___________ TestCreateCondaForgeEnvironment.test_successful_creation ___________
+tests/test_core.py:559: in test_successful_creation
+    mock_run.assert_any_call(
+../../.local/share/uv/python/cpython-3.11.11-linux-x86_64-gnu/lib/python3.11/unittest/mock.py:1010: in assert_any_call
+    raise AssertionError(
+E   AssertionError: run_command(['conda', 'create', '-n', 'target_env', '-c', 'conda-forge', 'python=3.11.3', '-y'], False) call not found
+------------------------------ Captured log call -------------------------------
+INFO     conda_converter:core.py:573 Successfully created conda-forge environment 'target_env'
+______________ TestConvertEnvironment.test_successful_conversion _______________
+tests/test_core.py:629: in test_successful_conversion
+    mock_create.assert_called_once_with(
+../../.local/share/uv/python/cpython-3.11.11-linux-x86_64-gnu/lib/python3.11/unittest/mock.py:950: in assert_called_once_with
+    raise AssertionError(msg)
+E   AssertionError: Expected 'create_conda_forge_environment' to be called once. Called 0 times.
+------------------------------ Captured log call -------------------------------
+INFO     conda_converter:core.py:772 Successfully converted environment 'source_env' to 'target_env'
+____________ TestConvertMultipleEnvironments.test_disk_space_check _____________
+../../.local/share/uv/python/cpython-3.11.11-linux-x86_64-gnu/lib/python3.11/unittest/mock.py:1375: in patched
+    with self.decoration_helper(patched,
+../../.local/share/uv/python/cpython-3.11.11-linux-x86_64-gnu/lib/python3.11/contextlib.py:137: in __enter__
+    return next(self.gen)
+../../.local/share/uv/python/cpython-3.11.11-linux-x86_64-gnu/lib/python3.11/unittest/mock.py:1357: in decoration_helper
+    arg = exit_stack.enter_context(patching)
+../../.local/share/uv/python/cpython-3.11.11-linux-x86_64-gnu/lib/python3.11/contextlib.py:517: in enter_context
+    result = _enter(cm)
+../../.local/share/uv/python/cpython-3.11.11-linux-x86_64-gnu/lib/python3.11/unittest/mock.py:1446: in __enter__
+    original, local = self.get_original()
+../../.local/share/uv/python/cpython-3.11.11-linux-x86_64-gnu/lib/python3.11/unittest/mock.py:1419: in get_original
+    raise AttributeError(
+E   AttributeError: <module 'conda_forge_converter.core' from '/home/arice/workspaces/anaconda-to-miniconda/src/conda_forge_converter/core.py'> does not have the attribute 'check_disk_space'
+___________ TestConvertMultipleEnvironments.test_parallel_conversion ___________
+tests/test_core.py:838: in test_parallel_conversion
+    with mock.patch("conda_forge_converter.core.check_disk_space", return_value=True):
+../../.local/share/uv/python/cpython-3.11.11-linux-x86_64-gnu/lib/python3.11/unittest/mock.py:1446: in __enter__
+    original, local = self.get_original()
+../../.local/share/uv/python/cpython-3.11.11-linux-x86_64-gnu/lib/python3.11/unittest/mock.py:1419: in get_original
+    raise AttributeError(
+E   AttributeError: <module 'conda_forge_converter.core' from '/home/arice/workspaces/anaconda-to-miniconda/src/conda_forge_converter/core.py'> does not have the attribute 'check_disk_space'
+=============================== warnings summary ===============================
+.venv/lib/python3.11/site-packages/_pytest/config/__init__.py:1441
+  /home/arice/workspaces/anaconda-to-miniconda/.venv/lib/python3.11/site-packages/_pytest/config/__init__.py:1441: PytestConfigWarning: Unknown config option: integration_test_paths
+
+    self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============================= slowest 10 durations =============================
+18.05s call     tests/test_core.py::TestConvertEnvironment::test_successful_conversion
+0.01s call     tests/test_core.py::TestGetEnvironmentPackages::test_fallback_to_full_export
+0.00s call     tests/test_core.py::TestGetEnvironmentSize::test_calculate_environment_size
+0.00s call     tests/test_core.py::TestFindEnvironmentsInPath::test_find_valid_environments
+0.00s call     tests/test_core.py::TestGetEnvironmentPackages::test_from_history_success
+0.00s call     tests/test_core.py::TestConvertMultipleEnvironments::test_with_exclusions
+0.00s call     tests/test_core.py::TestConvertMultipleEnvironments::test_parallel_conversion
+0.00s call     tests/test_core.py::TestConvertMultipleEnvironments::test_pattern_filtering
+0.00s call     tests/test_core.py::TestEnvironmentInfo::test_from_environment_success
+0.00s call     tests/test_core.py::TestConvertEnvironment::test_environment_info_failure
+=========================== short test summary info ============================
+FAILED tests/test_core.py::TestCreateCondaForgeEnvironment::test_successful_creation - AssertionError: run_command(['conda', 'create', '-n', 'target_env', '-c', 'conda-forge', 'python=3.11.3', '-y'], False) call not found
+FAILED tests/test_core.py::TestConvertEnvironment::test_successful_conversion - AssertionError: Expected 'create_conda_forge_environment' to be called once. Called 0 times.
+FAILED tests/test_core.py::TestConvertMultipleEnvironments::test_disk_space_check - AttributeError: <module 'conda_forge_converter.core' from '/home/arice/workspaces/anaconda-to-miniconda/src/conda_forge_converter/core.py'> does not have the attribute 'check_disk_space'
+FAILED tests/test_core.py::TestConvertMultipleEnvironments::test_parallel_conversion - AttributeError: <module 'conda_forge_converter.core' from '/home/arice/workspaces/anaconda-to-miniconda/src/conda_forge_converter/core.py'> does not have the attribute 'check_disk_space'
+=================== 4 failed, 22 passed, 1 warning in 19.66s ===================

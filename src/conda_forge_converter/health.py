@@ -1,8 +1,42 @@
-"""Health check functionality for conda environments."""
+"""Health check functionality for conda environments.
+
+This module provides functionality for analyzing and verifying conda environments
+for potential issues. It helps identify problems with environments before and after
+conversion, ensuring that environments are functioning correctly.
+
+The module is organized into the following functional areas:
+
+Health Analysis:
+  - check_environment_health: Analyze an environment for potential issues
+  - check_package_conflicts: Check for known package conflicts
+  - check_environment_structure: Verify the environment's directory structure
+
+Environment Verification:
+  - verify_environment: Verify that an environment functions correctly
+  - run_basic_tests: Run basic tests to ensure the environment works
+  - run_package_tests: Test key packages to ensure they function correctly
+
+The health check process typically includes:
+1. Package Inventory: Listing all installed packages and their versions
+2. Dependency Analysis: Checking for missing or conflicting dependencies
+3. Environment Structure: Verifying the environment's directory structure
+4. Python Functionality: Testing basic Python functionality
+5. Package Imports: Attempting to import key packages
+
+Type Definitions:
+  - HealthStatus: Status of a health check ("GOOD", "WARNING", "ERROR")
+  - HealthCheckResult: Dictionary containing health check results
+
+Constants:
+  - CONFLICT_PACKAGES: Dictionary of packages with known conflict versions
+"""
 
 import json
 import logging
 import os
+import shutil
+import tempfile
+from contextlib import suppress
 from pathlib import Path
 from typing import Any, Literal, TypeAlias
 
@@ -14,6 +48,15 @@ logger = logging.getLogger("conda_converter")
 # Type definitions
 HealthStatus: TypeAlias = Literal["GOOD", "WARNING", "ERROR"]
 HealthCheckResult: TypeAlias = dict[str, Any]
+
+# Common package conflicts
+CONFLICT_PACKAGES: dict[str, str] = {
+    "numpy": "1.24.0",
+    "pandas": "2.0.0",
+    "scipy": "1.10.0",
+    "matplotlib": "3.7.0",
+    "scikit-learn": "1.2.0",
+}
 
 
 def check_environment_health(env_name: str, verbose: bool = False) -> HealthCheckResult:
@@ -78,7 +121,7 @@ def _check_environment_exists(env_name: str, result: HealthCheckResult, verbose:
 
     try:
         env_list = json.loads(output)
-        env_names = [os.path.basename(env) for env in env_list.get("envs", [])]
+        env_names = [Path(env).name for env in env_list.get("envs", [])]
 
         if env_name not in env_names:
             result["status"] = "ERROR"
@@ -153,7 +196,7 @@ def _check_python_version(env_name: str, result: HealthCheckResult, verbose: boo
         result["issues"].append(
             {
                 "severity": "WARNING",
-                "message": f"Error checking Python version: {str(e)}",
+                "message": f"Error checking Python version: {e!s}",
                 "check": "python_version",
             }
         )
@@ -194,7 +237,10 @@ def _check_environment_packages(env_name: str, result: HealthCheckResult, verbos
             result["issues"].append(
                 {
                     "severity": "WARNING",
-                    "message": f"Environment has a very large number of packages ({conda_count + pip_count})",
+                    "message": (
+                        f"Environment has a very large number of packages "
+                        f"({conda_count + pip_count})"
+                    ),
                     "check": "packages",
                 }
             )
@@ -203,7 +249,7 @@ def _check_environment_packages(env_name: str, result: HealthCheckResult, verbos
         result["issues"].append(
             {
                 "severity": "WARNING",
-                "message": f"Error analyzing packages: {str(e)}",
+                "message": f"Error analyzing packages: {e!s}",
                 "check": "packages",
             }
         )
@@ -269,7 +315,7 @@ def _check_environment_size(env_name: str, result: HealthCheckResult, verbose: b
         # Find the path for this environment
         env_path = None
         for path in envs:
-            if os.path.basename(path) == env_name or path.endswith(f"envs/{env_name}"):
+            if Path(path).name == env_name or path.endswith(f"envs/{env_name}"):
                 env_path = path
                 break
 
@@ -299,11 +345,9 @@ def _calculate_directory_size(directory: str) -> int:
     total_size = 0
     for dirpath, _, filenames in os.walk(directory):
         for f in filenames:
-            fp = os.path.join(dirpath, f)
-            try:
-                total_size += os.path.getsize(fp)
-            except (OSError, FileNotFoundError):
-                pass
+            fp = Path(dirpath) / f
+            with suppress(OSError, FileNotFoundError):
+                total_size += Path(fp).stat().st_size
     return total_size
 
 
@@ -377,8 +421,8 @@ except Exception as e:
 """
 
         # Write to temporary file
-        temp_script = Path(f"/tmp/test_imports_{env_name}.py")
-        with open(temp_script, "w") as f:
+        temp_script = Path("/tmp/test_imports_{env_name}.py")
+        with Path(temp_script).open("w") as f:
             f.write(test_script)
 
         # Run the test script in the environment
@@ -394,7 +438,7 @@ except Exception as e:
         logger.error(f"Import test failed for environment '{env_name}'")
         return False
     except Exception as e:
-        logger.error(f"Error testing imports: {str(e)}")
+        logger.error(f"Error testing imports: {e!s}")
         return False
 
 
@@ -420,3 +464,130 @@ def _test_pip(env_name: str, verbose: bool) -> bool:
         return True
     logger.error(f"Pip test failed for environment '{env_name}'")
     return False
+
+
+def check_duplicate_packages(env_name: str) -> list[dict[str, Any]]:
+    """Check for duplicate packages in an environment."""
+    try:
+        result = run_command(["conda", "list", "-n", env_name, "--json"], verbose=True)
+        if not isinstance(result, str):
+            return []
+
+        data = json.loads(result)
+        packages = data.get("packages", [])
+
+        # Group packages by name
+        package_groups: dict[str, list[str]] = {}
+        for pkg in packages:
+            name = pkg.get("name", "")
+            if name:
+                if name not in package_groups:
+                    package_groups[name] = []
+                package_groups[name].append(pkg.get("version", ""))
+
+        # Find duplicates
+        duplicates = {
+            name: versions for name, versions in package_groups.items() if len(versions) > 1
+        }
+
+        return [
+            {
+                "name": name,
+                "versions": versions,
+            }
+            for name, versions in duplicates.items()
+        ]
+    except (json.JSONDecodeError, Exception) as e:
+        logger.debug(f"Error checking duplicate packages: {e!s}")
+        return []
+
+
+def check_package_conflicts(env_name: str) -> list[dict[str, Any]]:
+    """Check for package conflicts in an environment."""
+    try:
+        result = run_command(["conda", "list", "-n", env_name, "--json"], verbose=True)
+        if not isinstance(result, str):
+            return []
+
+        data = json.loads(result)
+        packages = data.get("packages", [])
+
+        # Check for common conflicts
+        conflicts = []
+        for pkg in packages:
+            name = pkg.get("name", "")
+            version = pkg.get("version", "")
+            if name in CONFLICT_PACKAGES and version != CONFLICT_PACKAGES[name]:
+                conflicts.append(
+                    {
+                        "name": name,
+                        "current_version": version,
+                        "recommended_version": CONFLICT_PACKAGES[name],
+                    }
+                )
+
+        return conflicts
+    except (json.JSONDecodeError, Exception) as e:
+        logger.debug(f"Error checking package conflicts: {e!s}")
+        return []
+
+
+def check_package_imports(env_name: str) -> list[str]:
+    """Check importing packages in an environment."""
+    try:
+        # Create temporary directory
+        temp_dir = Path(tempfile.mkdtemp())
+        try:
+            # Write test script
+            test_script = temp_dir / f"test_imports_{env_name}.py"
+            with test_script.open("w") as f:
+                f.write("""
+import sys
+import importlib
+
+def test_import(package_name):
+    try:
+        importlib.import_module(package_name)
+        return True
+    except ImportError:
+        return False
+
+# Test common packages
+packages = [
+    "numpy",
+    "pandas",
+    "scipy",
+    "matplotlib",
+    "scikit-learn",
+]
+
+failed_imports = []
+for package in packages:
+    if not test_import(package):
+        failed_imports.append(package)
+
+if failed_imports:
+    print("Failed to import:", ", ".join(failed_imports))
+    sys.exit(1)
+""")
+
+            # Run test script
+            cmd = ["conda", "run", "-n", env_name, "python", str(test_script)]
+            result = run_command(cmd, verbose=True)
+
+            if not isinstance(result, str):
+                return ["Failed to run import tests"]
+
+            if "Failed to import:" in result:
+                failed = result.split("Failed to import:")[1].strip()
+                return [pkg.strip() for pkg in failed.split(",")]
+
+            return []
+
+        finally:
+            # Clean up temporary directory
+            shutil.rmtree(temp_dir)
+
+    except Exception as e:
+        logger.error(f"Error testing imports: {e!s}")
+        return ["Failed to run import tests"]

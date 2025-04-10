@@ -1,0 +1,48 @@
+{
+  "pythonVersion": "3.11",
+  "include": [
+    "src",
+    "tests",
+    "examples",
+    "scripts"
+  ],
+  "exclude": [
+    "**/__pycache__",
+    "**/.mypy_cache"
+  ],
+  "typeCheckingMode": "basic",
+  "reportMissingTypeStubs": false,
+  "reportUnknownMemberType": false,
+  "reportUnknownArgumentType": false,
+  "reportUnknownVariableType": false,
+  "reportUnknownLambdaType": false,
+  "reportUntypedFunctionDecorator": false,
+  "reportMissingImports": false,
+  "reportMissingModuleSource": false,
+  "reportReturnType": false,
+  "useLibraryCodeForTypes": true,
+  "typeCheckingRules": {
+    "ignore": [
+      "ANN101",
+      "ANN102"
+    ]
+  },
+  "overrides": [
+    {
+      "files": [
+        "src/**/*.py"
+      ],
+      "typeCheckingMode": "basic",
+      "reportMissingImports": true,
+      "reportMissingModuleSource": true
+    },
+    {
+      "files": [
+        "tests/**/*.py",
+        "examples/**/*.py",
+        "scripts/**/*.py"
+      ],
+      "typeCheckingMode": "off"
+    }
+  ]
+}

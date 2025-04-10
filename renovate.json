@@ -1,0 +1,84 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:base",
+    ":semanticCommits",
+    ":dependencyDashboard"
+  ],
+  "packageRules": [
+    {
+      "matchUpdateTypes": ["minor", "patch"],
+      "matchCurrentVersion": "!/^0/",
+      "automerge": true
+    },
+    {
+      "matchDepTypes": ["devDependencies"],
+      "matchUpdateTypes": ["patch", "minor"],
+      "automerge": true
+    }
+  ],
+  "python": {
+    "packageRules": [
+      {
+        "matchPackagePatterns": ["^ruff$", "^pyright$", "^codespell$", "^pre-commit$"],
+        "groupName": "linting",
+        "groupSlug": "linting",
+        "labels": ["dependencies", "linting"]
+      },
+      {
+        "matchPackagePatterns": ["^pytest", "^coverage$", "^types-"],
+        "groupName": "testing",
+        "groupSlug": "testing",
+        "labels": ["dependencies", "testing"]
+      },
+      {
+        "matchPackagePatterns": ["^mkdocs", "^mkdocstrings"],
+        "groupName": "documentation",
+        "groupSlug": "documentation",
+        "labels": ["dependencies", "documentation"]
+      },
+      {
+        "matchPackagePatterns": ["^hatch", "^build$", "^twine$", "^uv$"],
+        "groupName": "build",
+        "groupSlug": "build",
+        "labels": ["dependencies", "build"]
+      },
+      {
+        "matchPackagePatterns": ["^safety$", "^bandit$", "^pip-audit$"],
+        "groupName": "security",
+        "groupSlug": "security",
+        "labels": ["dependencies", "security"]
+      },
+      {
+        "matchPackagePatterns": ["^pyyaml$", "^rich$", "^click$", "^packaging$", "^typing_extensions$"],
+        "groupName": "core-dependencies",
+        "groupSlug": "core",
+        "labels": ["dependencies", "core"]
+      },
+      {
+        "matchPackagePatterns": ["^commitizen$", "^gitpython$"],
+        "groupName": "versioning",
+        "groupSlug": "versioning",
+        "labels": ["dependencies", "versioning"]
+      }
+    ]
+  },
+  "schedule": ["every weekend"],
+  "labels": ["dependencies"],
+  "prHourlyLimit": 4,
+  "prConcurrentLimit": 16,
+  "rangeStrategy": "pin",
+  "semanticCommits": "enabled",
+  "semanticPrefix": "chore",
+  "stabilityDays": 3,
+  "dependencyDashboard": true,
+  "dependencyDashboardTitle": "Dependency Dashboard",
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 5am on monday"]
+  },
+  "prCreation": "not-pending",
+  "major": {
+    "labels": ["dependencies", "breaking"]
+  }
+}

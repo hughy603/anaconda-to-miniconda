@@ -1,10 +1,42 @@
 """Utilities for the conda-forge-converter package.
 
 This module provides utility functions used throughout the conda-forge-converter
-package, including logging setup, command execution, and filesystem operations.
+package, including logging setup, command execution, filesystem operations, and
+user/permission management.
+
+The module is organized into the following functional categories:
+
+Logging Functions:
+  - setup_logging: Configure logging to file and console
+  - set_log_level: Set the logger's level based on a string identifier
+
+Command Execution:
+  - run_command: Run a command and return its output
+  - is_command_output_str: Type guard to check if command output is a string
+
+Filesystem Operations:
+  - check_disk_space: Check if there's enough disk space available
+  - is_conda_environment: Check if a directory is a conda environment
+
+User and Permissions:
+  - is_root: Check if the current process is running as root
+  - get_path_owner: Get the user and group IDs of a file or directory
+  - get_owner_names: Get the user and group names from their IDs
+  - change_path_owner: Change the owner of a file or directory
+
+Type Aliases:
+  - CommandOutput: Output type from run_command (str | bool | None)
+  - PathLike: Path-like object (str | Path)
+  - LogLevel: Valid logging levels ("DEBUG", "INFO", etc.)
+
+Global Variables:
+  - logger: The global logger for the conda-forge-converter package
 """
 
+import grp
 import logging
+import os
+import pwd
 import shutil
 import subprocess
 import sys
@@ -207,7 +239,7 @@ def check_disk_space(needed_gb: float = 5, path: PathLike | None = None) -> bool
             return False
         return True
     except OSError as e:
-        logger.error(f"Error checking disk space at {path_obj}: {str(e)}")
+        logger.error(f"Error checking disk space at {path_obj}: {e!s}")
         return False
 
 
@@ -279,3 +311,166 @@ def set_log_level(level: LogLevel) -> None:
         logger.setLevel(logging.CRITICAL)
     else:
         logger.warning(f"Unknown log level: {level}")
+
+
+def is_root() -> bool:
+    """Check if the current process is running as root.
+
+    This function is particularly useful when running operations that may
+    require elevated privileges, such as changing file ownership or
+    installing packages system-wide. The converter uses this to determine
+    whether to apply special handling for root-executed operations.
+
+    Returns:
+    -------
+        True if running as root (UID 0), False otherwise.
+
+    Examples:
+    --------
+        >>> if is_root():
+        ...     print("Running as root - will preserve ownership")
+        ... else:
+        ...     print("Not running as root")
+
+    Note:
+    ----
+        This function only works on Unix-like systems. On Windows, it will
+        raise an AttributeError as os.geteuid() is not available.
+    """
+    return os.geteuid() == 0
+
+
+def get_path_owner(path: PathLike) -> tuple[int, int]:
+    """Get the user and group IDs of a file or directory.
+
+    This function retrieves the numeric user ID (UID) and group ID (GID)
+    that own a specified file or directory. This is useful when preserving
+    ownership during operations like environment conversion.
+
+    Args:
+    ----
+        path: Path to the file or directory as a string or Path object
+
+    Returns:
+    -------
+        Tuple of (uid, gid) containing the numeric user and group IDs
+
+    Examples:
+    --------
+        >>> uid, gid = get_path_owner("/path/to/file")
+        >>> print(f"File is owned by UID {uid} and GID {gid}")
+
+        >>> # Get owner of a directory using a Path object
+        >>> from pathlib import Path
+        >>> uid, gid = get_path_owner(Path("/path/to/directory"))
+
+    Raises:
+    ------
+        FileNotFoundError: If the specified path does not exist
+        PermissionError: If the current user doesn't have permission to access the path
+    """
+    path_obj = Path(path)
+    stat_info = path_obj.stat()
+    return (stat_info.st_uid, stat_info.st_gid)
+
+
+def get_owner_names(uid: int, gid: int) -> tuple[str, str]:
+    """Get the user and group names from their numeric IDs.
+
+    This function converts numeric user ID (UID) and group ID (GID) values
+    to their corresponding username and group name. This is useful for
+    displaying human-readable ownership information.
+
+    Args:
+    ----
+        uid: User ID (numeric)
+        gid: Group ID (numeric)
+
+    Returns:
+    -------
+        Tuple of (username, groupname) as strings
+        If the UID or GID cannot be resolved to a name, "unknown" is returned
+        for the corresponding value
+
+    Examples:
+    --------
+        >>> username, groupname = get_owner_names(1000, 1000)
+        >>> print(f"Owner: {username}, Group: {groupname}")
+
+        >>> # Handle case where user/group might not exist
+        >>> username, groupname = get_owner_names(9999, 9999)
+        >>> if username == "unknown":
+        ...     print("User ID not found in system")
+
+    Note:
+    ----
+        This function only works on Unix-like systems. On Windows, it will
+        raise an ImportError as pwd and grp modules are not available.
+    """
+    try:
+        username = pwd.getpwuid(uid).pw_name
+        groupname = grp.getgrgid(gid).gr_name
+        return (username, groupname)
+    except KeyError:
+        logger.warning(f"Could not find user/group for UID={uid}, GID={gid}")
+        return ("unknown", "unknown")
+
+
+def change_path_owner(path: PathLike, uid: int, gid: int, recursive: bool = True) -> bool:
+    """Change the owner of a file or directory.
+
+    This function changes the ownership of a file or directory to the specified
+    user ID (UID) and group ID (GID). When recursive=True (the default), it will
+    change ownership of all files and subdirectories within a directory.
+
+    This is particularly useful when running as root and needing to preserve
+    the original ownership of files after operations like environment conversion.
+
+    Args:
+    ----
+        path: Path to the file or directory as a string or Path object
+        uid: User ID to set as owner (numeric)
+        gid: Group ID to set as group (numeric)
+        recursive: Whether to change ownership recursively for directories (default: True)
+
+    Returns:
+    -------
+        True if ownership change was successful, False otherwise
+
+    Examples:
+    --------
+        >>> # Change ownership of a file
+        >>> success = change_path_owner("/path/to/file", 1000, 1000, recursive=False)
+        >>> if success:
+        ...     print("Ownership changed successfully")
+
+        >>> # Change ownership of a directory and all its contents
+        >>> change_path_owner("/path/to/directory", 1000, 1000)
+
+        >>> # Get current owner and change ownership
+        >>> uid, gid = get_path_owner("/path/to/file")
+        >>> change_path_owner("/path/to/new_file", uid, gid)
+
+    Note:
+    ----
+        This function requires appropriate permissions to change ownership.
+        When not running as root, you can typically only change ownership to
+        your own user/group.
+    """
+    path_obj = Path(path)
+
+    try:
+        if not recursive or path_obj.is_file():
+            os.chown(path_obj, uid, gid)
+        else:
+            # Recursively change ownership of all files and directories
+            for root, _dirs, files in os.walk(path_obj):
+                root_path = Path(root)
+                os.chown(root_path, uid, gid)
+                for file in files:
+                    file_path = root_path / file
+                    os.chown(file_path, uid, gid)
+        return True
+    except (PermissionError, OSError) as e:
+        logger.error(f"Failed to change ownership of {path}: {e!s}")
+        return False

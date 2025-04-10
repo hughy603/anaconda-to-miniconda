@@ -74,9 +74,12 @@ dmypy.json
 *.sublime-workspace
 *.sublime-project
 .DS_Store
-
 # Project specific
 uv.lock
+.hatch/
+.hatch_env/
+.venv/
+
 
 # Logs
 logs/
@@ -92,3 +95,8 @@ site_build/
 .cache/
 .doctrees/
 _site/
+
+Anaconda3*
+Miniforge3*
+
+conda_env_backups*

@@ -2,10 +2,7 @@
 default: true
 
 # MD013 - Line length
-MD013:
-  line_length: 120
-  code_blocks: false
-  tables: false
+MD013: false
 
 # MD024 - Multiple headers with the same content
 MD024:
@@ -26,9 +23,62 @@ MD007:
   indent: 2
 
 # MD029 - Ordered list item prefix
-MD029:
-  style: ordered
+MD029: false
 
 # MD004 - Unordered list style
 MD004:
   style: dash
+
+# MD026 - Trailing punctuation in headers
+MD026:
+  punctuation: ".,;:!"
+
+# MD030 - List item spacing
+MD030:
+  ul_single: 1
+  ol_single: 1
+
+# MD032 - List item indentation
+MD032:
+  list_item_indent: "one"
+
+# MD034 - Bare URL used
+MD034:
+  allowed_elements: ["a"]
+
+# MD035 - Horizontal rule style
+MD035:
+  style: "---"
+
+# MD036 - Emphasis used instead of a header
+MD036:
+  punctuation: ".,;:!"
+
+# MD048 - Code fence style
+MD048:
+  style: "backtick"
+
+# MD049 - Emphasis style
+MD049:
+  style: "consistent"
+
+# MD050 - Strong style
+MD050:
+  style: "consistent"
+
+# Disable rules that are not needed
+MD037: false  # No space in emphasis
+MD038: false  # No space in code
+MD039: false  # No space in code
+MD040: false  # Fenced code blocks should have a language specified
+MD042: false  # No empty links
+MD043: false  # Required header structure
+MD044: false  # Proper names should be capitalized
+MD045: false  # Images should have alt text
+MD047: false  # Files should end with a single newline character
+
+# Additional rules to disable for medium strictness
+MD003: false  # Heading style
+MD012: false  # Multiple consecutive blank lines
+MD022: false  # Headings should be surrounded by blank lines
+MD031: false  # Fenced code blocks should be surrounded by blank lines

@@ -2,6 +2,10 @@
 
 This section provides detailed documentation for the Conda-Forge Converter Python API. The API is designed for developers who want to integrate the conversion functionality into their own applications or scripts.
 
+## Documentation Approach
+
+The Conda-Forge Converter uses docstring-driven documentation. All API documentation is generated directly from the docstrings in the source code, ensuring that the documentation is always up-to-date with the code. The docstrings follow the Google style format and include detailed descriptions, parameter information, return values, examples, and notes where applicable.
+
 ## Package Structure
 
 The Conda-Forge Converter package is organized into several modules:
@@ -20,13 +24,10 @@ The Conda-Forge Converter package is organized into several modules:
 The [core module](core.md) contains the main functionality for converting environments. It handles environment discovery, package analysis, and environment creation.
 
 ```python
-from conda_forge_converter.core import EnvironmentConverter
-
-# Create a converter
-converter = EnvironmentConverter()
+from conda_forge_converter.core import convert_environment
 
 # Convert an environment
-converter.convert_environment("myenv", "myenv_forge")
+convert_environment("myenv", "myenv_forge")
 ```
 
 ### CLI Module
@@ -34,13 +35,13 @@ converter.convert_environment("myenv", "myenv_forge")
 The [cli module](cli.md) provides the command-line interface for the tool. It handles argument parsing and command execution.
 
 ```python
-from conda_forge_converter.cli import parse_args, run_command
+from conda_forge_converter.cli import parse_args, main
 
 # Parse arguments
 args = parse_args(["--source-env", "myenv", "--target-env", "myenv_forge"])
 
 # Run command with parsed arguments
-run_command(args)
+exit_code = main(["--source-env", "myenv", "--target-env", "myenv_forge"])
 ```
 
 ### Health Module
@@ -48,13 +49,10 @@ run_command(args)
 The [health module](health.md) analyzes environments for potential issues.
 
 ```python
-from conda_forge_converter.health import HealthChecker
-
-# Create a health checker
-checker = HealthChecker()
+from conda_forge_converter.health import check_environment_health
 
 # Check an environment
-report = checker.check_environment("myenv")
+report = check_environment_health("myenv")
 ```
 
 ### Reporting Module
@@ -62,13 +60,10 @@ report = checker.check_environment("myenv")
 The [reporting module](reporting.md) generates reports about conversions.
 
 ```python
-from conda_forge_converter.reporting import ReportGenerator
-
-# Create a report generator
-generator = ReportGenerator()
+from conda_forge_converter.reporting import generate_conversion_report
 
 # Generate a report
-report = generator.generate_report("myenv", "myenv_forge")
+report = generate_conversion_report("myenv", "myenv_forge", True, "report.json")
 ```
 
 ### Incremental Module
@@ -76,13 +71,10 @@ report = generator.generate_report("myenv", "myenv_forge")
 The [incremental module](incremental.md) handles updating existing conda-forge environments.
 
 ```python
-from conda_forge_converter.incremental import IncrementalUpdater
-
-# Create an incremental updater
-updater = IncrementalUpdater()
+from conda_forge_converter.incremental import update_conda_forge_environment
 
 # Update an environment
-updater.update_environment("myenv_forge")
+update_conda_forge_environment("myenv_forge", update_all=True)
 ```
 
 ### Utils Module
@@ -110,13 +102,11 @@ All API functions use Python's native exception system. Common exceptions includ
 Example error handling:
 
 ```python
-from conda_forge_converter.core import EnvironmentConverter
+from conda_forge_converter.core import convert_environment
 from conda_forge_converter.exceptions import EnvironmentNotFoundError
 
-converter = EnvironmentConverter()
-
 try:
-    converter.convert_environment("myenv", "myenv_forge")
+    convert_environment("myenv", "myenv_forge")
 except EnvironmentNotFoundError:
     print("Environment not found")
 except Exception as e:

@@ -3,8 +3,14 @@
 A simple tool to convert Anaconda environments to conda-forge environments while preserving package versions.
 
 [![Documentation](https://img.shields.io/badge/docs-latest-blue)](https://conda-forge-converter.readthedocs.io)
-[![Tests](https://github.com/yourusername/conda-forge-converter/actions/workflows/tests.yml/badge.svg)](https://github.com/yourusername/conda-forge-converter/actions/workflows/tests.yml)
+[![CI](https://github.com/yourusername/conda-forge-converter/actions/workflows/ci.yml/badge.svg)](https://github.com/yourusername/conda-forge-converter/actions/workflows/ci.yml)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
+[![Release](https://github.com/yourusername/conda-forge-converter/actions/workflows/release.yml/badge.svg)](https://github.com/yourusername/conda-forge-converter/actions/workflows/release.yml)
+[![Maintenance](https://github.com/yourusername/conda-forge-converter/actions/workflows/maintenance.yml/badge.svg)](https://github.com/yourusername/conda-forge-converter/actions/workflows/maintenance.yml)
+[![Code Coverage](https://codecov.io/gh/yourusername/conda-forge-converter/branch/main/graph/badge.svg)](https://codecov.io/gh/yourusername/conda-forge-converter)
+[![PyPI version](https://badge.fury.io/py/conda-forge-converter.svg)](https://badge.fury.io/py/conda-forge-converter)
+[![Python Versions](https://img.shields.io/pypi/pyversions/conda-forge-converter.svg)](https://pypi.org/project/conda-forge-converter/)
+[![License](https://img.shields.io/github/license/yourusername/conda-forge-converter.svg)](https://github.com/yourusername/conda-forge-converter/blob/main/LICENSE)
 
 ## Quick Start
 
@@ -32,19 +38,73 @@ conda-forge-converter --batch --pattern 'data*'
 - [User Guide](https://conda-forge-converter.readthedocs.io/en/latest/user/)
 - [CLI Reference](https://conda-forge-converter.readthedocs.io/en/latest/user/cli-reference.html)
 - [Contributing](CONTRIBUTING.md)
+- [Dependency Management](DEPENDENCY_MANAGEMENT.md)
 
 ## Development
 
 ```bash
-# Install development tools
+# Install UV (recommended to use pipx for global installation)
 pipx install uv
 pipx install pre-commit
 
 # Setup development environment
-./scripts/setup_dev.sh
+uv pip install -e ".[dev,test]"
 
-# Update dependencies
-python3 scripts/update_deps.py
+# Install pre-commit hooks
+pre-commit install
+
+# Lock dependencies
+uv run deps-lock
+
+# Run tests
+uv run test
+
+# Run tests with coverage
+uv run test-cov
+
+# Run linting and formatting
+uv run lint
+uv run format
+
+# Run type checking
+uv run type-check
+
+# Run security checks
+uv run security
+
+# Build documentation
+uv run docs-build
+
+# Serve documentation locally
+uv run docs-serve
+
+# Set up VSCode configuration
+./scripts/setup_vscode.py
+```
+
+### VSCode Integration
+
+This project includes pre-configured VSCode settings to help you get started quickly:
+
+1. **Automatic Setup**: Run `./scripts/setup_vscode.py` to set up VSCode configuration
+1. **Debug Configurations**: Pre-configured launch configurations for debugging
+1. **Tasks**: Common development tasks accessible via the VSCode Tasks menu
+1. **Extensions**: Recommended extensions for Python development
+
+For detailed information on debugging with VSCode, see [VSCode Debugging Guide](docs/dev/vscode-debugging.md).
+
+## Project Structure
+
+```
+conda-forge-converter/
+├── src/                  # Source code
+├── tests/                # Test suite
+├── docs/                 # Documentation
+├── examples/             # Example scripts
+├── scripts/              # Utility scripts
+├── pyproject.toml        # Project configuration
+├── requirements.lock     # Locked dependencies
+└── .github/workflows/    # CI/CD pipelines
 ```
 
 ## License

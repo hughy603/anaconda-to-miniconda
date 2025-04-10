@@ -1,0 +1,197 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      force_level:
+        description: 'Force specific version bump (optional)'
+        required: false
+        default: 'auto'
+        type: choice
+        options:
+          - auto
+          - patch
+          - minor
+          - major
+
+# Prevent concurrent runs
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: '3.11'
+  UV_VERSION: "0.7.1"
+
+jobs:
+  validate:
+    name: Validate Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install UV
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/uv
+            ~/.cache/pip
+          key: ${{ runner.os }}-py${{ env.PYTHON_VERSION }}-uv${{ env.UV_VERSION }}-release-${{ hashFiles('requirements.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-py${{ env.PYTHON_VERSION }}-uv${{ env.UV_VERSION }}-release-
+
+      - name: Install dependencies
+        run: |
+          uv pip install -r requirements.lock --system
+
+      - name: Validate release readiness
+        run: |
+          uv run validate-release
+
+  test:
+    name: Test on Multiple Platforms
+    needs: [validate]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        python-version: ['3.11', '3.12']
+        os: [ubuntu-latest, windows-latest, macos-latest]
+      fail-fast: false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Install UV
+        shell: bash
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/uv
+            ~/.cache/pip
+          key: ${{ runner.os }}-py${{ matrix.python-version }}-uv${{ env.UV_VERSION }}-${{ hashFiles('requirements.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-py${{ matrix.python-version }}-uv${{ env.UV_VERSION }}-
+
+      - name: Install dependencies
+        run: |
+          uv pip install -r requirements.lock --system
+
+      - name: Run tests
+        run: |
+          uv run test-cov
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.python-version }}-${{ matrix.os }}
+          path: |
+            .coverage
+            coverage.xml
+          retention-days: 30
+
+  release:
+    name: Create Release
+    needs: [test]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install UV
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: |
+          uv pip install -r requirements.lock --system
+          uv pip install python-semantic-release build twine --system
+
+      - name: Semantic Release
+        id: release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "${{ github.event.inputs.force_level }}" != "auto" ]; then
+            if [ "${{ github.event.inputs.force_level }}" == "major" ]; then
+              semantic-release version --major --no-commit --no-tag --no-push --no-vcs-release
+            elif [ "${{ github.event.inputs.force_level }}" == "minor" ]; then
+              semantic-release version --minor --no-commit --no-tag --no-push --no-vcs-release
+            elif [ "${{ github.event.inputs.force_level }}" == "patch" ]; then
+              semantic-release version --patch --no-commit --no-tag --no-push --no-vcs-release
+            fi
+          else
+            semantic-release version --no-commit --no-tag --no-push --no-vcs-release
+          fi
+          # Extract version from _version.py
+          VERSION=$(python -c "from conda_forge_converter import __version__; print(__version__)")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.release.outputs.version }}
+          name: Release v${{ steps.release.outputs.version }}
+          body_path: CHANGELOG.md
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and publish
+        run: |
+          semantic-release publish
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPOSITORY_URL: https://upload.pypi.org/legacy/
+          PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          retention-days: 30

@@ -12,6 +12,8 @@ Key features:
 - Parallel processing for batch conversions
 """
 
+from conda_forge_converter._version import __version__
+
 from .cli import main
 from .core import (
     EnvironmentInfo,
@@ -23,23 +25,28 @@ from .core import (
 )
 from .health import check_environment_health, verify_environment
 from .incremental import detect_drift, update_conda_forge_environment
-from .reporting import generate_conversion_report, generate_summary_report, print_report_summary
+from .reporting import (
+    generate_conversion_report,
+    generate_summary_report,
+    print_report_summary,
+)
 from .utils import setup_logging
 
 __all__ = [
-    "main",
     "EnvironmentInfo",
+    "__version__",
+    "check_environment_health",
     "convert_environment",
     "convert_multiple_environments",
-    "environment_exists",
-    "get_environment_packages",
-    "list_all_conda_environments",
-    "check_environment_health",
-    "verify_environment",
     "detect_drift",
-    "update_conda_forge_environment",
+    "environment_exists",
     "generate_conversion_report",
     "generate_summary_report",
+    "get_environment_packages",
+    "list_all_conda_environments",
+    "main",
     "print_report_summary",
     "setup_logging",
+    "update_conda_forge_environment",
+    "verify_environment",
 ]

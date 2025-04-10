@@ -1,27 +1,122 @@
-"""Pytest configuration for conda-forge-converter tests."""
+"""Pytest configuration for integration tests."""
 
-from unittest import mock
+import json
+import os
+import subprocess
+from pathlib import Path
+from typing import Any
 
 import pytest
 
-
-# Ensure we don't mess with real environments during tests
-@pytest.fixture(autouse=True)
-def disable_real_command_execution():
-    """Prevent actual subprocess commands from running during tests."""
-    with mock.patch("subprocess.run") as _:
-        yield
+from conda_forge_converter.utils import logger
 
 
-# Prevent polluting logs during tests
-@pytest.fixture(autouse=True)
-def disable_logging():
-    """Disable logging during tests."""
-    with (
-        mock.patch("logging.Logger.debug"),
-        mock.patch("logging.Logger.info"),
-        mock.patch("logging.Logger.warning"),
-        mock.patch("logging.Logger.error"),
-        mock.patch("logging.Logger.critical"),
-    ):
-        yield
+def pytest_configure(config: pytest.Config) -> None:
+    """Configure pytest for integration tests."""
+    config.addinivalue_line(
+        "markers",
+        "integration: mark test as an integration test that requires real conda installations",
+    )
+
+
+def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
+    """Modify test collection to skip integration tests if conda is not available."""
+    try:
+        result = subprocess.run(
+            ["which", "conda"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if result.returncode != 0:
+            skip_integration = pytest.mark.skip(reason="conda not available")
+            for item in items:
+                if "integration" in item.keywords:
+                    item.add_marker(skip_integration)
+    except Exception as e:
+        logger.warning(f"Error checking for conda: {e!s}")
+        skip_integration = pytest.mark.skip(reason="Error checking for conda")
+        for item in items:
+            if "integration" in item.keywords:
+                item.add_marker(skip_integration)
+
+
+def get_conda_info() -> dict[str, Any]:
+    """Get conda information including active env and root prefix."""
+    try:
+        result = subprocess.run(
+            ["conda", "info", "--json"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        return json.loads(result.stdout)
+    except (subprocess.SubprocessError, json.JSONDecodeError):
+        return {}
+
+
+def find_conda_installation() -> Path | None:
+    """Find the conda installation path."""
+    try:
+        conda_path = subprocess.run(
+            ["which", "conda"],
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.strip()
+
+        if conda_path:
+            return Path(conda_path).parent.parent
+    except subprocess.SubprocessError:
+        pass
+
+    return None
+
+
+@pytest.fixture(scope="session")
+def conda_base_path() -> Path:
+    """Fixture providing the base conda installation path."""
+    conda_path = find_conda_installation()
+    if not conda_path:
+        pytest.skip("conda not found in PATH")
+    return conda_path
+
+
+@pytest.fixture(scope="session")
+def anaconda_base_path(conda_info: dict[str, Any]) -> Path:
+    """Fixture providing the Anaconda base installation path."""
+    # Try to find Anaconda installation
+    possible_paths = [
+        Path("/home/arice/anaconda"),
+        Path("/home/arice/anaconda3"),
+        Path(conda_info.get("root_prefix", "")),
+    ]
+
+    for path in possible_paths:
+        if path.exists():
+            return path
+
+    pytest.skip("Anaconda installation not found at expected paths")
+
+
+@pytest.fixture(scope="session")
+def miniforge_base_path() -> Path:
+    """Fixture providing the Miniforge base installation path."""
+    # Try to find Miniforge installation
+    possible_paths = [
+        Path("/home/arice/miniforge3"),
+        Path("/opt/miniforge3"),
+        Path(os.path.expanduser("~/miniforge3")),
+    ]
+
+    for path in possible_paths:
+        if path.exists():
+            return path
+
+    pytest.skip("Miniforge installation not found at expected paths")
+
+
+@pytest.fixture(scope="session")
+def conda_info() -> dict[str, Any]:
+    """Fixture providing conda information."""
+    return get_conda_info()

@@ -119,7 +119,9 @@ class TestMainFunction:
             None,
             False,
             False,
-            "/path/to/myenv",
+            use_fast_solver=True,
+            batch_size=20,
+            preserve_ownership=True,
         )
         assert exit_code == 0
 
@@ -147,14 +149,20 @@ class TestMainFunction:
         # Verify
         mock_setup_logging.assert_called_once()
         mock_convert_multiple.assert_called_once_with(
-            "data*",
-            "_forge",
-            False,
-            False,
-            "test",
-            1,
-            True,
-            None,
+            source_envs=None,
+            target_envs=None,
+            python_version=None,
+            env_pattern="data*",
+            exclude="test",
+            target_suffix="_forge",
+            dry_run=False,
+            verbose=False,
+            max_parallel=1,
+            backup=True,
+            search_paths=None,
+            use_fast_solver=True,
+            batch_size=20,
+            preserve_ownership=True,
         )
         assert exit_code == 0
 

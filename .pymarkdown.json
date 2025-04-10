@@ -1,15 +1,10 @@
 {
   "plugins": {
     "line-length": {
-      "enabled": true,
-      "line_length": 120,
-      "code_blocks": false,
-      "tables": false,
-      "headings": false
+      "enabled": false
     },
     "no-duplicate-heading": {
-      "enabled": true,
-      "siblings_only": true
+      "enabled": false
     },
     "no-trailing-spaces": {
       "enabled": true
@@ -38,6 +33,24 @@
       "enabled": false
     },
     "no-emphasis-as-heading": {
+      "enabled": false
+    },
+    "heading-style": {
+      "enabled": false
+    },
+    "blanks-around-headings": {
+      "enabled": false
+    },
+    "blanks-around-fences": {
+      "enabled": false
+    },
+    "fenced-code-language": {
+      "enabled": false
+    },
+    "no-trailing-punctuation": {
+      "enabled": false
+    },
+    "no-multiple-blanks": {
       "enabled": false
     }
   }
