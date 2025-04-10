@@ -18,11 +18,17 @@ A simple tool to convert Anaconda environments to conda-forge environments while
 # Install
 pip install conda-forge-converter
 
-# Convert a single environment
-conda-forge-converter -s myenv -t myenv_forge
+# Convert and replace a single environment (original is backed up as myenv_anaconda_backup)
+conda-forge-converter -s myenv
 
-# Batch convert with pattern matching
+# Convert to a new environment without replacing the original
+conda-forge-converter -s myenv --no-replace -t myenv_forge
+
+# Batch convert with pattern matching (replaces all matching environments)
 conda-forge-converter --batch --pattern 'data*'
+
+# Batch convert without replacing original environments
+conda-forge-converter --batch --pattern 'data*' --no-replace
 ```
 
 ## Key Features

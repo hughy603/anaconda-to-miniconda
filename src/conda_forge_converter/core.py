@@ -964,46 +964,72 @@ def get_environment_info(env_name: str, verbose: bool = False) -> EnvironmentInf
         return None
 
 
-def convert_environment(
+def convert_environment(  # noqa: C901
     source_env: str,
-    target_env: str,
+    target_env: str | None = None,
     python_version: str | None = None,
     dry_run: bool = False,
     verbose: bool = False,
     use_fast_solver: bool = True,
     batch_size: int = 20,
     preserve_ownership: bool = True,
+    replace_original: bool = True,
+    backup_suffix: str = "_anaconda_backup",
 ) -> bool:
     """Convert a conda environment to use conda-forge packages.
 
     Args:
         source_env: Name of the source environment
-        target_env: Name of the target environment
+        target_env: Name of the target environment (if None and replace_original is False, will use source_env + "_forge")
         python_version: Python version to use (default: same as source)
         dry_run: If True, only simulate the operation
         verbose: Whether to print verbose output
         use_fast_solver: Whether to use faster conda solvers if available
         batch_size: Number of packages to install in each batch
         preserve_ownership: Whether to preserve the ownership of the source environment
+        replace_original: Whether to replace the original environment (default: True)
+        backup_suffix: Suffix to add to the backup environment name
 
     Returns:
         True if conversion was successful, False otherwise
 
-    """
+    """  # noqa: E501
     try:
-        # Check if environments exist
+        # Check if source environment exists
         if not environment_exists(source_env, verbose):
             logger.error(f"Source environment '{source_env}' does not exist")
             return False
 
-        if environment_exists(target_env, verbose):
-            logger.error(f"Target environment '{target_env}' already exists")
-            return False
+        # Determine target environment name
+        if replace_original:
+            # If replacing original, target is the same as source
+            effective_target = source_env
+
+            # Backup the original environment
+            if not dry_run:
+                if not backup_environment(source_env, backup_suffix, verbose):
+                    logger.error(f"Failed to backup environment '{source_env}'")
+                    return False
+
+                # Remove the original environment
+                logger.info(f"Removing original environment '{source_env}'...")
+                result = run_command(["conda", "env", "remove", "--name", source_env], verbose)
+                if not is_command_output_str(result):
+                    logger.error(f"Failed to remove original environment '{source_env}'")
+                    return False
+        else:
+            # If not replacing, use provided target or default
+            effective_target = target_env or f"{source_env}_forge"
+
+            # Check if target environment already exists
+            if environment_exists(effective_target, verbose):
+                logger.error(f"Target environment '{effective_target}' already exists")
+                return False
 
         # Get environment info
         env_info = EnvironmentInfo.from_environment(source_env, "", verbose)
         if not env_info:
-            raise ConversionError(source_env, target_env, "Failed to analyze environment")
+            raise ConversionError(source_env, effective_target, "Failed to analyze environment")
 
         # Create conda-forge environment
         conda_packages = getattr(env_info, "conda_packages", [])
@@ -1012,7 +1038,7 @@ def convert_environment(
 
         result = create_conda_forge_environment(
             source_env,
-            target_env,
+            effective_target,
             conda_packages,
             pip_packages,
             python_ver,
@@ -1024,14 +1050,22 @@ def convert_environment(
         )
 
         if result:
-            logger.info(f"Successfully converted environment '{source_env}' to '{target_env}'")
+            if replace_original:
+                logger.info(
+                    f"Successfully replaced environment '{source_env}' with conda-forge packages"
+                )
+                logger.info(f"Original environment backed up as '{source_env}{backup_suffix}'")
+            else:
+                logger.info(
+                    f"Successfully converted environment '{source_env}' to '{effective_target}'"
+                )
 
         return result
 
     except (EnvironmentCreationError, PackageInstallationError) as e:
-        raise ConversionError(source_env, target_env, str(e)) from e
+        raise ConversionError(source_env, effective_target, str(e)) from e
     except Exception as e:
-        raise ConversionError(source_env, target_env, f"Unexpected error: {e!s}") from e
+        raise ConversionError(source_env, effective_target, f"Unexpected error: {e!s}") from e
 
 
 def _raise_disk_space_error(required: int, free: int) -> None:
@@ -1050,10 +1084,12 @@ def convert_multiple_environments(  # noqa: C901
     verbose: bool = False,
     max_parallel: int = 1,
     backup: bool = False,
-    search_paths: list[str] | None = None,
+    search_paths: list[str | Path] | None = None,
     use_fast_solver: bool = True,
     batch_size: int = 20,
     preserve_ownership: bool = True,
+    replace_original: bool = True,
+    backup_suffix: str = "_anaconda_backup",
 ) -> bool:
     """Convert multiple conda environments to use conda-forge packages.
 
@@ -1072,6 +1108,8 @@ def convert_multiple_environments(  # noqa: C901
         use_fast_solver: Whether to use faster conda solvers if available
         batch_size: Number of packages to install in each batch
         preserve_ownership: Whether to preserve the ownership of the source environments
+        replace_original: Whether to replace the original environments (default: True)
+        backup_suffix: Suffix to add to the backup environment name
 
     Returns:
         True if all conversions were successful, False otherwise
@@ -1080,9 +1118,9 @@ def convert_multiple_environments(  # noqa: C901
     # Find all conda environments if source_envs not provided
     if source_envs is None:
         # Convert search_paths to the expected type if needed
-        path_list = None
+        path_list: list[PathLike] | None = None
         if search_paths:
-            path_list = [p if isinstance(p, Path) else Path(p) for p in search_paths]
+            path_list = search_paths  # search_paths is already list[str | Path]
         all_envs = list_all_conda_environments(path_list, verbose)
         if not all_envs:
             logger.error("No conda environments found")
@@ -1114,7 +1152,12 @@ def convert_multiple_environments(  # noqa: C901
 
     # Determine target environment names if not provided
     if target_envs is None:
-        target_envs = [f"{env}{target_suffix}" for env in source_envs]
+        if replace_original:
+            # If replacing original, target names are the same as source names
+            target_envs = source_envs
+        else:
+            # If not replacing, add suffix to source names
+            target_envs = [f"{env}{target_suffix}" for env in source_envs]
 
     # Check disk space if needed
     if not dry_run and max_parallel > 0:
@@ -1138,13 +1181,15 @@ def convert_multiple_environments(  # noqa: C901
         try:
             result = convert_environment(
                 source_env,
-                target_env,
+                target_env if not replace_original else None,
                 python_version,
                 dry_run,
                 verbose,
                 use_fast_solver=use_fast_solver,
                 batch_size=batch_size,
                 preserve_ownership=preserve_ownership,
+                replace_original=replace_original,
+                backup_suffix=backup_suffix,
             )
             results[source_env] = result
             if result:
@@ -1165,6 +1210,46 @@ def convert_multiple_environments(  # noqa: C901
     logger.info("========================================")
 
     return failed == 0 and successful > 0
+
+
+# This function is imported from utils, so we don't need to redefine it here
+
+
+def backup_environment(
+    env_name: str, backup_suffix: str = "_anaconda_backup", verbose: bool = False
+) -> bool:
+    """Backup a conda environment with a temporary name.
+
+    Args:
+        env_name: Name of the environment to backup
+        backup_suffix: Suffix to add to the backup environment name
+        verbose: Whether to log detailed information
+
+    Returns:
+        True if successful, False otherwise
+    """
+    backup_name = f"{env_name}{backup_suffix}"
+
+    # Check if backup already exists
+    if environment_exists(backup_name, verbose):
+        logger.info(f"Backup environment '{backup_name}' already exists, removing it...")
+        # Remove existing backup
+        result = run_command(["conda", "env", "remove", "--name", backup_name], verbose)
+        if not is_command_output_str(result):
+            logger.error(f"Failed to remove existing backup environment '{backup_name}'")
+            return False
+
+    # Clone the environment to create a backup
+    logger.info(f"Backing up environment '{env_name}' to '{backup_name}'...")
+    result = run_command(
+        ["conda", "create", "--name", backup_name, "--clone", env_name, "-y"], verbose
+    )
+    if not is_command_output_str(result):
+        logger.error(f"Failed to backup environment '{env_name}'")
+        return False
+
+    logger.info(f"Successfully backed up environment '{env_name}' to '{backup_name}'")
+    return True
 
 
 # This function is imported from utils, so we don't need to redefine it here
