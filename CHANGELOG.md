@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## v1.0.0 (2025-04-10)
+
+### Bug Fixes
+
+- Fix GitHub Actions workflow by updating version format and adding missing imports
+  ([`commit_id`](https://github.com/hughy603/anaconda-to-miniconda/commit/commit_id))
 
 ## v0.0.1-dev.1 (2025-04-10)
 
@@ -34,10 +40,10 @@
 - Bump development version [skip ci]
   ([`16dcccd`](https://github.com/hughy603/anaconda-to-miniconda/commit/16dcccd86a2fbd68e11de1bbd548b3ddfd5e6bfd))
 
-- Merge branch 'develop' of https://github.com/hughy603/anaconda-to-miniconda into develop
+- Merge branch 'develop' of <https://github.com/hughy603/anaconda-to-miniconda> into develop
   ([`83c1b4c`](https://github.com/hughy603/anaconda-to-miniconda/commit/83c1b4c479f88c5f9ab6c6921cedb1b3b5c82a3d))
 
-- Merge branch 'develop' of https://github.com/hughy603/anaconda-to-miniconda into develop
+- Merge branch 'develop' of <https://github.com/hughy603/anaconda-to-miniconda> into develop
   ([`5c23a71`](https://github.com/hughy603/anaconda-to-miniconda/commit/5c23a7102f7e3d234915619720eaca5ffb030c3f))
 
 - Remove test file

@@ -63,11 +63,15 @@ from .exceptions import (
     PackageInstallationError,
 )
 from .utils import (
+    check_disk_space,
     is_command_output_str,
     is_conda_environment,
     logger,
     run_command,
 )
+
+# Re-export check_disk_space for easier mocking in tests
+check_disk_space = check_disk_space
 
 # === TYPE DEFINITIONS ===
 
@@ -1163,8 +1167,6 @@ def convert_multiple_environments(  # noqa: C901
     if not dry_run and max_parallel > 0:
         # Estimate required space (rough estimate)
         try:
-            from conda_forge_converter.utils import check_disk_space
-
             if not check_disk_space(5 * len(source_envs)):  # Assume 5GB per environment
                 logger.warning("Low disk space detected. Conversion may fail.")
         except Exception as e:
