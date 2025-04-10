@@ -11,6 +11,9 @@
 - Standardize PR templates for proper selection in GitHub and VSCode
   ([`fc142a2`](https://github.com/hughy603/anaconda-to-miniconda/commit/fc142a2a59519d6efaedbec1f63bca57f6861c3d))
 
+- Update documentation build commands to use hatch and enhance dependency management in uv.lock
+  ([`b7790bc`](https://github.com/hughy603/anaconda-to-miniconda/commit/b7790bcba7716489f2ca88e1a3ebf8b63b1ea85d))
+
 - **ci**: Add write permissions and fix git push in version-bump workflow
   ([`03cdca0`](https://github.com/hughy603/anaconda-to-miniconda/commit/03cdca0315bd3a4725acf19d98b3177965de2929))
 
@@ -20,7 +23,13 @@
   ([`e907b88`](https://github.com/hughy603/anaconda-to-miniconda/commit/e907b885aca193300fcf539bc068c5841a9c9be2))
 
 - Bump development version [skip ci]
+  ([`17bcda6`](https://github.com/hughy603/anaconda-to-miniconda/commit/17bcda6eee415ae90fc9be30f66b6bb4d1b30db3))
+
+- Bump development version [skip ci]
   ([`16dcccd`](https://github.com/hughy603/anaconda-to-miniconda/commit/16dcccd86a2fbd68e11de1bbd548b3ddfd5e6bfd))
+
+- Merge branch 'develop' of https://github.com/hughy603/anaconda-to-miniconda into develop
+  ([`83c1b4c`](https://github.com/hughy603/anaconda-to-miniconda/commit/83c1b4c479f88c5f9ab6c6921cedb1b3b5c82a3d))
 
 - Merge branch 'develop' of https://github.com/hughy603/anaconda-to-miniconda into develop
   ([`5c23a71`](https://github.com/hughy603/anaconda-to-miniconda/commit/5c23a7102f7e3d234915619720eaca5ffb030c3f))
