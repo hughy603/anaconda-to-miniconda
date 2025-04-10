@@ -11,6 +11,9 @@
 - Standardize PR templates for proper selection in GitHub and VSCode
   ([`fc142a2`](https://github.com/hughy603/anaconda-to-miniconda/commit/fc142a2a59519d6efaedbec1f63bca57f6861c3d))
 
+- Update dependency installation to include development and documentation extras
+  ([`bbfcc2b`](https://github.com/hughy603/anaconda-to-miniconda/commit/bbfcc2b9cacfe5f0626d4aa423e71adb6821b319))
+
 - Update documentation build commands to use hatch and enhance dependency management in uv.lock
   ([`b7790bc`](https://github.com/hughy603/anaconda-to-miniconda/commit/b7790bcba7716489f2ca88e1a3ebf8b63b1ea85d))
 
@@ -21,6 +24,9 @@
 
 - Add test file for commit message validation
   ([`e907b88`](https://github.com/hughy603/anaconda-to-miniconda/commit/e907b885aca193300fcf539bc068c5841a9c9be2))
+
+- Bump development version [skip ci]
+  ([`90336c1`](https://github.com/hughy603/anaconda-to-miniconda/commit/90336c1b9b5489befdc4fe90eb585cbea01761eb))
 
 - Bump development version [skip ci]
   ([`17bcda6`](https://github.com/hughy603/anaconda-to-miniconda/commit/17bcda6eee415ae90fc9be30f66b6bb4d1b30db3))
