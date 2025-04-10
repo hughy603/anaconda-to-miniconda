@@ -1,0 +1,16 @@
+template_selection:
+  - name: Default Pull Request
+    about: Create a standard pull request
+    filename: ../pull_request_template.md
+  - name: Feature Addition
+    about: Add a new feature to the project
+    filename: feature.md
+  - name: Bug Fix
+    about: Fix a bug in the project
+    filename: bugfix.md
+  - name: Documentation Update
+    about: Improve project documentation
+    filename: documentation.md
+  - name: Code Refactoring
+    about: Refactor code without changing functionality
+    filename: refactor.md

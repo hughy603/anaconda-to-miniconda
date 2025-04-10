@@ -4,6 +4,7 @@ about: Refactor code without changing functionality
 title: 'refactor: '
 labels: [refactor]
 assignees: ''
+filename: refactor.md
 ---
 
 # Refactoring Pull Request

@@ -1,3 +1,11 @@
+---
+name: Default Pull Request
+about: Create a standard pull request
+title: ''
+labels: []
+assignees: ''
+---
+
 # Pull Request
 
 ## PR Title Format

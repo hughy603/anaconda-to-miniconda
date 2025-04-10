@@ -69,15 +69,27 @@ Examples:
 ## Pull Request Process
 
 1. Choose the appropriate PR template based on your change type:
+
    - Feature additions: Use the "Feature Addition" template
    - Bug fixes: Use the "Bug Fix" template
    - Documentation changes: Use the "Documentation Update" template
    - Code refactoring: Use the "Code Refactoring" template
    - For other changes: Use the default template
+
+   **How to select a template:**
+
+   - **On GitHub.com**: When creating a new PR, you'll see a dropdown menu to select a template
+   - **In VSCode**: When creating a PR, click on "Preview" and you'll see options to select a template
+   - **Using GitHub CLI**: Add `--template=<template-name>` when creating a PR
+
 1. Format your PR title following the Conventional Commit format
+
 1. Update the README.md with details of changes if needed
+
 1. Update the CHANGELOG.md with details of changes
+
 1. The PR will be merged once you have a maintainer's approval
+
 1. Ensure the PR description clearly describes the problem and solution
 
 ## Questions?

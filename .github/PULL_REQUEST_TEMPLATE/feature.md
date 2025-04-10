@@ -4,6 +4,7 @@ about: Add a new feature to the project
 title: 'feat: '
 labels: [enhancement]
 assignees: ''
+filename: feature.md
 ---
 
 # Feature Pull Request

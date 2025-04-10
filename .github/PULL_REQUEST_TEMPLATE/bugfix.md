@@ -4,6 +4,7 @@ about: Fix a bug in the project
 title: 'fix: '
 labels: [bug]
 assignees: ''
+filename: bugfix.md
 ---
 
 # Bug Fix Pull Request

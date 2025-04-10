@@ -4,6 +4,7 @@ about: Improve project documentation
 title: 'docs: '
 labels: [documentation]
 assignees: ''
+filename: documentation.md
 ---
 
 # Documentation Pull Request
