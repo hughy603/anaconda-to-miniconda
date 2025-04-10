@@ -118,14 +118,31 @@ jobs:
             coverage.xml
           retention-days: 30
 
+  approve-release:
+    name: Approve Release
+    needs: [test]
+    runs-on: ubuntu-latest
+    # To implement a proper approval process:
+    # 1. Create an environment named 'production' in GitHub repository settings
+    # 2. Add required reviewers to that environment
+    # 3. Uncomment the following lines:
+    # environment:
+    #   name: production
+    #   url: ${{ github.server_url }}/${{ github.repository }}/releases
+    steps:
+      - name: Approve Release
+        run: echo "Release approved by ${{ github.actor }} at $(date)"
+
   release:
     name: Create Release
-    needs: [test]
+    needs: [approve-release]
     runs-on: ubuntu-latest
     permissions:
       contents: write
       id-token: write
       packages: write
+    outputs:
+      version: ${{ steps.publish.outputs.version }}
 
     steps:
       - name: Checkout code
@@ -182,8 +199,12 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and publish
+        id: publish
         run: |
           semantic-release publish
+          # Extract version from _version.py again to ensure we have the latest
+          VERSION=$(python -c "from conda_forge_converter import __version__; print(__version__)")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPOSITORY_URL: https://upload.pypi.org/legacy/
@@ -195,3 +216,85 @@ jobs:
           name: dist
           path: dist/
           retention-days: 30
+
+  health-check:
+    name: Deployment Health Check
+    needs: [release]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install released package
+        id: install
+        run: |
+          pip install conda-forge-converter==${{ needs.release.outputs.version }} --no-cache-dir
+          # Verify installation
+          if conda-forge-converter --version | grep -q "${{ needs.release.outputs.version }}"; then
+            echo "status=success" >> $GITHUB_OUTPUT
+          else
+            echo "status=failure" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+      - name: Basic functionality test
+        id: test
+        if: steps.install.outputs.status == 'success'
+        run: |
+          # Run a basic test to ensure the package works
+          conda-forge-converter --help
+          # Add more comprehensive tests as needed
+          echo "status=success" >> $GITHUB_OUTPUT
+
+  rollback:
+    name: Rollback Release
+    needs: [release, health-check]
+    if: failure() && needs.release.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          pip install python-semantic-release twine
+
+      - name: Get previous version
+        id: prev_version
+        run: |
+          # Get the previous version tag
+          PREV_VERSION=$(git describe --abbrev=0 --tags $(git rev-list --tags --skip=1 --max-count=1))
+          echo "version=${PREV_VERSION#v}" >> $GITHUB_OUTPUT
+
+      - name: Create rollback PR
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: rollback to version ${{ steps.prev_version.outputs.version }} due to failed health check"
+          title: "Emergency Rollback to ${{ steps.prev_version.outputs.version }}"
+          body: |
+            ## Emergency Rollback
+
+            The release of version ${{ needs.release.outputs.version }} failed health checks.
+            This PR rolls back to the previous stable version ${{ steps.prev_version.outputs.version }}.
+
+            ### Failure Details
+
+            - Release workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+            Please investigate the cause of the failure before attempting another release.
+          branch: rollback-${{ steps.prev_version.outputs.version }}
+          base: master
+          labels: rollback,emergency

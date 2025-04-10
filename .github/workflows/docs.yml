@@ -19,6 +19,7 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  pull-requests: write  # Needed for commenting on PRs
 
 env:
   PYTHON_VERSION: "3.11"
@@ -78,6 +79,11 @@ jobs:
         with:
           path: ./site
 
+      - name: Check for broken links
+        run: |
+          uv pip install linkchecker --system
+          linkchecker --check-extern ./site/index.html || true  # Don't fail the build if links are broken, just report them
+
   deploy:
     name: Deploy Documentation
     needs: build
@@ -87,3 +93,73 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  preview:
+    name: Preview Documentation
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install UV
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/uv
+            ~/.cache/pip
+          key: ${{ runner.os }}-py${{ env.PYTHON_VERSION }}-uv${{ env.UV_VERSION }}-docs-preview-${{ hashFiles('requirements.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-py${{ env.PYTHON_VERSION }}-uv${{ env.UV_VERSION }}-docs-preview-
+
+      - name: Install dependencies
+        run: |
+          uv pip install -e ".[docs]" --system
+
+      - name: Build MkDocs site
+        run: |
+          hatch run docs-build -- --strict
+
+      - name: Deploy to Netlify
+        id: netlify
+        uses: nwtgck/actions-netlify@v3
+        with:
+          publish-dir: './site'
+          production-deploy: false
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: "Deploy from GitHub Actions"
+          enable-pull-request-comment: true
+          enable-commit-comment: false
+          overwrites-pull-request-comment: true
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        timeout-minutes: 5
+
+      - name: Add PR Comment
+        if: github.event_name == 'pull_request' && steps.netlify.outputs.deploy-url != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const deployUrl = '${{ steps.netlify.outputs.deploy-url }}';
+            const body = `## 📝 Documentation Preview\n\nYour documentation changes can be previewed at: [${deployUrl}](${deployUrl})\n\nThis preview will be updated automatically as you make changes to the PR.`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });

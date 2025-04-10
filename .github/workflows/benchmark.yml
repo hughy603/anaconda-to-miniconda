@@ -1,0 +1,145 @@
+name: Performance Benchmarking
+
+on:
+  push:
+    branches: [master, main, develop]
+  pull_request:
+    branches: [master, main, develop]
+  schedule:
+    - cron: '0 0 * * 1'  # Run weekly on Monday
+  workflow_dispatch:  # Allow manual triggering
+
+env:
+  PYTHON_VERSION: "3.11"
+  UV_VERSION: "0.7.1"
+
+jobs:
+  benchmark:
+    name: Run Performance Benchmarks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for accurate benchmarking comparisons
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install UV
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/uv
+            ~/.cache/pip
+          key: ${{ runner.os }}-py${{ env.PYTHON_VERSION }}-uv${{ env.UV_VERSION }}-benchmark-${{ hashFiles('requirements.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-py${{ env.PYTHON_VERSION }}-uv${{ env.UV_VERSION }}-benchmark-
+
+      - name: Install dependencies
+        run: |
+          uv pip install -e ".[test]" --system
+          uv pip install pytest-benchmark --system
+
+      - name: Create benchmark directory
+        run: mkdir -p tests/benchmarks
+
+      - name: Create sample benchmark test if needed
+        id: check_benchmarks
+        run: |
+          if [ -z "$(find tests/benchmarks -name 'test_*.py' 2>/dev/null)" ]; then
+            echo "Creating a sample benchmark test"
+            echo 'import pytest' > tests/benchmarks/test_sample_benchmark.py
+            echo 'from conda_forge_converter import __version__' >> tests/benchmarks/test_sample_benchmark.py
+            echo '' >> tests/benchmarks/test_sample_benchmark.py
+            echo 'def test_version_access(benchmark):' >> tests/benchmarks/test_sample_benchmark.py
+            echo '    """Benchmark accessing the version (placeholder benchmark)."""' >> tests/benchmarks/test_sample_benchmark.py
+            echo '    result = benchmark(lambda: __version__)' >> tests/benchmarks/test_sample_benchmark.py
+            echo '    assert result is not None' >> tests/benchmarks/test_sample_benchmark.py
+            echo '' >> tests/benchmarks/test_sample_benchmark.py
+            echo '# Add more meaningful benchmarks for your actual code here' >> tests/benchmarks/test_sample_benchmark.py
+            echo "created=true" >> $GITHUB_OUTPUT
+          else
+            echo "Benchmark tests found"
+            echo "created=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run benchmarks
+        run: python -m pytest tests/benchmarks/ --benchmark-json=benchmark-results.json
+
+      - name: Store benchmark result
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          name: Python Benchmark
+          tool: 'pytest'
+          output-file-path: benchmark-results.json
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: true
+          # Show alert with commit comment on detecting possible performance regression
+          alert-threshold: '200%'
+          comment-on-alert: true
+          fail-on-alert: false
+          alert-comment-cc-users: '@yourusername'
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: benchmark-results.json
+          retention-days: 90  # Keep benchmark results for longer analysis
+
+  compare:
+    name: Compare Benchmarks
+    needs: benchmark
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download benchmark results
+        uses: actions/download-artifact@v4
+        with:
+          name: benchmark-results
+          path: ./
+
+      - name: Compare with base branch
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            try {
+              const benchmarkResults = JSON.parse(fs.readFileSync('./benchmark-results.json', 'utf8'));
+
+              // Format benchmark results for PR comment
+              let comment = '## 📊 Performance Benchmark Results\n\n';
+              comment += 'Test | Mean Time | Min Time | Max Time\n';
+              comment += '-----|----------|----------|----------\n';
+
+              benchmarkResults.benchmarks.forEach(benchmark => {
+                const name = benchmark.name;
+                const mean = (benchmark.stats.mean * 1000).toFixed(3);
+                const min = (benchmark.stats.min * 1000).toFixed(3);
+                const max = (benchmark.stats.max * 1000).toFixed(3);
+
+                comment += `${name} | ${mean} ms | ${min} ms | ${max} ms\n`;
+              });
+
+              comment += '\nThese results are from the current PR. For comparison with the base branch, check the [benchmark history](../actions/workflows/benchmark.yml).';
+
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: comment
+              });
+            } catch (error) {
+              console.error('Error processing benchmark results:', error);
+              core.setFailed('Failed to process benchmark results');
+            }

@@ -80,6 +80,9 @@ hatch run docs-serve
 
 # Set up VSCode configuration
 ./scripts/setup_vscode.py
+
+# Test GitHub Actions workflows locally
+.github/local-testing/test-workflow.sh .github/workflows/ci.yml
 ```
 
 ### VSCode Integration

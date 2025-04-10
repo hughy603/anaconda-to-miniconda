@@ -49,6 +49,7 @@ Examples:
 - [ ] Integration tests added
 - [ ] Manual testing performed
 - [ ] All tests passing locally
+- [ ] GitHub Actions workflows tested locally (if applicable)
 
 ## Documentation
 

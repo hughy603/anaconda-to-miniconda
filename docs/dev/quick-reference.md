@@ -102,6 +102,28 @@ mkdocs serve
 mkdocs build
 ```
 
+### GitHub Actions Local Testing
+
+```bash
+# Validate workflow syntax
+actionlint .github/workflows/ci.yml
+
+# Test workflow with push event
+.github/local-testing/test-workflow.sh .github/workflows/ci.yml
+
+# Test workflow with pull_request event
+.github/local-testing/test-workflow.sh .github/workflows/ci.yml pull_request
+
+# Test with Python 3.11
+.github/local-testing/test-workflow.sh .github/workflows/ci.yml push python-version=3.11
+
+# Test with Python 3.12
+.github/local-testing/test-workflow.sh .github/workflows/ci.yml push python-version=3.12
+
+# Test with both Python versions
+.github/local-testing/test-python-versions.sh .github/workflows/ci.yml
+```
+
 ## Conventional Commits Cheat Sheet
 
 ### Format

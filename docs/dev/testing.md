@@ -291,6 +291,64 @@ The CI workflow runs:
 1. Code coverage reporting
 1. Linting checks
 
+### Local Testing of GitHub Actions Workflows
+
+Before pushing changes to GitHub Actions workflows, you can test them locally using the tools provided in the `.github/local-testing` directory:
+
+#### Prerequisites
+
+1. Install Docker: <https://docs.docker.com/get-docker/>
+1. Install act: <https://github.com/nektos/act#installation>
+1. Install actionlint: <https://github.com/rhysd/actionlint#installation>
+
+#### Validating Workflow Syntax
+
+```bash
+# Using pre-commit
+pre-commit run actionlint --files .github/workflows/ci.yml
+
+# Or directly with actionlint
+actionlint .github/workflows/ci.yml
+```
+
+#### Testing Workflow Execution Locally
+
+```bash
+# Test with default push event
+.github/local-testing/test-workflow.sh .github/workflows/ci.yml
+
+# Test with pull_request event
+.github/local-testing/test-workflow.sh .github/workflows/ci.yml pull_request
+```
+
+#### Testing with Python Matrix
+
+```bash
+# Test with Python 3.11
+.github/local-testing/test-workflow.sh .github/workflows/ci.yml push python-version=3.11
+
+# Test with Python 3.12
+.github/local-testing/test-workflow.sh .github/workflows/ci.yml push python-version=3.12
+
+# Test with both Python 3.11 and 3.12
+.github/local-testing/test-python-versions.sh .github/workflows/ci.yml
+```
+
+#### VSCode Integration
+
+The repository includes VSCode tasks for GitHub Actions testing:
+
+1. Open the Command Palette (Ctrl+Shift+P)
+1. Type "Tasks: Run Task"
+1. Select one of the GitHub Actions testing tasks:
+   - Validate Workflow
+   - Test Workflow
+   - Test with Python 3.11
+   - Test with Python 3.12
+   - Test Both Python Versions
+
+For Windows users, refer to the `.github/local-testing/windows-setup-guide.md` for detailed setup instructions.
+
 ## Test Data
 
 Test data is stored in `tests/data/` and includes:

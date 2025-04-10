@@ -1,0 +1,85 @@
+name: Security Scanning
+
+on:
+  push:
+    branches: [master, main, develop]
+  pull_request:
+    branches: [master, main, develop]
+  schedule:
+    - cron: '0 0 * * 1'  # Run weekly on Monday
+
+env:
+  PYTHON_VERSION: "3.11"
+  UV_VERSION: "0.7.1"
+
+jobs:
+  sonarqube:
+    name: SonarQube Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for better relevancy of analysis
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install UV
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/uv
+            ~/.cache/pip
+          key: ${{ runner.os }}-py${{ env.PYTHON_VERSION }}-uv${{ env.UV_VERSION }}-security-${{ hashFiles('requirements.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-py${{ env.PYTHON_VERSION }}-uv${{ env.UV_VERSION }}-security-
+
+      - name: Install dependencies
+        run: |
+          uv pip install -e ".[test]" --system
+
+      - name: Run tests with coverage
+        run: |
+          uv run test-cov
+
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        with:
+          args: >
+            -Dsonar.projectKey=conda-forge-converter
+            -Dsonar.python.coverage.reportPaths=coverage.xml
+            -Dsonar.sources=src
+            -Dsonar.tests=tests
+            -Dsonar.python.xunit.reportPath=pytest.xml
+            -Dsonar.qualitygate.wait=true
+
+  secret-scanning:
+    name: Secret Scanning Notification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Secret Scanning Notice
+        run: |
+          echo "::notice::GitHub's built-in secret scanning should be enabled in the repository settings."
+          echo "::notice::Go to Settings > Security > Code security and analysis > Secret scanning > Enable"
+
+          # Check if we're running in a PR context
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "::notice::Checking for potential secrets in this PR..."
+            git diff ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | \
+            grep -E '(password|token|key|secret|credential).*[=:][^=:]*[a-zA-Z0-9_-]{16,}' || true
+          fi

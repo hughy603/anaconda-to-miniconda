@@ -62,6 +62,7 @@ Examples:
 - [ ] Integration tests added/updated
 - [ ] Manual testing performed
 - [ ] All tests passing locally
+- [ ] GitHub Actions workflows tested locally (if applicable)
 
 ## Checklist
 

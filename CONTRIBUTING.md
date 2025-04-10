@@ -75,6 +75,14 @@ This ensures that when you pull changes that include automatic version bump comm
 1. **Make your changes**: Implement your feature or bug fix
 1. **Run pre-commit checks**: `pre-commit run --all-files`
 1. **Run tests**: `pytest`
+1. **Test GitHub Actions workflows locally** (if applicable):
+   ```bash
+   # Validate workflow syntax
+   actionlint .github/workflows/your-workflow.yml
+
+   # Test workflow execution
+   .github/local-testing/test-workflow.sh .github/workflows/your-workflow.yml
+   ```
 1. **Commit your changes**: Use conventional commit format (see below)
 1. **Pull before pushing**: `git pull` (this will merge any remote changes)
 1. **Push your changes**: `git push origin feature/your-feature-name`

@@ -2,6 +2,46 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "Validate Workflow with Actionlint",
+            "type": "shell",
+            "command": "actionlint ${input:workflowFile}",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Validate All Workflows",
+            "type": "shell",
+            "command": "actionlint .github/workflows/*.yml",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Create Feature Branch for Workflow Testing",
+            "type": "shell",
+            "command": "git checkout -b workflow-test-${input:branchSuffix}",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Push Workflow Changes for Testing",
+            "type": "shell",
+            "command": "git add .github/workflows/${input:workflowFile} && git commit -m \"test: Test workflow changes\" && git push -u origin HEAD",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
             "label": "Install Development Dependencies",
             "type": "shell",
             "command": "uv pip install -e \".[dev,test]\"",
@@ -148,6 +188,31 @@
                 "reveal": "always",
                 "panel": "new"
             }
+        }
+    ],
+    "inputs": [
+        {
+            "id": "workflowFile",
+            "description": "Workflow file path:",
+            "default": "ci.yml",
+            "type": "promptString"
+        },
+        {
+            "id": "branchSuffix",
+            "description": "Feature branch suffix (workflow-test-{suffix}):",
+            "default": "feature",
+            "type": "promptString"
+        },
+        {
+            "id": "environmentName",
+            "description": "GitHub Actions environment:",
+            "default": "testing",
+            "type": "pickString",
+            "options": [
+                "testing",
+                "staging",
+                "production"
+            ]
         }
     ]
 }

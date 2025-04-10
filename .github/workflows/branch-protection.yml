@@ -80,11 +80,40 @@ jobs:
         if: github.event_name == 'pull_request'
         run: |
           COMMIT_MSG=$(git log -1 --pretty=%B)
-          if ! [[ $COMMIT_MSG =~ ^(feat|fix|docs|style|refactor|test|chore)(\([a-z0-9-]+\))?: .+ ]]; then
+          if ! [[ $COMMIT_MSG =~ ^(feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert)(\([a-z0-9-]+\))?: .+ ]]; then
             echo "Error: Invalid commit message format. Must follow Conventional Commits specification."
             echo "Example: feat(api): add new endpoint"
             exit 1
           fi
+
+      - name: Check PR size
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const response = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+
+            const additions = response.data.additions;
+            const deletions = response.data.deletions;
+            const changedFiles = response.data.changed_files;
+
+            console.log(`PR Stats: ${additions} additions, ${deletions} deletions, ${changedFiles} files changed`);
+
+            // Define thresholds
+            const LARGE_THRESHOLD = 500;
+            const VERY_LARGE_THRESHOLD = 1000;
+
+            if (additions + deletions > VERY_LARGE_THRESHOLD) {
+              core.warning(`⚠️ This PR is very large (${additions} additions, ${deletions} deletions). Consider breaking it into smaller PRs.`);
+            } else if (additions + deletions > LARGE_THRESHOLD) {
+              core.notice(`ℹ️ This PR is large (${additions} additions, ${deletions} deletions). Consider if it could be broken down further.`);
+            }
+
+            // Don't fail the build, just warn
 
       - name: Upload test results
         if: always()
@@ -96,3 +125,58 @@ jobs:
             coverage.xml
             pytest.xml
           retention-days: 30
+
+  verify-protection:
+    name: Verify Branch Protection
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Verify branch protection settings
+        uses: actions/github-script@v7
+        with:
+          script: |
+            try {
+              // Get the branch protection settings
+              const branch = github.ref.replace('refs/heads/', '');
+              console.log(`Checking branch protection for ${branch}`);
+
+              const { data: protection } = await github.rest.repos.getBranchProtection({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                branch: branch
+              });
+
+              // Check required status checks
+              if (!protection.required_status_checks) {
+                core.warning(`⚠️ Branch ${branch} does not have required status checks enabled.`);
+              }
+
+              // Check required PR reviews
+              if (!protection.required_pull_request_reviews) {
+                core.warning(`⚠️ Branch ${branch} does not have required pull request reviews enabled.`);
+              } else {
+                const requiredReviewers = protection.required_pull_request_reviews.required_approving_review_count || 0;
+                if (requiredReviewers < 1) {
+                  core.warning(`⚠️ Branch ${branch} requires ${requiredReviewers} reviewers. Consider requiring at least 1 reviewer.`);
+                }
+              }
+
+              // Check admin enforcement
+              if (!protection.enforce_admins.enabled) {
+                core.warning(`⚠️ Branch ${branch} does not enforce protections for administrators.`);
+              }
+
+              console.log('Branch protection verification completed.');
+            } catch (error) {
+              core.warning(`⚠️ Could not verify branch protection settings: ${error.message}`);
+              core.warning('Please ensure branch protection is enabled in repository settings:');
+              core.warning('Settings > Branches > Branch protection rules > Add rule');
+              core.warning('Recommended settings:');
+              core.warning('- Require pull request reviews before merging');
+              core.warning('- Require status checks to pass before merging');
+              core.warning('- Require branches to be up to date before merging');
+              core.warning('- Include administrators');
+            }
