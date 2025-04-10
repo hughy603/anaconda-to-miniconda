@@ -1,107 +1,22 @@
-# Changelog
+# CHANGELOG
 
-All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## v0.0.1-dev.1 (2025-04-10)
 
-## [Unreleased]
+### Bug Fixes
 
-### Added
+- **ci**: Add write permissions and fix git push in version-bump workflow
+  ([`03cdca0`](https://github.com/hughy603/anaconda-to-miniconda/commit/03cdca0315bd3a4725acf19d98b3177965de2929))
 
-### Changed
+### Chores
 
-### Fixed
+- Add test file for commit message validation
+  ([`e907b88`](https://github.com/hughy603/anaconda-to-miniconda/commit/e907b885aca193300fcf539bc068c5841a9c9be2))
 
-## [1.0.0-alpha.1] - 2025-04-10
+- Remove test file
+  ([`6ab3e3b`](https://github.com/hughy603/anaconda-to-miniconda/commit/6ab3e3bfec371dcad04024ee0fba1341625efe05))
 
-### Added
+### Documentation
 
-### Changed
-
-### Fixed
-
-## [1.0.2] - 2025-04-10
-
-### Added
-
-### Changed
-
-### Fixed
-
-## [1.0.1] - 2025-04-10
-
-### Added
-
-### Changed
-
-### Fixed
-
-## [1.1.0] - 2025-04-10
-
-### Added
-
-### Changed
-
-### Fixed
-
-## [2.0.0] - 2025-04-10
-
-### Added
-
-### Changed
-
-### Fixed
-
-## [0.2.0] - 2025-04-10
-
-### Added
-
-- Standardized code quality tasks using UV
-- Simplified CI/CD pipelines with GitHub Actions
-- Improved documentation building with MkDocs
-- Configured pyright for static type checking
-- Fully leveraged UV for dependency management, locking, and script running
-
-### Changed
-
-- Replaced pylint with pyright for more robust static type checking
-- Moved from hatch to UV for comprehensive dependency management and script running
-- Simplified workflow configurations to use UV directly
-
-## [1.0.0] - 2025-04-05
-
-### Added
-
-- Initial project setup
-- Basic conda environment conversion functionality
-- Support for Python 3.11 and 3.12
-- Comprehensive test suite with pytest
-- Code quality tools: ruff, pylint
-- CI/CD pipeline with GitHub Actions
-- Documentation with MkDocs
-- Security scanning with safety and bandit
-
-### Changed
-
-- Switched to hatch for dependency management
-- Improved type hints and static analysis
-- Enhanced pre-commit hooks configuration
-
-### Fixed
-
-- Version management using hatch-vcs
-- Dependency caching in CI pipeline
-
-### Security
-
-- Added security scanning in CI
-- Added dependency vulnerability checks
-
-## [0.1.0] - 2024-04-06
-
-### Added
-
-- Initial release
-- Basic project structure
-- Core functionality for converting Anaconda environments to conda-forge
+- Standardize PR templates with Conventional Commit format
+  ([`7d30986`](https://github.com/hughy603/anaconda-to-miniconda/commit/7d309868e927c12c69965329e2d394830cadf13c))
