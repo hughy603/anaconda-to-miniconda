@@ -45,9 +45,19 @@ dev = [
     "python-semantic-release>=9.0.0",
     "pre-commit>=3.5.0",
     "build>=1.0.0",
+    "hatch>=1.9.0",
 ]
 test = ["pytest>=8.0.0", "pytest-cov>=4.1.0"]
-all = ["conda-forge-converter[dev,test]"]
+docs = [
+    "mkdocs>=1.5.0",
+    "mkdocs-material>=9.5.0",
+    "mkdocstrings>=0.24.0",
+    "mkdocstrings-python>=1.8.0",
+    "mkdocs-minify-plugin>=0.7.0",
+    "mkdocs-redirects>=1.2.1",
+    "hatch>=1.9.0",
+]
+all = ["conda-forge-converter[dev,test,docs]"]
 
 [project.scripts]
 conda-forge-converter = "conda_forge_converter.cli:main"

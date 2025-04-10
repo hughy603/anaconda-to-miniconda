@@ -61,7 +61,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv pip install -r requirements.lock --system
+          # Install the project with docs extras to get all documentation dependencies
+          uv pip install -e ".[docs]" --system
 
       - name: Check spelling
         run: |
