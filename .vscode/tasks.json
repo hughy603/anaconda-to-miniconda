@@ -188,13 +188,53 @@
                 "reveal": "always",
                 "panel": "new"
             }
+        },
+        {
+            "label": "Test Workflow",
+            "type": "shell",
+            "command": "bash .github/local-testing/test-workflow.sh ${input:workflowFile} ${input:eventType}",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Test with Python 3.11",
+            "type": "shell",
+            "command": "bash .github/local-testing/test-workflow.sh ${input:workflowFile} push python-version=3.11",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Test with Python 3.12",
+            "type": "shell",
+            "command": "bash .github/local-testing/test-workflow.sh ${input:workflowFile} push python-version=3.12",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Test Both Python Versions",
+            "type": "shell",
+            "command": "bash .github/local-testing/test-python-versions.sh ${input:workflowFile}",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
         }
     ],
     "inputs": [
         {
             "id": "workflowFile",
             "description": "Workflow file path:",
-            "default": "ci.yml",
+            "default": ".github/workflows/ci.yml",
             "type": "promptString"
         },
         {
@@ -202,6 +242,17 @@
             "description": "Feature branch suffix (workflow-test-{suffix}):",
             "default": "feature",
             "type": "promptString"
+        },
+        {
+            "id": "eventType",
+            "description": "Event type:",
+            "default": "push",
+            "type": "pickString",
+            "options": [
+                "push",
+                "pull_request",
+                "workflow_dispatch"
+            ]
         },
         {
             "id": "environmentName",
@@ -216,3 +267,4 @@
         }
     ]
 }
+
