@@ -1,108 +1,115 @@
 repos:
-    - repo: https://github.com/pre-commit/pre-commit-hooks
-      rev: v5.0.0
-      hooks:
-          - id: trailing-whitespace
-          - id: end-of-file-fixer
-          - id: check-yaml
-          - id: check-added-large-files
-          - id: check-ast
-          - id: check-json
-          - id: check-merge-conflict
-          - id: detect-private-key
-          - id: mixed-line-ending
-            args: [--fix=lf]
-          - id: check-case-conflict
-          - id: check-toml
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+      - id: check-ast
+      - id: check-json
+      - id: check-merge-conflict
+      - id: detect-private-key
+      - id: mixed-line-ending
+        args: [--fix=lf]
+      - id: check-case-conflict
+      - id: check-toml
 
-    - repo: https://github.com/astral-sh/ruff-pre-commit
-      rev: v0.11.4
-      hooks:
-          - id: ruff
-            args: [--fix, --config=pyproject.toml]
-          - id: ruff-format
-            types_or: [python, toml]
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.4
+    hooks:
+      - id: ruff
+        args: [--fix, --config=pyproject.toml]
+      - id: ruff-format
+        types_or: [python, toml]
 
-    - repo: https://github.com/RobertCraigie/pyright-python
-      rev: v1.1.399
-      hooks:
-          - id: pyright
-            args: ["--project=./pyrightconfig.json"]
-            # Using the central pyrightconfig.json configuration
+  - repo: https://github.com/RobertCraigie/pyright-python
+    rev: v1.1.399
+    hooks:
+      - id: pyright
+        args: ["--project=./pyrightconfig.json"]
+        # Using the central pyrightconfig.json configuration
 
-    # Commit message format validation
-    - repo: https://github.com/compilerla/conventional-pre-commit
-      rev: v3.1.0
-      hooks:
-          - id: conventional-pre-commit
-            stages: [commit-msg]
-            args:
-                [
-                    feat,
-                    fix,
-                    docs,
-                    style,
-                    refactor,
-                    perf,
-                    test,
-                    build,
-                    ci,
-                    chore,
-                    revert,
-                ]
+  # Commit message format validation
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v3.1.0
+    hooks:
+      - id: conventional-pre-commit
+        stages: [commit-msg]
+        args:
+          [
+            feat,
+            fix,
+            docs,
+            style,
+            refactor,
+            perf,
+            test,
+            build,
+            ci,
+            chore,
+            revert,
+          ]
 
-    # Dependency management
-    - repo: local
-      hooks:
-          - id: deps-lock
-            name: Lock dependencies with UV
-            entry: uv pip compile pyproject.toml --output-file=requirements.lock --extra=dev --extra=test
-            language: system
-            files: ^(pyproject\.toml|requirements\.lock)$
-            pass_filenames: false
+  # Dependency management
+  - repo: local
+    hooks:
+      - id: deps-lock
+        name: Lock dependencies with UV
+        entry: uv pip compile pyproject.toml --output-file=requirements.lock --extra=dev --extra=test
+        language: system
+        files: ^(pyproject\.toml|requirements\.lock)$
+        pass_filenames: false
 
-    # Documentation quality hooks
-    - repo: https://github.com/executablebooks/mdformat
-      rev: 0.7.22
-      hooks:
-          - id: mdformat
-            additional_dependencies:
-                - mdformat-gfm
-                - mdformat-black
-                - mdformat-myst
+      - id: uv-lock
+        name: Update UV lockfile
+        entry: uv lock
+        language: system
+        files: ^(pyproject\.toml|uv\.lock)$
+        pass_filenames: false
 
-    # GitHub workflow validation hooks
-    - repo: https://github.com/rhysd/actionlint
-      rev: v1.7.7
-      hooks:
-          - id: actionlint
-            args: ["-color"]
-            types: [yaml]
-            files: ^\.github/workflows/.*\.ya?ml$
-            # TOML linting and formatting has been consolidated with the ruff-format hook above
-            types_or: [toml]
+  # Documentation quality hooks
+  - repo: https://github.com/executablebooks/mdformat
+    rev: 0.7.22
+    hooks:
+      - id: mdformat
+        additional_dependencies:
+          - mdformat-gfm
+          - mdformat-black
+          - mdformat-myst
 
-    # Check for sensitive data in GitHub workflows
-    - repo: https://github.com/zricethezav/gitleaks
-      rev: v8.24.2
-      hooks:
-          - id: gitleaks
-            args: ["--config=.gitleaks.toml"]
-            stages: [pre-commit]
+  # GitHub workflow validation hooks
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.7
+    hooks:
+      - id: actionlint
+        args: ["-color"]
+        types: [yaml]
+        files: ^\.github/workflows/.*\.ya?ml$
+        # TOML linting and formatting has been consolidated with the ruff-format hook above
+        types_or: [toml]
 
-    # Release validation
-    - repo: local
-      hooks:
-          - id: validate-release
-            name: Validate release readiness
-            entry: semantic-release version --print
-            language: system
-            pass_filenames: false
-            stages: [pre-push, manual]
+  # Check for sensitive data in GitHub workflows
+  - repo: https://github.com/zricethezav/gitleaks
+    rev: v8.24.2
+    hooks:
+      - id: gitleaks
+        args: ["--config=.gitleaks.toml"]
+        stages: [pre-commit]
 
-          - id: check-version-bump
-            name: Check version bump
-            entry: semantic-release version --no-commit --no-tag --no-push --no-vcs-release
-            language: system
-            pass_filenames: false
-            stages: [manual]
+  # Release validation
+  - repo: local
+    hooks:
+      - id: validate-release
+        name: Validate release readiness
+        entry: semantic-release version --print
+        language: system
+        pass_filenames: false
+        stages: [pre-push, manual]
+
+      - id: check-version-bump
+        name: Check version bump
+        entry: semantic-release version --no-commit --no-tag --no-push --no-vcs-release
+        language: system
+        pass_filenames: false
+        stages: [manual]

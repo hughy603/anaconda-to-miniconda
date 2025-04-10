@@ -138,6 +138,15 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
+all = [
+    { name = "build" },
+    { name = "pre-commit" },
+    { name = "pyright" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "python-semantic-release" },
+    { name = "ruff" },
+]
 dev = [
     { name = "build" },
     { name = "pre-commit" },
@@ -152,17 +161,24 @@ test = [
 
 [package.metadata]
 requires-dist = [
+    { name = "build", marker = "extra == 'all'", specifier = ">=1.0.0" },
     { name = "build", marker = "extra == 'dev'", specifier = ">=1.0.0" },
-    { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=3.0.0" },
+    { name = "pre-commit", marker = "extra == 'all'", specifier = ">=3.5.0" },
+    { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=3.5.0" },
+    { name = "pyright", marker = "extra == 'all'", specifier = ">=1.1.350" },
     { name = "pyright", marker = "extra == 'dev'", specifier = ">=1.1.350" },
-    { name = "pytest", marker = "extra == 'test'", specifier = ">=7.0.0" },
-    { name = "pytest-cov", marker = "extra == 'test'", specifier = ">=4.0.0" },
-    { name = "python-semantic-release", marker = "extra == 'dev'", specifier = ">=8.0.0" },
-    { name = "pyyaml", specifier = ">=6.0" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.0.54" },
-    { name = "typing-extensions", specifier = ">=4.7.0" },
+    { name = "pytest", marker = "extra == 'all'", specifier = ">=8.0.0" },
+    { name = "pytest", marker = "extra == 'test'", specifier = ">=8.0.0" },
+    { name = "pytest-cov", marker = "extra == 'all'", specifier = ">=4.1.0" },
+    { name = "pytest-cov", marker = "extra == 'test'", specifier = ">=4.1.0" },
+    { name = "python-semantic-release", marker = "extra == 'all'", specifier = ">=9.0.0" },
+    { name = "python-semantic-release", marker = "extra == 'dev'", specifier = ">=9.0.0" },
+    { name = "pyyaml", specifier = ">=6.0.1" },
+    { name = "ruff", marker = "extra == 'all'", specifier = ">=0.3.0" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.3.0" },
+    { name = "typing-extensions", specifier = ">=4.10.0" },
 ]
-provides-extras = ["dev", "test"]
+provides-extras = ["all", "dev", "test"]
 
 [[package]]
 name = "coverage"

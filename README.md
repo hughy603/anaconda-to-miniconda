@@ -73,10 +73,10 @@ uv run type-check
 uv run security
 
 # Build documentation
-uv run docs-build
+hatch run docs-build
 
 # Serve documentation locally
-uv run docs-serve
+hatch run docs-serve
 
 # Set up VSCode configuration
 ./scripts/setup_vscode.py

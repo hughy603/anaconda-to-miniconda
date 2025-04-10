@@ -70,7 +70,7 @@ jobs:
 
       - name: Build MkDocs site
         run: |
-          uv run docs-build -- --strict
+          hatch run docs-build -- --strict
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

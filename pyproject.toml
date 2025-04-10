@@ -35,7 +35,7 @@ classifiers = [
 
 dependencies = [
     "pyyaml>=6.0.1",
-    "typing_extensions>=4.9.0", # For additional type hints if needed
+    "typing_extensions>=4.10.0", # For additional type hints if needed
 ]
 
 [project.optional-dependencies]
@@ -78,6 +78,10 @@ test = "pytest --cov=conda_forge_converter --cov-report=term-missing --cov-repor
 test-fast = "pytest --cov=conda_forge_converter --cov-report=term-missing --cov-fail-under=0 tests/test_cli.py"
 test-specific = "pytest --cov=conda_forge_converter --cov-report=term-missing --cov-fail-under=0"
 clean-coverage = "rm -f .coverage .coverage.* coverage.xml && rm -rf htmlcov"
+
+# Documentation scripts
+docs-build = "mkdocs build"
+docs-serve = "mkdocs serve"
 
 # Type checking configuration is now in pyrightconfig.json
 
@@ -171,8 +175,7 @@ prerelease_token = "feature"
 
 # UV configuration for dependency management
 [tool.uv]
-# Use the requirements.lock file for reproducible installations
-lockfile = "requirements.lock"
+# UV will automatically use requirements.lock for reproducible installations
 
 # Coverage configuration
 [tool.coverage.run]

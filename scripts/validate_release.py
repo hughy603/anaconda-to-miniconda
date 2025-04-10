@@ -34,7 +34,7 @@ def run_command(cmd: list[str], check: bool = True) -> subprocess.CompletedProce
         "format": ["ruff", "format", "."],
         "type-check": ["pyright"],
         "security": ["bandit", "-r", "src/"],
-        "docs-build": ["echo", "Documentation build skipped - mkdocs not installed"],
+        "docs-build": ["hatch", "run", "docs-build"],
     }
 
     if cmd[0] in command_map:
