@@ -1,0 +1,145 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  PYTHON_VERSION: "3.11"
+  # Add this for local testing detection
+  ACT_LOCAL_TESTING: ${{ vars.ACT_LOCAL_TESTING || 'false' }}
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        # Simplify matrix for local testing
+        python-version: ${{ env.ACT_LOCAL_TESTING == 'true' && fromJSON('["3.11"]') || fromJSON('["3.11", "3.12"]') }}
+        os: ${{ env.ACT_LOCAL_TESTING == 'true' && fromJSON('["ubuntu-latest"]') || fromJSON('["ubuntu-latest", "windows-latest", "macos-latest"]') }}
+      fail-fast: false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Install Poetry
+        if: ${{ env.ACT_LOCAL_TESTING != 'true' }}
+        uses: snok/install-poetry@v1
+        with:
+          version: 1.5.1
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Install Poetry (local testing)
+        if: ${{ env.ACT_LOCAL_TESTING == 'true' }}
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.poetry/bin" >> $GITHUB_PATH
+
+      - name: Cache Poetry dependencies
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: ${{ runner.os }}-poetry-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-poetry-${{ matrix.python-version }}-
+
+      - name: Install dependencies
+        run: |
+          if [[ "${{ env.ACT_LOCAL_TESTING }}" == "true" ]]; then
+            # Simplified for local testing
+            poetry install
+          else
+            # Full version for GitHub
+            poetry install --with dev,test
+          fi
+
+      - name: Run linting and type checking
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11' }}
+        run: |
+          if [[ "${{ env.ACT_LOCAL_TESTING }}" == "true" ]]; then
+            # Simplified for local testing
+            echo "Running simplified linting for local testing"
+            poetry run ruff check . || echo "Linting found issues, but continuing..."
+          else
+            # Full version for GitHub
+            poetry run ruff check .
+            poetry run ruff format --check
+            poetry run pyright
+          fi
+
+      - name: Run tests
+        run: |
+          if [[ "${{ env.ACT_LOCAL_TESTING }}" == "true" ]]; then
+            # Simplified for local testing
+            echo "Running simplified tests for local testing"
+            poetry run pytest -xvs tests/
+          else
+            # Full version for GitHub
+            poetry run pytest --cov=src --cov-report=term-missing --cov-report=xml
+          fi
+
+      - name: Upload coverage to Codecov
+        if: ${{ matrix.os == 'ubuntu-latest' && env.ACT_LOCAL_TESTING != 'true' }}
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Run security checks
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11' && env.ACT_LOCAL_TESTING != 'true' }}
+        run: |
+          poetry run pip install bandit
+          poetry run bandit -r src/ -c pyproject.toml
+
+  python-compatibility:
+    name: Python ${{ matrix.python-version }} Compatibility
+    runs-on: ubuntu-latest
+    if: ${{ env.ACT_LOCAL_TESTING != 'true' }}
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: 1.5.1
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Install dependencies
+        run: |
+          poetry install --with dev,test
+
+      - name: Run tests
+        run: |
+          poetry run pytest
+
+      - name: Report compatibility status
+        if: always()
+        run: |
+          if [ ${{ job.status }} == 'success' ]; then
+            echo "✅ Compatible with Python ${{ matrix.python-version }}"
+          else
+            echo "❌ Not compatible with Python ${{ matrix.python-version }}"
+            echo "::error::Tests failed with Python ${{ matrix.python-version }}"
+          fi

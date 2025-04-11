@@ -1,0 +1,26 @@
+{
+    "inputs": {},
+    "ref": "refs/heads/main",
+    "repository": {
+        "name": "conda-forge-converter",
+        "full_name": "username/conda-forge-converter",
+        "private": false,
+        "owner": {
+            "name": "username",
+            "email": "user@example.com"
+        },
+        "html_url": "https://github.com/username/conda-forge-converter",
+        "description": "A tool to convert Anaconda environments to conda-forge",
+        "fork": false,
+        "url": "https://github.com/username/conda-forge-converter",
+        "created_at": 1577836800,
+        "updated_at": 1577836800,
+        "pushed_at": 1577836800,
+        "default_branch": "main"
+    },
+    "sender": {
+        "login": "username"
+    },
+    "workflow": "Validate Workflows",
+    "event_name": "workflow_dispatch"
+}

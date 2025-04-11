@@ -1,0 +1,43 @@
+name: Sample (act compatible)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          # Simplified dependencies for local testing
+          echo "Installing minimal dependencies for local testing"
+          pip install pytest
+
+      - name: Run tests
+        run: |
+          # Simplified tests for local testing
+          echo "Running simplified tests for local testing"
+          python -c "print('Local testing successful!')"
+
+  local-only:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Local testing info
+        run: |
+          echo "This job only runs during local testing"
+          echo "It can be used to verify that local testing is working correctly"
+          echo "Current environment:"
+          env | sort

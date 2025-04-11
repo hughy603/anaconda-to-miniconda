@@ -1,33 +1,24 @@
-# PowerShell script to test GitHub Actions workflows with different Python versions
+# PowerShell script to test a workflow with different Python versions
 param(
     [Parameter(Mandatory=$true)][string]$WorkflowFile,
     [string]$EventType = "push",
-    [string]$Platform = "ubuntu-latest",
-    [string]$DockerImage = "ghcr.io/catthehacker/ubuntu:act-latest",
-    [switch]$DryRun = $false
+    [string]$JobFilter = "",
+    [Parameter(ValueFromRemainingArguments=$true)][string[]]$AdditionalArgs
 )
 
+if (-not $WorkflowFile) {
+    Write-Host "Usage: $PSCommandPath <workflow-file> [event-type] [job-filter] [additional-args]"
+    Write-Host "Examples:"
+    Write-Host "  $PSCommandPath .github/workflows/ci.yml"
+    Write-Host "  $PSCommandPath .github/workflows/ci.yml pull_request"
+    Write-Host "  $PSCommandPath .github/workflows/ci.yml test"
+    Write-Host "  $PSCommandPath .github/workflows/ci.yml push test --verbose"
+    exit 1
+}
+
 Write-Host "Testing workflow with Python 3.11..." -ForegroundColor Cyan
-# Create a temporary JSON file for matrix inputs
-$matrixJson = @{
-    "python-version" = "3.11"
-} | ConvertTo-Json
-
-$matrixFile = ".github/local-testing/matrix-python311.json"
-Set-Content -Path $matrixFile -Value $matrixJson
-
-# Run act for Python 3.11
-$eventFile = ".github/local-testing/events/$EventType.json"
-& "$PSScriptRoot\act-runner.ps1" -WorkflowFile $WorkflowFile -EventFile $eventFile -MatrixFile $matrixFile -Platform $Platform -DockerImage $DockerImage -DryRun:$DryRun
+$additionalArgsStr = if ($AdditionalArgs) { $AdditionalArgs -join ' ' } else { "" }
+& "$PSScriptRoot\local-test.ps1" -WorkflowFile $WorkflowFile -EventType $EventType -JobFilter $JobFilter -MatrixOverride "python-version=3.11" $AdditionalArgs
 
 Write-Host "`nTesting workflow with Python 3.12..." -ForegroundColor Cyan
-# Create a temporary JSON file for matrix inputs
-$matrixJson = @{
-    "python-version" = "3.12"
-} | ConvertTo-Json
-
-$matrixFile = ".github/local-testing/matrix-python312.json"
-Set-Content -Path $matrixFile -Value $matrixJson
-
-# Run act for Python 3.12
-& "$PSScriptRoot\act-runner.ps1" -WorkflowFile $WorkflowFile -EventFile $eventFile -MatrixFile $matrixFile -Platform $Platform -DockerImage $DockerImage -DryRun:$DryRun
+& "$PSScriptRoot\local-test.ps1" -WorkflowFile $WorkflowFile -EventType $EventType -JobFilter $JobFilter -MatrixOverride "python-version=3.12" $AdditionalArgs

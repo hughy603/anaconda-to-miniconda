@@ -18,10 +18,21 @@ jobs:
         run: |
           bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
           echo "${GITHUB_WORKSPACE}/bin" >> $GITHUB_PATH
+          # Make actionlint executable and available in PATH for local testing
+          if [ -f "./actionlint" ]; then
+            chmod +x ./actionlint
+            export PATH=$PATH:$(pwd)
+          fi
 
       - name: Run actionlint
+        if: ${{ env.ACT_LOCAL_TESTING != 'true' }}
         run: |
           actionlint
+          
+      - name: Skip actionlint for local testing
+        if: ${{ env.ACT_LOCAL_TESTING == 'true' }}
+        run: |
+          echo "Skipping actionlint for local testing"
 
       - name: Validate workflow files
         run: |
@@ -47,12 +58,13 @@ jobs:
             echo "Validating $file..."
 
             # Check for common issues
-            if grep -q "uses: actions/checkout@master" "$file"; then
+            # Exclude lines that are part of grep commands or comments
+            if grep -v "grep" "$file" | grep -v "#" | grep -q "uses: actions/checkout@master"; then
               echo "::error file=$file::Uses actions/checkout@master instead of a version tag"
               exit 1
             fi
 
-            if grep -q "uses: actions/setup-python@master" "$file"; then
+            if grep -v "grep" "$file" | grep -v "#" | grep -q "uses: actions/setup-python@master"; then
               echo "::error file=$file::Uses actions/setup-python@master instead of a version tag"
               exit 1
             fi

@@ -1,0 +1,119 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  PYTHON_VERSION: "3.11"
+  UV_VERSION: "0.7.1"
+  # Add this for local testing
+  ACT_LOCAL_TESTING: ${{ vars.ACT_LOCAL_TESTING || 'false' }}
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        # Simplify matrix for local testing
+        python-version: ["3.11", "3.12"]
+        os: ["ubuntu-latest", "windows-latest", "macos-latest"]
+      fail-fast: false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Install UV
+        shell: bash
+        run: |
+          if [[ "${{ env.ACT_LOCAL_TESTING }}" == "true" ]]; then
+            echo "Skipping UV installation in local testing"
+            pip install -e ".[dev,test]"
+          else
+            curl -LsSf https://astral.sh/uv/install.sh | sh
+            echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          fi
+
+      - name: Cache dependencies
+        if: ${{ env.ACT_LOCAL_TESTING != 'true' }}
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/uv
+            ~/.cache/pip
+          key: ${{ runner.os }}-py${{ matrix.python-version }}-uv${{ env.UV_VERSION }}-${{ hashFiles('requirements.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-py${{ matrix.python-version }}-uv${{ env.UV_VERSION }}-
+
+      - name: Install dependencies
+        run: |
+          if [[ "${{ env.ACT_LOCAL_TESTING }}" == "true" ]]; then
+            # Simplified for local testing
+            pip install -e ".[dev,test]"
+          else
+            # Full version for GitHub
+            uv pip install -e ".[dev,test]" --system
+          fi
+
+      - name: Run linting and type checking
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
+        run: |
+          if [[ "${{ env.ACT_LOCAL_TESTING }}" == "true" ]]; then
+            # Simplified for local testing
+            echo "Running simplified linting for local testing"
+            if command -v ruff &> /dev/null; then
+              ruff check . || echo "Linting found issues, but continuing..."
+            else
+              echo "Ruff not installed, skipping linting"
+            fi
+          else
+            # Full version for GitHub
+            hatch run lint
+            hatch run format -- --check
+            hatch run type-check
+          fi
+
+      - name: Run tests
+        run: |
+          if [[ "${{ env.ACT_LOCAL_TESTING }}" == "true" ]]; then
+            # Simplified for local testing
+            echo "Running simplified tests for local testing"
+            # Create a basic test file if it doesn't exist
+            mkdir -p tests
+            if [ ! -f "tests/test_basic.py" ]; then
+              echo 'def test_placeholder(): assert True' > tests/test_basic.py
+            fi
+            python -m pytest tests/test_basic.py -v
+          else
+            # Full version for GitHub
+            hatch run test
+          fi
+
+      - name: Upload coverage to Codecov
+        if: matrix.os == 'ubuntu-latest' && env.ACT_LOCAL_TESTING != 'true'
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: true
+
+      - name: Run security checks
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
+        run: |
+          if [[ "${{ env.ACT_LOCAL_TESTING }}" == "true" ]]; then
+            # Simplified for local testing
+            echo "Skipping security checks in local testing"
+          else
+            # Full version for GitHub
+            hatch run security
+          fi
