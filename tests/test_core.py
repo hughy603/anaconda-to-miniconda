@@ -613,7 +613,9 @@ class TestCreateCondaForgeEnvironment:
         mock_run.side_effect = [
             "libmamba",  # solver check for fast solver with conda config --show solver
             "mamba",     # which mamba check
+            "mamba",     # which mamba check (called again in _create_base_environment)
             "Environment created successfully",  # environment creation
+            "mamba",     # which mamba check (called in _install_conda_packages_in_batches)
             "Packages installed successfully",  # conda packages batch
             "Packages installed successfully",  # individual package 1 (if batch fails)
             "Packages installed successfully",  # individual package 2 (if batch fails)
@@ -643,24 +645,27 @@ class TestCreateCondaForgeEnvironment:
         assert any(arg in first_call_args for arg in ["config", "env", "list"])
 
         # The second call is to check for mamba
-        second_call_args = mock_run.call_args_list[1][0][0]
-        assert "which" in second_call_args
-        assert "mamba" in second_call_args
+        # Find the first "which mamba" call
+        which_mamba_call_found = False
+        for call_args in mock_run.call_args_list:
+            args = call_args[0][0]
+            if "which" in args and "mamba" in args:
+                which_mamba_call_found = True
+                break
+        assert which_mamba_call_found, "No 'which mamba' call found"
 
-        # The third call should be to create the base environment
-        third_call_args = mock_run.call_args_list[2][0][0]
-        assert "conda" in third_call_args or "mamba" in third_call_args
-        assert "create" in third_call_args
-        assert "target_env" in third_call_args
-
-        # The third call should be to create the base environment
-        third_call_args = mock_run.call_args_list[2][0][0]
-        assert "conda" in third_call_args or "mamba" in third_call_args
-        assert "create" in third_call_args
-        assert "target_env" in third_call_args
-        assert "python=3.11.3" in third_call_args or any(
-            arg.startswith("python=3.11.3") for arg in third_call_args
-        )
+        # Find the environment creation call
+        create_env_call_found = False
+        for _, call_args in enumerate(mock_run.call_args_list):
+            args = call_args[0][0]
+            if ("conda" in args or "mamba" in args) and "create" in args and "target_env" in args:
+                create_env_call_found = True
+                # Check that python version is specified correctly
+                assert "python=3.11.3" in args or any(
+                    arg.startswith("python=3.11.3") for arg in args
+                ), "Python version not specified correctly"
+                break
+        assert create_env_call_found, "No environment creation call found"
 
     @mock.patch("conda_forge_converter.core.environment_exists")
     @mock.patch("conda_forge_converter.core.run_command")
@@ -676,11 +681,24 @@ class TestCreateCondaForgeEnvironment:
         mock_exists.side_effect = lambda env_name, verbose=False: env_name != "target_env"
 
         # First call for solver check, second succeeds (create env), third call fails (install packages)
-        mock_run.side_effect = [
-            "libmamba",  # solver check with conda config --show solver
-            "Environment created successfully",  # environment creation with conda create
-            None,  # package installation failure
-        ]
+        # We need to make sure the package installation fails
+        # The failure needs to happen in _install_conda_packages_in_batches
+        # Let's add a print statement to see what's happening
+        def side_effect(*args, **kwargs):
+            cmd = args[0] if args else []
+            if len(cmd) > 0:
+                if "conda" in cmd[0] and "config" in cmd:
+                    return "libmamba"
+                elif "which" in cmd[0] and "mamba" in cmd:
+                    return "mamba"
+                elif ("conda" in cmd[0] or "mamba" in cmd[0]) and "create" in cmd:
+                    return "Environment created successfully"
+                elif ("conda" in cmd[0] or "mamba" in cmd[0]) and "install" in cmd:
+                    # This is the package installation - make it fail
+                    return None
+            return "default"
+        
+        mock_run.side_effect = side_effect
 
         # Execute
         result = create_conda_forge_environment(
@@ -695,6 +713,10 @@ class TestCreateCondaForgeEnvironment:
 
         # Verify
         assert result is False
+        
+        # Check that run_command was called with the expected arguments
+        install_calls = [call for call in mock_run.call_args_list if len(call[0][0]) > 0 and ("conda" in call[0][0][0] or "mamba" in call[0][0][0]) and "install" in call[0][0]]
+        assert len(install_calls) > 0, "No install calls were made"
 
 
 class TestConvertEnvironment:
