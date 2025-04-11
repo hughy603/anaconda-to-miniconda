@@ -601,7 +601,8 @@ class TestCreateCondaForgeEnvironment:
         # First call is for solver check, second for environment creation, rest for package installation
         # We need more responses for all the run_command calls
         mock_run.side_effect = [
-            "libmamba",  # solver check
+            "libmamba",  # solver check for fast solver
+            "mamba",  # which mamba check
             "Environment created successfully",  # environment creation
             "Packages installed successfully",  # conda packages batch
             "Packages installed successfully",  # individual package 1 (if batch fails)
@@ -721,9 +722,23 @@ class TestConvertEnvironment:
         # Verify
         assert result is True
         mock_from_env.assert_called_once_with("source_env", "", False)
-        assert mock_create_forge.call_count == 1
-        mock_from_env.assert_called_once_with("source_env", "", False)
-        assert mock_create_forge.call_count == 1
+        mock_create_forge.assert_called_once_with(
+            "source_env",
+            "target_env",
+            [
+                {"name": "numpy", "version": "1.24.3"},
+                {"name": "pandas", "version": "2.0.1"},
+            ],
+            [
+                {"name": "scikit-learn", "version": "1.2.2"},
+            ],
+            "3.11.3",
+            False,
+            False,
+            use_fast_solver=True,
+            batch_size=20,
+            preserve_ownership=True,
+        )
 
     @mock.patch("conda_forge_converter.core.environment_exists")
     def test_target_already_exists(self, mock_exists: mock.MagicMock) -> None:
@@ -881,7 +896,7 @@ class TestConvertMultipleEnvironments:
         )  # This is already handled correctly in the test
 
         # Mock check_disk_space inside the function
-        with mock.patch("conda_forge_converter.utils.check_disk_space", return_value=False):
+        with mock.patch("conda_forge_converter.core.check_disk_space", return_value=False):
             # Execute - the current implementation just warns about low disk space
             # but doesn't prevent conversion
             result = convert_multiple_environments(verbose=False)
@@ -909,7 +924,7 @@ class TestConvertMultipleEnvironments:
         source_envs = list(mock_conda_environments.keys())
 
         # Mock check_disk_space inside the function
-        with mock.patch("conda_forge_converter.utils.check_disk_space", return_value=True):
+        with mock.patch("conda_forge_converter.core.check_disk_space", return_value=True):
             result = convert_multiple_environments(
                 source_envs=source_envs,  # Pass source_envs directly to avoid filtering
                 target_suffix="_forge",

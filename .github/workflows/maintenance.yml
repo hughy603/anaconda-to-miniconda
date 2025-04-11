@@ -53,7 +53,7 @@ jobs:
       - name: Run security checks
         id: security_check
         run: |
-          uv run security || echo "security_failed=true" >> $GITHUB_OUTPUT
+          hatch run security || echo "security_failed=true" >> $GITHUB_OUTPUT
           pip-audit || echo "audit_failed=true" >> $GITHUB_OUTPUT
 
       - name: Create issue if vulnerabilities found
@@ -115,7 +115,7 @@ jobs:
 
       - name: Run test coverage
         run: |
-          uv run test-cov
+          hatch run test:cov
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4

@@ -55,9 +55,9 @@ jobs:
       - name: Run linting and type checking
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
         run: |
-          uv run lint
-          uv run format -- --check
-          uv run type-check
+          hatch run lint
+          hatch run format -- --check
+          hatch run type-check
 
       - name: Run tests
         run: |
@@ -73,4 +73,4 @@ jobs:
       - name: Run security checks
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
         run: |
-          uv run security
+          hatch run security

@@ -63,7 +63,9 @@ from .exceptions import (
     PackageInstallationError,
 )
 from .utils import (
-    check_disk_space,
+    check_disk_space as utils_check_disk_space,
+)
+from .utils import (
     is_command_output_str,
     is_conda_environment,
     logger,
@@ -71,7 +73,7 @@ from .utils import (
 )
 
 # Re-export check_disk_space for easier mocking in tests
-check_disk_space = check_disk_space
+check_disk_space = utils_check_disk_space
 
 # === TYPE DEFINITIONS ===
 

@@ -1,152 +1,89 @@
 # GitHub Actions Local Testing
 
-This directory contains tools for testing GitHub Actions workflows locally before committing changes.
-
-## Overview
-
-The local testing tools allow you to:
-
-- Test GitHub Actions workflows locally without pushing to GitHub
-- Test with specific matrix configurations (e.g., Python versions)
-- Test with different event types (push, pull_request, etc.)
-- Validate workflows before committing changes
+This directory contains scripts and configuration files for testing GitHub Actions workflows locally using [act](https://github.com/nektos/act).
 
 ## Prerequisites
 
-1. [Docker Desktop](https://www.docker.com/products/docker-desktop/) - Required to run the workflow containers
-1. [act](https://github.com/nektos/act#installation) - Tool for running GitHub Actions locally
-1. PowerShell - Used by the scripts to run act
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running
+- [act](https://github.com/nektos/act) installed
 
-## Installation
+## Scripts
 
-### Installing act
+### test-workflow.ps1
 
-#### Windows
-
-```powershell
-# Using Chocolatey
-choco install act-cli
-
-# Using Scoop
-scoop install act
-```
-
-#### macOS
-
-```bash
-# Using Homebrew
-brew install act
-```
-
-#### Linux
-
-```bash
-# Using the install script
-curl -s https://raw.githubusercontent.com/nektos/act/master/install.sh | sudo bash
-```
-
-## Usage
-
-### Using PowerShell (Recommended)
-
-#### Test a workflow
+This PowerShell script allows you to test GitHub Actions workflows locally.
 
 ```powershell
-# Test with default push event
-.\github\local-testing\test-workflow.ps1 -WorkflowFile .github/workflows/ci.yml
+# Test the CI workflow
+.\test-workflow.ps1 -WorkflowFile .github/workflows/ci.yml
 
-# Test with pull_request event
-.\github\local-testing\test-workflow.ps1 -WorkflowFile .github/workflows/ci.yml -EventType pull_request
+# Test with a specific event type
+.\test-workflow.ps1 -WorkflowFile .github/workflows/ci.yml -EventType pull_request
 
-# Test with specific Python version
-.\github\local-testing\test-workflow.ps1 -WorkflowFile .github/workflows/ci.yml -MatrixOverride "python-version=3.11"
+# Test with a matrix override
+.\test-workflow.ps1 -WorkflowFile .github/workflows/ci.yml -MatrixOverride "python-version=3.11"
 
-# Test with specific job
-.\github\local-testing\test-workflow.ps1 -WorkflowFile .github/workflows/ci.yml -JobFilter "test"
+# Test a specific job
+.\test-workflow.ps1 -WorkflowFile .github/workflows/ci.yml -JobFilter "test"
 
-# Test without Docker (dry run mode)
-.\github\local-testing\test-workflow.ps1 -WorkflowFile .github/workflows/ci.yml -DryRun
+# Dry run (don't actually run Docker)
+.\test-workflow.ps1 -WorkflowFile .github/workflows/ci.yml -DryRun
 ```
 
-#### Test with multiple Python versions
+### test-workflow.sh
 
-```powershell
-# Test with Python 3.11 and 3.12
-.\github\local-testing\test-python-versions.ps1 -WorkflowFile .github/workflows/ci.yml
-```
-
-### Using Bash
-
-#### Test a workflow
+This Bash script provides the same functionality as test-workflow.ps1 but for Unix-like systems.
 
 ```bash
-# Test with default push event
-bash .github/local-testing/test-workflow.sh .github/workflows/ci.yml
+# Test the CI workflow
+./test-workflow.sh .github/workflows/ci.yml
 
-# Test with pull_request event
-bash .github/local-testing/test-workflow.sh .github/workflows/ci.yml pull_request
+# Test with a specific event type
+./test-workflow.sh .github/workflows/ci.yml pull_request
 
-# Test with specific Python version
-bash .github/local-testing/test-workflow.sh .github/workflows/ci.yml push python-version=3.11
+# Test with a matrix override
+./test-workflow.sh .github/workflows/ci.yml push python-version=3.11
 ```
 
-#### Test with multiple Python versions
+### act-runner.ps1
 
-```bash
-# Test with Python 3.11 and 3.12
-bash .github/local-testing/test-python-versions.sh .github/workflows/ci.yml
-```
+This PowerShell script is used by test-workflow.ps1 to run GitHub Actions workflows locally. It handles:
 
-## How It Works
+- Creating a temporary directory
+- Copying repository files
+- Setting up a git repository
+- Running act with the appropriate parameters
 
-The scripts:
+## Local Testing Workflow Files
 
-1. Create a temporary directory in your home folder
-1. Copy the repository files to the temporary directory
-1. Initialize a git repository in the temporary directory
-1. Create event and matrix configuration files as needed
-1. Run act with the appropriate parameters
-1. Clean up the temporary directory when done
+For workflows that require specific environment setup, we provide local testing versions of the workflow files:
 
-This approach avoids issues with UNC paths and ensures a clean environment for each test run.
+- `ci-local.yml`: A modified version of ci.yml that works better with local testing
 
-## Advanced Usage
-
-### Using the act-runner.ps1 Script Directly
-
-For more control, you can use the `act-runner.ps1` script directly:
-
-```powershell
-# Basic usage
-.\github\local-testing\act-runner.ps1 -WorkflowFile .github/workflows/ci.yml -EventFile .github/local-testing/events/push.json
-
-# With matrix override
-.\github\local-testing\act-runner.ps1 -WorkflowFile .github/workflows/ci.yml -EventFile .github/local-testing/events/push.json -MatrixFile .github/local-testing/matrix-input.json
-
-# Keep the temporary directory for debugging
-.\github\local-testing\act-runner.ps1 -WorkflowFile .github/workflows/ci.yml -EventFile .github/local-testing/events/push.json -KeepTemp
-
-# Specify a different platform and Docker image
-.\github\local-testing\act-runner.ps1 -WorkflowFile .github/workflows/ci.yml -EventFile .github/local-testing/events/push.json -Platform ubuntu-22.04 -DockerImage ghcr.io/catthehacker/ubuntu:act-22.04
-
-# Run without Docker (dry run mode)
-.\github\local-testing\act-runner.ps1 -WorkflowFile .github/workflows/ci.yml -EventFile .github/local-testing/events/push.json -DryRun
-```
+These local testing workflow files are automatically used when running the test-workflow.ps1 script with the corresponding workflow file.
 
 ## Troubleshooting
 
 ### Docker Issues
 
-- Ensure Docker Desktop is running
-- Make sure you have enough disk space for the Docker images
-- If you see permission errors, try running Docker Desktop as administrator
+If you encounter Docker-related issues:
 
-### Path Issues
+1. Make sure Docker Desktop is running
+1. Try running with the `-DryRun` flag to see the commands that would be executed
+1. Check Docker Desktop settings to ensure it has enough resources
 
-- The scripts handle path conversion automatically
-- If you see path-related errors, try using the PowerShell scripts instead of bash
+### Act Issues
 
-### Git Issues
+If you encounter issues with act:
 
-- The scripts initialize a git repository in the temporary directory
-- If you see git-related errors, make sure git is installed and in your PATH
+1. Make sure act is installed and in your PATH
+1. Try running act directly to see if there are any configuration issues
+1. Check the [act documentation](https://github.com/nektos/act) for more information
+
+### Workflow Issues
+
+If the workflow runs but fails:
+
+1. Check the error messages in the output
+1. Look for missing dependencies or configuration
+1. Try running with a matrix override to test a specific configuration

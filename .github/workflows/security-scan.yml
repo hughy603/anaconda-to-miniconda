@@ -49,7 +49,7 @@ jobs:
 
       - name: Run tests with coverage
         run: |
-          uv run test-cov
+          hatch run test:cov
 
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v1

@@ -60,7 +60,7 @@ jobs:
 
       - name: Validate release readiness
         run: |
-          uv run validate-release
+          hatch run validate-release
 
   test:
     name: Test on Multiple Platforms
@@ -106,7 +106,7 @@ jobs:
 
       - name: Run tests
         run: |
-          uv run test-cov
+          hatch run test:cov
 
       - name: Upload test results
         if: always()
