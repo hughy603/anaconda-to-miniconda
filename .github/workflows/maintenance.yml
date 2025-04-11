@@ -48,7 +48,7 @@ jobs:
       - name: Install dependencies
         run: |
           uv pip install -r requirements.lock --system
-          uv pip install pip-audit --system
+          uv pip install pip-audit hatch --system
 
       - name: Run security checks
         id: security_check

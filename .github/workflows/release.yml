@@ -57,6 +57,7 @@ jobs:
       - name: Install dependencies
         run: |
           uv pip install -r requirements.lock --system
+          uv pip install hatch --system
 
       - name: Validate release readiness
         run: |
@@ -103,6 +104,7 @@ jobs:
       - name: Install dependencies
         run: |
           uv pip install -r requirements.lock --system
+          uv pip install hatch --system
 
       - name: Run tests
         run: |
@@ -164,7 +166,7 @@ jobs:
       - name: Install dependencies
         run: |
           uv pip install -r requirements.lock --system
-          uv pip install python-semantic-release build twine --system
+          uv pip install python-semantic-release build twine hatch --system
 
       - name: Semantic Release
         id: release

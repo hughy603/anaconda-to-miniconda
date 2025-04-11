@@ -48,8 +48,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv pip install hatch  # Only needed for version management
-          uv pip install -e ".[dev]"
+          uv pip install hatch --system  # Only needed for version management
+          uv pip install -e ".[dev]" --system
 
       - name: Check version format
         run: |
