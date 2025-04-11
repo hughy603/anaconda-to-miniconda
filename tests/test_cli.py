@@ -115,13 +115,15 @@ class TestMainFunction:
         mock_list_envs.assert_called_once()
         mock_convert.assert_called_once_with(
             "myenv",
-            "myenv_forge",
+            None,  # When replace_original=True, target_env is None
             None,
             False,
             False,
             use_fast_solver=True,
             batch_size=20,
             preserve_ownership=True,
+            replace_original=True,
+            backup_suffix="_anaconda_backup",
         )
         assert exit_code == 0
 
@@ -163,6 +165,8 @@ class TestMainFunction:
             use_fast_solver=True,
             batch_size=20,
             preserve_ownership=True,
+            replace_original=True,
+            backup_suffix="_anaconda_backup",
         )
         assert exit_code == 0
 

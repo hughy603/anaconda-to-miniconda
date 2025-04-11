@@ -50,12 +50,18 @@ paths = [
     '''\.idea/.*''',
     '''pyproject\.toml$''',
 ]
+
+# Allow specific files and lines that trigger false positives
+[[allowlist.files]]
+path = '''src/conda_forge_converter/utils.py'''
+line_number = 46
 regexes = [
     '''(?i)example[_-]?key''',
     '''(?i)test[_-]?key''',
     '''(?i)dummy[_-]?key''',
     '''github-actions\[bot\]@users\.noreply\.github\.com''',
     '''actions@github\.com''',
+    '''user_module = None''',                                # Allow Unix module import fallback
 ]
 
 [[rules]]

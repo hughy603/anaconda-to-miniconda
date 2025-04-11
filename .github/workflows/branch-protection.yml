@@ -49,7 +49,7 @@ jobs:
       - name: Install dependencies
         run: |
           uv pip install hatch --system  # Only needed for version management
-          uv pip install -e ".[dev]" --system
+          hatch env create # TODO: replace with uv venv for speed
 
       - name: Check version format
         run: |
@@ -69,12 +69,12 @@ jobs:
 
       - name: Run tests
         run: |
-          uvx pytest --cov=conda_forge_converter --cov-report=term-missing --cov-report=xml --junitxml=pytest.xml
+          hatch run pytest --cov=conda_forge_converter --cov-report=term-missing --cov-report=xml --junitxml=pytest.xml tests/
 
       - name: Run linting
         run: |
-          uvx ruff check .
-          uvx mypy .
+          hatch run lint
+          hatch run type-check
 
       - name: Check commit message format
         if: github.event_name == 'pull_request'

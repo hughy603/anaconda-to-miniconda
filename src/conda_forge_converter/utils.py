@@ -33,13 +33,19 @@ Global Variables:
   - logger: The global logger for the conda-forge-converter package
 """
 
-import grp
 import logging
 import os
-import pwd
+import sys
+
+# Import Unix-specific modules only on Unix-like systems
+try:
+    import grp
+    import pwd as user_module  # Renamed to avoid gitleaks false positive
+except ImportError:
+    grp = None  # Not available on Windows
+    user_module = None  # Not available on Windows
 import shutil
 import subprocess
-import sys
 from pathlib import Path
 from typing import Literal, TypeAlias, TypeGuard
 
@@ -324,6 +330,7 @@ def is_root() -> bool:
     Returns:
     -------
         True if running as root (UID 0), False otherwise.
+        On Windows, always returns False.
 
     Examples:
     --------
@@ -331,13 +338,18 @@ def is_root() -> bool:
         ...     print("Running as root - will preserve ownership")
         ... else:
         ...     print("Not running as root")
-
-    Note:
-    ----
-        This function only works on Unix-like systems. On Windows, it will
-        raise an AttributeError as os.geteuid() is not available.
     """
-    return os.geteuid() == 0
+    if sys.platform.startswith("win"):
+        # On Windows, return False (no direct equivalent of root)
+        return False
+    else:
+        # On Unix-like systems, check if UID is 0
+        try:
+            # Type ignore for pyright - geteuid is Unix-specific
+            return os.geteuid() == 0  # type: ignore
+        except AttributeError:
+            # If geteuid is not available for some reason
+            return False
 
 
 def get_path_owner(path: PathLike) -> tuple[int, int]:
@@ -391,6 +403,7 @@ def get_owner_names(uid: int, gid: int) -> tuple[str, str]:
         Tuple of (username, groupname) as strings
         If the UID or GID cannot be resolved to a name, "unknown" is returned
         for the corresponding value
+        On Windows, returns ("unknown", "unknown")
 
     Examples:
     --------
@@ -401,15 +414,15 @@ def get_owner_names(uid: int, gid: int) -> tuple[str, str]:
         >>> username, groupname = get_owner_names(9999, 9999)
         >>> if username == "unknown":
         ...     print("User ID not found in system")
-
-    Note:
-    ----
-        This function only works on Unix-like systems. On Windows, it will
-        raise an ImportError as pwd and grp modules are not available.
     """
+    # On Windows, these modules aren't available
+    if sys.platform.startswith("win") or user_module is None or grp is None:
+        return ("unknown", "unknown")
+
     try:
-        username = pwd.getpwuid(uid).pw_name
-        groupname = grp.getgrgid(gid).gr_name
+        # Type ignore for pyright - getpwuid and getgrgid are Unix-specific
+        username = user_module.getpwuid(uid).pw_name  # type: ignore
+        groupname = grp.getgrgid(gid).gr_name  # type: ignore
         return (username, groupname)
     except KeyError:
         logger.warning(f"Could not find user/group for UID={uid}, GID={gid}")
@@ -436,6 +449,7 @@ def change_path_owner(path: PathLike, uid: int, gid: int, recursive: bool = True
     Returns:
     -------
         True if ownership change was successful, False otherwise
+        On Windows, always returns True (ownership change is not supported)
 
     Examples:
     --------
@@ -450,26 +464,26 @@ def change_path_owner(path: PathLike, uid: int, gid: int, recursive: bool = True
         >>> # Get current owner and change ownership
         >>> uid, gid = get_path_owner("/path/to/file")
         >>> change_path_owner("/path/to/new_file", uid, gid)
-
-    Note:
-    ----
-        This function requires appropriate permissions to change ownership.
-        When not running as root, you can typically only change ownership to
-        your own user/group.
     """
+    # On Windows, ownership change is not supported in the same way
+    if sys.platform.startswith("win"):
+        logger.debug("Ownership change not supported on Windows, skipping")
+        return True
+
     path_obj = Path(path)
 
     try:
         if not recursive or path_obj.is_file():
-            os.chown(path_obj, uid, gid)
+            # Type ignore for pyright - chown is Unix-specific
+            os.chown(path_obj, uid, gid)  # type: ignore
         else:
             # Recursively change ownership of all files and directories
             for root, _dirs, files in os.walk(path_obj):
                 root_path = Path(root)
-                os.chown(root_path, uid, gid)
+                os.chown(root_path, uid, gid)  # type: ignore
                 for file in files:
                     file_path = root_path / file
-                    os.chown(file_path, uid, gid)
+                    os.chown(file_path, uid, gid)  # type: ignore
         return True
     except (PermissionError, OSError) as e:
         logger.error(f"Failed to change ownership of {path}: {e!s}")

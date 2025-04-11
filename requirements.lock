@@ -4,6 +4,8 @@ annotated-types==0.7.0
     # via pydantic
 anyio==4.9.0
     # via httpx
+backports-tarfile==1.2.0
+    # via jaraco-context
 build==1.2.2.post1
     # via conda-forge-converter (pyproject.toml)
 certifi==2025.1.31
@@ -11,8 +13,6 @@ certifi==2025.1.31
     #   httpcore
     #   httpx
     #   requests
-cffi==1.17.1
-    # via cryptography
 cfgv==3.4.0
     # via pre-commit
 charset-normalizer==3.4.1
@@ -25,10 +25,13 @@ click==8.1.8
     #   userpath
 click-option-group==0.5.7
     # via python-semantic-release
+colorama==0.4.6
+    # via
+    #   build
+    #   click
+    #   pytest
 coverage==7.8.0
     # via pytest-cov
-cryptography==44.0.2
-    # via secretstorage
 deprecated==1.2.18
     # via python-semantic-release
 distlib==0.3.9
@@ -61,6 +64,8 @@ idna==3.10
     #   httpx
     #   hyperlink
     #   requests
+importlib-metadata==8.6.1
+    # via keyring
 importlib-resources==6.5.2
     # via python-semantic-release
 iniconfig==2.1.0
@@ -71,10 +76,6 @@ jaraco-context==6.0.1
     # via keyring
 jaraco-functools==4.1.0
     # via keyring
-jeepney==0.9.0
-    # via
-    #   keyring
-    #   secretstorage
 jinja2==3.1.6
     # via python-semantic-release
 keyring==25.6.0
@@ -115,8 +116,6 @@ pre-commit==3.8.0
     # via conda-forge-converter (pyproject.toml)
 ptyprocess==0.7.0
     # via pexpect
-pycparser==2.22
-    # via cffi
 pydantic==2.9.2
     # via python-semantic-release
 pydantic-core==2.23.4
@@ -137,6 +136,8 @@ python-gitlab==4.13.0
     # via python-semantic-release
 python-semantic-release==9.21.0
     # via conda-forge-converter (pyproject.toml)
+pywin32-ctypes==0.2.3
+    # via keyring
 pyyaml==6.0.2
     # via
     #   conda-forge-converter (pyproject.toml)
@@ -154,8 +155,6 @@ rich==13.9.4
     #   python-semantic-release
 ruff==0.3.7
     # via conda-forge-converter (pyproject.toml)
-secretstorage==3.3.3
-    # via keyring
 shellingham==1.5.4
     # via
     #   hatch
@@ -191,5 +190,7 @@ virtualenv==20.30.0
     #   pre-commit
 wrapt==1.17.2
     # via deprecated
+zipp==3.21.0
+    # via importlib-metadata
 zstandard==0.23.0
     # via hatch

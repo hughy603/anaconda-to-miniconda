@@ -1,0 +1,9 @@
+{
+    "ref": "refs/heads/main",
+    "repository": {
+        "name": "conda-forge-converter",
+        "owner": {
+            "name": "test-user"
+        }
+    }
+}

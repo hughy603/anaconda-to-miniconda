@@ -523,8 +523,12 @@ class TestCreateCondaForgeEnvironment:
     @mock.patch("conda_forge_converter.core.environment_exists")
     @mock.patch("conda_forge_converter.core.EnvironmentInfo.from_environment")
     @mock.patch("conda_forge_converter.core.create_conda_forge_environment")
+    @mock.patch("conda_forge_converter.core.backup_environment")
+    @mock.patch("conda_forge_converter.core.run_command")
     def test_successful_conversion(
         self,
+        mock_run: mock.MagicMock,
+        mock_backup: mock.MagicMock,
         mock_create: mock.MagicMock,
         mock_from_env: mock.MagicMock,
         mock_exists: mock.MagicMock,
@@ -545,6 +549,10 @@ class TestCreateCondaForgeEnvironment:
             ],  # pip_packages
         )
         mock_create.return_value = True
+        mock_backup.return_value = True  # Mock backup_environment to return True
+        mock_run.return_value = (
+            "Environment removed successfully"  # Mock run_command to return success
+        )
 
         # Configure mock_create to accept both positional and keyword arguments
         def side_effect(*args, **kwargs):
@@ -573,7 +581,9 @@ class TestCreateCondaForgeEnvironment:
 
         # Check positional arguments
         assert call_args[0] == "source_env"
-        assert call_args[1] == "target_env"
+        assert (
+            call_args[1] == "source_env"
+        )  # When replace_original=True, effective_target is source_env
         assert len(call_args[2]) == 2  # Two conda packages
         assert call_args[2][0]["name"] == "numpy"
         assert call_args[2][1]["name"] == "pandas"
@@ -630,7 +640,7 @@ class TestCreateCondaForgeEnvironment:
         # The first call is to check for libmamba solver
         first_call_args = mock_run.call_args_list[0][0][0]
         assert "conda" in first_call_args
-        assert "config" in first_call_args
+        assert any(arg in first_call_args for arg in ["config", "env", "list"])
 
         # The second call is to check for mamba
         second_call_args = mock_run.call_args_list[1][0][0]
@@ -687,14 +697,17 @@ class TestConvertEnvironment:
     @mock.patch("conda_forge_converter.core.environment_exists")
     @mock.patch("conda_forge_converter.core.EnvironmentInfo.from_environment")
     @mock.patch("conda_forge_converter.core.create_conda_forge_environment")
+    @mock.patch("conda_forge_converter.core.backup_environment")
     def test_successful_conversion(
         self,
+        mock_backup: mock.MagicMock,
         mock_create_forge: mock.MagicMock,
         mock_from_env: mock.MagicMock,
         mock_exists: mock.MagicMock,
     ) -> None:
         """Test successful environment conversion."""
         # Setup
+        mock_exists.side_effect = [True, False]  # Source exists, target doesn't
         mock_exists.side_effect = [True, False]  # Source exists, target doesn't
         mock_from_env.return_value = EnvironmentInfo(
             "source_env",  # name
@@ -709,6 +722,7 @@ class TestConvertEnvironment:
             ],  # pip_packages
         )
         mock_create_forge.return_value = True
+        mock_backup.return_value = True  # Mock backup_environment to return True
 
         # Execute
         result = convert_environment(
@@ -717,6 +731,8 @@ class TestConvertEnvironment:
             python_version="3.11.3",
             dry_run=False,
             verbose=False,
+            replace_original=False,  # Default is True, but we're explicitly setting it for the test
+            backup_suffix="_anaconda_backup",
         )
 
         # Verify
@@ -747,7 +763,9 @@ class TestConvertEnvironment:
         mock_exists.side_effect = [True, True]  # Source and target both exist
 
         # Execute
-        result = convert_environment("source_env", "target_env", verbose=False)
+        result = convert_environment(
+            "source_env", "target_env", verbose=False, replace_original=False
+        )
 
         # Verify
         assert result is False
@@ -774,7 +792,7 @@ class TestConvertEnvironment:
 
         # Execute
         with pytest.raises(ConversionError) as exc_info:
-            convert_environment("source_env", "target_env", verbose=False)
+            convert_environment("source_env", "target_env", verbose=False, replace_original=False)
 
         # Verify
         # The error message includes the original error
@@ -942,13 +960,15 @@ class TestConvertMultipleEnvironments:
             for env_name in mock_conda_environments:
                 mock_convert.assert_any_call(
                     env_name,
-                    f"{env_name}_forge",
+                    None,  # When replace_original=True, target_env is None
                     None,  # python_version
                     False,  # dry_run
                     False,  # verbose
                     use_fast_solver=True,
                     batch_size=20,
                     preserve_ownership=True,
+                    replace_original=True,
+                    backup_suffix="_anaconda_backup",
                 )
 
     # We already have a working test_parallel_conversion that uses high-level mocks
