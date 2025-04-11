@@ -20,6 +20,12 @@ cd conda-forge-converter
 # Install UV (recommended to use pipx for global installation)
 pip install uv
 
+# Install shellcheck (required for pre-commit hooks)
+# On Windows: scoop install shellcheck
+# On macOS: brew install shellcheck
+# On Ubuntu/Debian: apt-get install shellcheck
+# On Fedora/RHEL: dnf install ShellCheck
+
 # Set up development environment
 uv venv
 uv pip install -e ".[dev,test]"

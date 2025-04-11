@@ -1,0 +1,13 @@
+name: Test Shellcheck
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test Shellcheck
+        run: |
+          # Fixed: Added quotes around the variable to prevent SC2086 error
+          echo "Hello" >> "$GITHUB_OUTPUT"

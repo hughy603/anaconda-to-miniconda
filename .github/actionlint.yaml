@@ -1,0 +1,23 @@
+# actionlint configuration file
+# See: https://github.com/rhysd/actionlint/blob/main/docs/config.md
+
+# Shellcheck configuration
+shellcheck:
+  # Don't ignore any shellcheck warnings
+  ignore: []
+  # Explicitly enable SC2086 (double quote to prevent globbing and word splitting)
+  include: ["SC2086"]
+  # Set shellcheck severity level
+  severity: "warning"
+  # Use bash as the default shell
+  shell: "bash"
+
+# Don't ignore any actionlint warnings
+ignore: []
+
+# Self-hosted runner labels
+self-hosted-runner:
+  labels:
+    - "ubuntu-latest"
+    - "windows-latest"
+    - "macos-latest"

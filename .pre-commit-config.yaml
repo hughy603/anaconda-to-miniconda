@@ -92,11 +92,22 @@ repos:
         name: Lint GitHub Actions workflows
         description: Run actionlint on GitHub Actions workflow files
         entry: actionlint
-        args: ["-color"]
+        args: ["-color", "-config-file", ".github/actionlint.yaml"]
         language: system
         # Check all workflow files, including examples
         files: ^\.github/workflows/.*\.(ya?ml|ya?ml\.example)$
         # This will use your locally installed actionlint
+
+  # Check for required dependencies
+  - repo: local
+    hooks:
+      - id: check-shellcheck
+        name: Check shellcheck installation
+        description: Verify shellcheck is installed for GitHub Actions workflow validation
+        entry: powershell -ExecutionPolicy Bypass -File .github/scripts/check-shellcheck-installed.ps1
+        language: system
+        pass_filenames: false
+        always_run: true
 
   # Check for sensitive data in GitHub workflows
   # Temporarily disabled due to false positives
