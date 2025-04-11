@@ -233,6 +233,7 @@ function Run-TestsWithPython {
         $cmd += " --env ACT_LOCAL_TESTING=true"
         $cmd += " --env SKIP_DOCKER_BUILDS=true"
         $cmd += " --env SKIP_LONG_RUNNING_TESTS=true"
+        $cmd += " --env REVIEWDOG_GITHUB_API_TOKEN=local-testing-token"
 
         # Run the command
         Write-Host "Running: $cmd" -ForegroundColor Green
@@ -390,6 +391,7 @@ if ($SkipDocker) {
     $cmd += " --env ACT_LOCAL_TESTING=true"
     $cmd += " --env SKIP_DOCKER_BUILDS=true"
     $cmd += " --env SKIP_LONG_RUNNING_TESTS=true"
+    $cmd += " --env REVIEWDOG_GITHUB_API_TOKEN=local-testing-token"
 
     # Run the command
     Write-Host "Running: $cmd" -ForegroundColor Green
