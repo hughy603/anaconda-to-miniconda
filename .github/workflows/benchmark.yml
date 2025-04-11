@@ -32,7 +32,7 @@ jobs:
       - name: Install UV
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
 
       - name: Cache dependencies
         uses: actions/cache@v4
@@ -57,19 +57,21 @@ jobs:
         run: |
           if [ -z "$(find tests/benchmarks -name 'test_*.py' 2>/dev/null)" ]; then
             echo "Creating a sample benchmark test"
-            echo 'import pytest' > tests/benchmarks/test_sample_benchmark.py
-            echo 'from conda_forge_converter import __version__' >> tests/benchmarks/test_sample_benchmark.py
-            echo '' >> tests/benchmarks/test_sample_benchmark.py
-            echo 'def test_version_access(benchmark):' >> tests/benchmarks/test_sample_benchmark.py
-            echo '    """Benchmark accessing the version (placeholder benchmark)."""' >> tests/benchmarks/test_sample_benchmark.py
-            echo '    result = benchmark(lambda: __version__)' >> tests/benchmarks/test_sample_benchmark.py
-            echo '    assert result is not None' >> tests/benchmarks/test_sample_benchmark.py
-            echo '' >> tests/benchmarks/test_sample_benchmark.py
-            echo '# Add more meaningful benchmarks for your actual code here' >> tests/benchmarks/test_sample_benchmark.py
-            echo "created=true" >> $GITHUB_OUTPUT
+            {
+              echo 'import pytest'
+              echo 'from conda_forge_converter import __version__'
+              echo ''
+              echo 'def test_version_access(benchmark):'
+              echo '    """Benchmark accessing the version (placeholder benchmark)."""'
+              echo '    result = benchmark(lambda: __version__)'
+              echo '    assert result is not None'
+              echo ''
+              echo '# Add more meaningful benchmarks for your actual code here'
+            } > tests/benchmarks/test_sample_benchmark.py
+            echo "created=true" >> "$GITHUB_OUTPUT"
           else
             echo "Benchmark tests found"
-            echo "created=false" >> $GITHUB_OUTPUT
+            echo "created=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Run benchmarks

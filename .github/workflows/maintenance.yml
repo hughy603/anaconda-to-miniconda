@@ -33,7 +33,7 @@ jobs:
       - name: Install UV
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
 
       - name: Cache dependencies
         uses: actions/cache@v4
@@ -53,8 +53,8 @@ jobs:
       - name: Run security checks
         id: security_check
         run: |
-          hatch run security || echo "security_failed=true" >> $GITHUB_OUTPUT
-          pip-audit || echo "audit_failed=true" >> $GITHUB_OUTPUT
+          hatch run security || echo "security_failed=true" >> "$GITHUB_OUTPUT"
+          pip-audit || echo "audit_failed=true" >> "$GITHUB_OUTPUT"
 
       - name: Create issue if vulnerabilities found
         if: steps.security_check.outputs.security_failed == 'true' || steps.security_check.outputs.audit_failed == 'true'
@@ -101,7 +101,7 @@ jobs:
       - name: Install UV
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
 
       - name: Install dependencies
         run: |

@@ -34,7 +34,7 @@ jobs:
       - name: Install uv
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
 
       - name: Cache dependencies
         uses: actions/cache@v4
@@ -95,7 +95,7 @@ jobs:
           echo "Checking commit messages between $BASE_SHA and $HEAD_SHA"
           
           # Get all commits in the PR
-          COMMITS=$(git log --no-merges --pretty=format:"%H" $BASE_SHA..$HEAD_SHA)
+          COMMITS=$(git log --no-merges --pretty=format:"%H" "$BASE_SHA".."$HEAD_SHA")
           
           if [ -z "$COMMITS" ]; then
             echo "No non-merge commits found in this PR. Skipping commit message check."
@@ -105,8 +105,8 @@ jobs:
           INVALID_COMMITS=0
           
           # Check each commit message
-          for COMMIT in $COMMITS; do
-            COMMIT_MSG=$(git log -1 --pretty=%B $COMMIT)
+          for COMMIT in ${COMMITS}; do
+            COMMIT_MSG=$(git log -1 --pretty=%B "$COMMIT")
             
             # Skip check for merge commits (just in case)
             if echo "$COMMIT_MSG" | grep -E "^Merge " > /dev/null; then
@@ -126,8 +126,8 @@ jobs:
             fi
           done
           
-          if [ $INVALID_COMMITS -gt 0 ]; then
-            echo "Found $INVALID_COMMITS commit(s) with invalid message format."
+          if [ ${INVALID_COMMITS} -gt 0 ]; then
+            echo "Found ${INVALID_COMMITS} commit(s) with invalid message format."
             exit 1
           else
             echo "All commit messages follow the Conventional Commits specification."

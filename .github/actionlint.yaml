@@ -5,12 +5,18 @@
 shellcheck:
   # Don't ignore any shellcheck warnings
   ignore: []
-  # Explicitly enable SC2086 (double quote to prevent globbing and word splitting)
-  include: ["SC2086"]
-  # Set shellcheck severity level
-  severity: "warning"
+  # Include all shellcheck checks
+  include: []
+  # Set shellcheck severity level to error to catch all issues
+  severity: "error"
   # Use bash as the default shell
   shell: "bash"
+  # Additional shellcheck options
+  options:
+    - "-x" # Follow source statements
+    - "-a" # Consider all files to be bash scripts
+    - "-o" # Enable all optional checks
+    - "all"
 
 # Don't ignore any actionlint warnings
 ignore: []

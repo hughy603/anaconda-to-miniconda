@@ -74,7 +74,7 @@ repos:
         entry: python .github/scripts/check_python_compatibility.py
         language: python
         pass_filenames: false
-        stages: [push, manual]
+        stages: [pre-push, manual]
         verbose: true
   - repo: https://github.com/executablebooks/mdformat
     rev: 0.7.22
@@ -92,7 +92,7 @@ repos:
         name: Lint GitHub Actions workflows
         description: Run actionlint on GitHub Actions workflow files
         entry: actionlint
-        args: ["-color", "-config-file", ".github/actionlint.yaml"]
+        args: ["-color", "-config-file", ".github/actionlint.yaml", "-verbose"]
         language: system
         # Check all workflow files, including examples
         files: ^\.github/workflows/.*\.(ya?ml|ya?ml\.example)$
