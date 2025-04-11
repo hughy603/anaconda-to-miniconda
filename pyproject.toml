@@ -91,6 +91,7 @@ clean-coverage = "rm -f .coverage .coverage.* coverage.xml && rm -rf htmlcov"
 
 # Linting and type checking
 lint = "ruff check ."
+format = "ruff format"
 type-check = "pyright"
 
 # Documentation scripts

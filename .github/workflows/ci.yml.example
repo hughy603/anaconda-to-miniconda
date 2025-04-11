@@ -17,8 +17,8 @@ jobs:
     strategy:
       matrix:
         # Simplify matrix for local testing
-        python-version: ${{ env.ACT_LOCAL_TESTING == 'true' && fromJSON('["3.11"]') || fromJSON('["3.11", "3.12"]') }}
-        os: ${{ env.ACT_LOCAL_TESTING == 'true' && fromJSON('["ubuntu-latest"]') || fromJSON('["ubuntu-latest", "windows-latest", "macos-latest"]') }}
+        python-version: ${{ vars.ACT_LOCAL_TESTING == 'true' && fromJSON('["3.11"]') || fromJSON('["3.11", "3.12"]') }}
+        os: ${{ vars.ACT_LOCAL_TESTING == 'true' && fromJSON('["ubuntu-latest"]') || fromJSON('["ubuntu-latest", "windows-latest", "macos-latest"]') }}
       fail-fast: false
 
     steps:
@@ -34,7 +34,7 @@ jobs:
           cache: 'pip'
 
       - name: Install Poetry
-        if: ${{ env.ACT_LOCAL_TESTING != 'true' }}
+        if: ${{ vars.ACT_LOCAL_TESTING != 'true' }}
         uses: snok/install-poetry@v1
         with:
           version: 1.5.1
@@ -42,7 +42,7 @@ jobs:
           virtualenvs-in-project: true
 
       - name: Install Poetry (local testing)
-        if: ${{ env.ACT_LOCAL_TESTING == 'true' }}
+        if: ${{ vars.ACT_LOCAL_TESTING == 'true' }}
         run: |
           curl -sSL https://install.python-poetry.org | python3 -
           echo "$HOME/.poetry/bin" >> $GITHUB_PATH
@@ -57,7 +57,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          if [[ "${{ env.ACT_LOCAL_TESTING }}" == "true" ]]; then
+          if [[ "${{ vars.ACT_LOCAL_TESTING }}" == "true" ]]; then
             # Simplified for local testing
             poetry install
           else
@@ -68,7 +68,7 @@ jobs:
       - name: Run linting and type checking
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11' }}
         run: |
-          if [[ "${{ env.ACT_LOCAL_TESTING }}" == "true" ]]; then
+          if [[ "${{ vars.ACT_LOCAL_TESTING }}" == "true" ]]; then
             # Simplified for local testing
             echo "Running simplified linting for local testing"
             poetry run ruff check . || echo "Linting found issues, but continuing..."
@@ -81,7 +81,7 @@ jobs:
 
       - name: Run tests
         run: |
-          if [[ "${{ env.ACT_LOCAL_TESTING }}" == "true" ]]; then
+          if [[ "${{ vars.ACT_LOCAL_TESTING }}" == "true" ]]; then
             # Simplified for local testing
             echo "Running simplified tests for local testing"
             poetry run pytest -xvs tests/
@@ -91,7 +91,7 @@ jobs:
           fi
 
       - name: Upload coverage to Codecov
-        if: ${{ matrix.os == 'ubuntu-latest' && env.ACT_LOCAL_TESTING != 'true' }}
+        if: ${{ matrix.os == 'ubuntu-latest' && vars.ACT_LOCAL_TESTING != 'true' }}
         uses: codecov/codecov-action@v4
         with:
           file: ./coverage.xml
@@ -99,7 +99,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Run security checks
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11' && env.ACT_LOCAL_TESTING != 'true' }}
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11' && vars.ACT_LOCAL_TESTING != 'true' }}
         run: |
           poetry run pip install bandit
           poetry run bandit -r src/ -c pyproject.toml
@@ -107,7 +107,7 @@ jobs:
   python-compatibility:
     name: Python ${{ matrix.python-version }} Compatibility
     runs-on: ubuntu-latest
-    if: ${{ env.ACT_LOCAL_TESTING != 'true' }}
+    if: vars.ACT_LOCAL_TESTING != 'true'
     strategy:
       matrix:
         python-version: ["3.11", "3.12"]

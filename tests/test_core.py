@@ -612,10 +612,10 @@ class TestCreateCondaForgeEnvironment:
         # We need more responses for all the run_command calls
         mock_run.side_effect = [
             "libmamba",  # solver check for fast solver with conda config --show solver
-            "mamba",     # which mamba check
-            "mamba",     # which mamba check (called again in _create_base_environment)
+            "mamba",  # which mamba check
+            "mamba",  # which mamba check (called again in _create_base_environment)
             "Environment created successfully",  # environment creation
-            "mamba",     # which mamba check (called in _install_conda_packages_in_batches)
+            "mamba",  # which mamba check (called in _install_conda_packages_in_batches)
             "Packages installed successfully",  # conda packages batch
             "Packages installed successfully",  # individual package 1 (if batch fails)
             "Packages installed successfully",  # individual package 2 (if batch fails)
@@ -697,7 +697,7 @@ class TestCreateCondaForgeEnvironment:
                     # This is the package installation - make it fail
                     return None
             return "default"
-        
+
         mock_run.side_effect = side_effect
 
         # Execute
@@ -713,9 +713,15 @@ class TestCreateCondaForgeEnvironment:
 
         # Verify
         assert result is False
-        
+
         # Check that run_command was called with the expected arguments
-        install_calls = [call for call in mock_run.call_args_list if len(call[0][0]) > 0 and ("conda" in call[0][0][0] or "mamba" in call[0][0][0]) and "install" in call[0][0]]
+        install_calls = [
+            call
+            for call in mock_run.call_args_list
+            if len(call[0][0]) > 0
+            and ("conda" in call[0][0][0] or "mamba" in call[0][0][0])
+            and "install" in call[0][0]
+        ]
         assert len(install_calls) > 0, "No install calls were made"
 
 

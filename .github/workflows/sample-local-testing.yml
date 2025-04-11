@@ -48,7 +48,7 @@ jobs:
 
   lint:
     # Only run this job if not in local testing mode
-    if: ${{ env.ACT_LOCAL_TESTING != 'true' }}
+    if: vars.ACT_LOCAL_TESTING != 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -70,7 +70,7 @@ jobs:
 
   local-only:
     # Only run this job if in local testing mode
-    if: ${{ env.ACT_LOCAL_TESTING == 'true' }}
+    if: vars.ACT_LOCAL_TESTING == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Local testing info

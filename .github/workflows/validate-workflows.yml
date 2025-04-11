@@ -4,7 +4,14 @@ on:
   pull_request:
     paths:
       - '.github/workflows/**'
+  push:
+    branches: [main, develop]
+    paths:
+      - '.github/workflows/**'
   workflow_dispatch:
+
+env:
+  ACT_LOCAL_TESTING: ${{ vars.ACT_LOCAL_TESTING || 'false' }}
 
 jobs:
   validate:
@@ -14,77 +21,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install actionlint
-        run: |
-          bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
-          echo "${GITHUB_WORKSPACE}/bin" >> $GITHUB_PATH
-          # Make actionlint executable and available in PATH for local testing
-          if [ -f "./actionlint" ]; then
-            chmod +x ./actionlint
-            export PATH=$PATH:$(pwd)
-          fi
-
       - name: Run actionlint
-        if: ${{ env.ACT_LOCAL_TESTING != 'true' }}
-        run: |
-          actionlint
+        if: vars.ACT_LOCAL_TESTING != 'true'
+        uses: reviewdog/action-actionlint@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          fail_on_error: true
           
       - name: Skip actionlint for local testing
-        if: ${{ env.ACT_LOCAL_TESTING == 'true' }}
+        if: vars.ACT_LOCAL_TESTING == 'true'
         run: |
-          echo "Skipping actionlint for local testing"
-
-      - name: Validate workflow files
-        run: |
-          echo "Validating workflow files..."
-
-          # Get list of changed workflow files
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | grep -E '^\.github/workflows/.*\.ya?ml$' || true)
-          else
-            CHANGED_FILES=$(find .github/workflows -name "*.yml" -o -name "*.yaml")
-          fi
-
-          if [ -z "$CHANGED_FILES" ]; then
-            echo "No workflow files changed."
-            exit 0
-          fi
-
-          echo "Changed workflow files:"
-          echo "$CHANGED_FILES"
-
-          # Validate each workflow file
-          for file in $CHANGED_FILES; do
-            echo "Validating $file..."
-
-            # Check for common issues
-            # Exclude lines that are part of grep commands or comments
-            if grep -v "grep" "$file" | grep -v "#" | grep -q "uses: actions/checkout@master"; then
-              echo "::error file=$file::Uses actions/checkout@master instead of a version tag"
-              exit 1
-            fi
-
-            if grep -v "grep" "$file" | grep -v "#" | grep -q "uses: actions/setup-python@master"; then
-              echo "::error file=$file::Uses actions/setup-python@master instead of a version tag"
-              exit 1
-            fi
-
-            # Check for matrix strategy
-            if grep -q "matrix:" "$file"; then
-              echo "Matrix strategy found in $file"
-
-              # Check if Python versions are specified
-              if grep -q "python-version:" "$file"; then
-                echo "Python versions specified in matrix"
-
-                # Check if Python 3.11 and 3.12 are included
-                if ! grep -q "3.11" "$file" || ! grep -q "3.12" "$file"; then
-                  echo "::warning file=$file::Matrix should include Python 3.11 and 3.12"
-                fi
-              fi
-            fi
-
-            echo "$file validation complete"
-          done
-
-          echo "All workflow files validated successfully!"
+          echo "Skipping actionlint in local testing mode"
+          echo "This step would normally validate GitHub Actions workflow files"

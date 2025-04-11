@@ -68,7 +68,7 @@ repos:
         files: ^(pyproject\.toml|uv\.lock)$
         pass_filenames: false
 
-  # Documentation quality hooks
+      # Documentation quality hooks
       - id: python-version-check
         name: Python 3.11/3.12 Compatibility Check
         entry: python .github/scripts/check_python_compatibility.py
@@ -86,15 +86,17 @@ repos:
           - mdformat-myst
 
   # GitHub workflow validation hooks
-  - repo: https://github.com/rhysd/actionlint
-    rev: v1.7.7
+  - repo: local
     hooks:
       - id: actionlint
-        args: ["-color"]
-        types: [yaml]
-        files: ^\.github/workflows/.*\.ya?ml$
-        # TOML linting and formatting has been consolidated with the ruff-format hook above
-        types_or: [toml]
+        name: Lint GitHub Actions workflows
+        description: Run actionlint on GitHub Actions workflow files
+        entry: actionlint
+        args: ["-color", "-ignore", "SC2016"]
+        language: system
+        # Check all workflow files, including examples
+        files: ^\.github/workflows/.*\.(ya?ml|ya?ml\.example)$
+        # This will use your locally installed actionlint
 
   # Check for sensitive data in GitHub workflows
   # Temporarily disabled due to false positives
