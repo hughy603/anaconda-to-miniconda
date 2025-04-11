@@ -64,12 +64,12 @@ jobs:
         run: |
           hatch run test
 
-      - name: Upload coverage to Codecov
-        if: matrix.os == 'ubuntu-latest' && env.ACT_LOCAL_TESTING != 'true'
-        uses: codecov/codecov-action@v4
-        with:
-          file: ./coverage.xml
-          fail_ci_if_error: true
+      # - name: Upload coverage to Codecov
+      #   if: matrix.os == 'ubuntu-latest' && env.ACT_LOCAL_TESTING != 'true'
+      #   uses: codecov/codecov-action@v4
+      #   with:
+      #     file: ./coverage.xml
+      #     fail_ci_if_error: true
 
       - name: Run security checks
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11' && env.ACT_LOCAL_TESTING != 'true'
