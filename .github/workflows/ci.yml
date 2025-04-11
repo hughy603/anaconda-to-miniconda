@@ -61,7 +61,7 @@ jobs:
 
       - name: Run tests
         run: |
-          hatch run test:cov
+          hatch run test
 
       - name: Upload coverage to Codecov
         if: matrix.os == 'ubuntu-latest'

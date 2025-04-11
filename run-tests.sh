@@ -1,6 +1,6 @@
 #!/bin/bash
 # DEPRECATED: This script is deprecated in favor of using Hatch for running tests.
-# Please use `hatch run test:cov` instead.
+# Please use `hatch run test` instead.
 #
 # This script is kept for backward compatibility but will be removed in a future version.
 #

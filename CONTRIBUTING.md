@@ -18,9 +18,10 @@ git clone https://github.com/yourusername/conda-forge-converter.git
 cd conda-forge-converter
 
 # Install UV (recommended to use pipx for global installation)
-pipx install uv
+pip install uv
 
 # Set up development environment
+uv venv
 uv pip install -e ".[dev,test]"
 
 # Install pre-commit hooks

@@ -115,7 +115,7 @@ jobs:
 
       - name: Run test coverage
         run: |
-          hatch run test:cov
+          hatch run test
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4

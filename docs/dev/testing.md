@@ -71,7 +71,7 @@ pytest -v
 hatch run test
 
 # Run with coverage
-hatch run test:cov
+hatch run test
 
 # Run specific tests
 hatch run test -- tests/unit/test_core.py

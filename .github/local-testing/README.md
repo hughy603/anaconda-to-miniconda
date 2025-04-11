@@ -15,19 +15,19 @@ This PowerShell script allows you to test GitHub Actions workflows locally.
 
 ```powershell
 # Test the CI workflow
-.\test-workflow.ps1 -WorkflowFile .github/workflows/ci.yml
+.\.github\local-testing\test-workflow.ps1 -WorkflowFile .github/workflows/ci.yml
 
 # Test with a specific event type
-.\test-workflow.ps1 -WorkflowFile .github/workflows/ci.yml -EventType pull_request
+.\.github\local-testing\test-workflow.ps1 -WorkflowFile .github/workflows/ci.yml -EventType pull_request
 
 # Test with a matrix override
-.\test-workflow.ps1 -WorkflowFile .github/workflows/ci.yml -MatrixOverride "python-version=3.11"
+.\.github\local-testing\test-workflow.ps1 -WorkflowFile .github/workflows/ci.yml -MatrixOverride "python-version=3.11"
 
 # Test a specific job
-.\test-workflow.ps1 -WorkflowFile .github/workflows/ci.yml -JobFilter "test"
+.\.github\local-testing\test-workflow.ps1 -WorkflowFile .github/workflows/ci.yml -JobFilter "test"
 
 # Dry run (don't actually run Docker)
-.\test-workflow.ps1 -WorkflowFile .github/workflows/ci.yml -DryRun
+.\.github\local-testing\test-workflow.ps1 -WorkflowFile .github/workflows/ci.yml -DryRun
 ```
 
 ### test-workflow.sh

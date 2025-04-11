@@ -43,7 +43,7 @@ uv pip install -r requirements.lock
 hatch run test:run
 
 # Run tests with coverage
-hatch run test:cov
+hatch run test
 ```
 
 ### Dependency Structure
@@ -57,7 +57,7 @@ hatch run test:cov
 - Never modify the generated requirements.lock file directly
 - Always specify version constraints in `pyproject.toml`
 - Use `uv pip install -e ".[dev,test]"` for local development
-- Use Hatch for running tests: `hatch run test:cov`
+- Use Hatch for running tests: `hatch run test`
 - Run tests after dependency updates to verify compatibility
 - Keep UV updated to the latest stable version
 

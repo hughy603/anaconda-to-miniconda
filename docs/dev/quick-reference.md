@@ -50,7 +50,7 @@ git push origin feature/your-feature-name
 hatch run test:run
 
 # Run with coverage
-hatch run test:cov
+hatch run test
 
 # Run specific test file
 hatch run test:run tests/test_specific.py
