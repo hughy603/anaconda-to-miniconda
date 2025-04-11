@@ -50,8 +50,8 @@ jobs:
         run: |
           uv pip install hatch --system  # Only needed for version management
           hatch env create # TODO: replace with uv venv for speed
-          # Explicitly install test dependencies
-          hatch env run -- pip install pytest pytest-cov
+          # Explicitly install test and linting dependencies
+          hatch env run -- pip install pytest pytest-cov ruff pyright
 
       - name: Check version format
         run: |
@@ -69,14 +69,14 @@ jobs:
             exit 1
           fi
 
-      - name: Run tests
-        run: |
-          hatch run pytest --cov=conda_forge_converter --cov-report=term-missing --cov-report=xml --junitxml=pytest.xml tests/
-
       - name: Run linting
         run: |
           hatch run lint
           hatch run type-check
+
+      - name: Run tests
+        run: |
+          hatch run pytest --cov=conda_forge_converter --cov-report=term-missing --cov-report=xml --junitxml=pytest.xml tests/
 
       - name: Check commit message format
         if: github.event_name == 'pull_request'

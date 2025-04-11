@@ -121,6 +121,7 @@ convention = "google"
 "__init__.py" = ["F401", "E402"]
 "tests/*" = ["E501", "ANN", "PT009", "D"]
 "scripts/*" = ["E501", "ANN201", "D"]
+".github/scripts/*" = ["E501", "ANN", "C901", "D"]
 # Ignore missing return type annotations in decorator wrappers
 "src/conda_forge_converter/progress.py" = ["ANN401"]
 "src/conda_forge_converter/cli.py" = ["E501"]
