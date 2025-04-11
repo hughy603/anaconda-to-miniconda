@@ -89,9 +89,11 @@ jobs:
         if: github.event_name == 'pull_request'
         run: |
           COMMIT_MSG=$(git log -1 --pretty=%B)
-          if ! [[ $COMMIT_MSG =~ ^(feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert)(\([a-z0-9-]+\))?: .+ ]]; then
+          # Use grep instead of bash regex for better compatibility
+          if ! echo "$COMMIT_MSG" | grep -E "^(feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert)(\([a-z0-9-]+\))?: .+" > /dev/null; then
             echo "Error: Invalid commit message format. Must follow Conventional Commits specification."
             echo "Example: feat(api): add new endpoint"
+            echo "Actual commit message: $COMMIT_MSG"
             exit 1
           fi
 
