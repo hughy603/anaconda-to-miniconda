@@ -69,6 +69,13 @@ repos:
         pass_filenames: false
 
   # Documentation quality hooks
+      - id: python-version-check
+        name: Python 3.11/3.12 Compatibility Check
+        entry: python .github/scripts/check_python_compatibility.py
+        language: python
+        pass_filenames: false
+        stages: [push, manual]
+        verbose: true
   - repo: https://github.com/executablebooks/mdformat
     rev: 0.7.22
     hooks:

@@ -7,6 +7,7 @@ on:
     branches: [main, develop]
 
 env:
+  ACT_LOCAL_TESTING: ${{ vars.ACT_LOCAL_TESTING || 'false' }}
   PYTHON_VERSION: "3.11"
   UV_VERSION: "0.7.1"
 
@@ -53,7 +54,7 @@ jobs:
           uv pip install -e ".[dev,test]" --system
 
       - name: Run linting and type checking
-        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11' && env.ACT_LOCAL_TESTING != 'true'
         run: |
           hatch run lint
           hatch run format -- --check
@@ -64,13 +65,13 @@ jobs:
           hatch run test
 
       - name: Upload coverage to Codecov
-        if: matrix.os == 'ubuntu-latest'
+        if: matrix.os == 'ubuntu-latest' && env.ACT_LOCAL_TESTING != 'true'
         uses: codecov/codecov-action@v4
         with:
           file: ./coverage.xml
           fail_ci_if_error: true
 
       - name: Run security checks
-        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11' && env.ACT_LOCAL_TESTING != 'true'
         run: |
           hatch run security

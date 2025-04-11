@@ -2,232 +2,92 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Validate Workflow with Actionlint",
+            "label": "Test GitHub Actions Workflow",
             "type": "shell",
-            "command": "actionlint ${input:workflowFile}",
-            "problemMatcher": [],
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            }
-        },
-        {
-            "label": "Validate All Workflows",
-            "type": "shell",
-            "command": "actionlint .github/workflows/*.yml",
-            "problemMatcher": [],
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            }
-        },
-        {
-            "label": "Create Feature Branch for Workflow Testing",
-            "type": "shell",
-            "command": "git checkout -b workflow-test-${input:branchSuffix}",
-            "problemMatcher": [],
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            }
-        },
-        {
-            "label": "Push Workflow Changes for Testing",
-            "type": "shell",
-            "command": "git add .github/workflows/${input:workflowFile} && git commit -m \"test: Test workflow changes\" && git push -u origin HEAD",
-            "problemMatcher": [],
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            }
-        },
-        {
-            "label": "Install Development Dependencies",
-            "type": "shell",
-            "command": "uv pip install -e \".[dev,test]\"",
+            "command": ".github/scripts/test-github-actions.sh --workflow ${input:workflowFile}",
             "problemMatcher": [],
             "presentation": {
                 "reveal": "always",
                 "panel": "new"
             },
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            }
+            "group": "test"
         },
         {
-            "label": "Run Tests",
+            "label": "Validate GitHub Actions Workflow",
             "type": "shell",
-            "command": "pytest",
+            "command": ".github/scripts/test-github-actions.sh --validate --workflow ${input:workflowFile}",
             "problemMatcher": [],
             "presentation": {
                 "reveal": "always",
                 "panel": "new"
             },
-            "group": {
-                "kind": "test",
-                "isDefault": true
-            }
-        },
-        {
-            "label": "Run Tests with Coverage",
-            "type": "shell",
-            "command": "pytest --cov=conda_forge_converter tests/",
-            "problemMatcher": [],
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            }
-        },
-        {
-            "label": "Lint with Ruff",
-            "type": "shell",
-            "command": "ruff check .",
-            "problemMatcher": [],
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            }
-        },
-        {
-            "label": "Format with Ruff",
-            "type": "shell",
-            "command": "ruff format .",
-            "problemMatcher": [],
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            }
-        },
-        {
-            "label": "Type Check with Pyright",
-            "type": "shell",
-            "command": "pyright",
-            "problemMatcher": [],
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            }
-        },
-        {
-            "label": "Lock Dependencies",
-            "type": "shell",
-            "command": "uv pip compile pyproject.toml --output-file=requirements.lock --extra=dev --extra=test",
-            "problemMatcher": [],
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            }
-        },
-        {
-            "label": "Install Pre-commit Hooks",
-            "type": "shell",
-            "command": "pre-commit install",
-            "problemMatcher": [],
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            }
-        },
-        {
-            "label": "Run Pre-commit Hooks",
-            "type": "shell",
-            "command": "pre-commit run --all-files",
-            "problemMatcher": [],
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            }
-        },
-        {
-            "label": "Build Documentation",
-            "type": "shell",
-            "command": "mkdocs build",
-            "problemMatcher": [],
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            }
-        },
-        {
-            "label": "Serve Documentation",
-            "type": "shell",
-            "command": "mkdocs serve",
-            "problemMatcher": [],
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            }
-        },
-        {
-            "label": "Check Conda Environment",
-            "type": "shell",
-            "command": "conda info",
-            "problemMatcher": [],
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            }
-        },
-        {
-            "label": "List Conda Environments",
-            "type": "shell",
-            "command": "conda env list",
-            "problemMatcher": [],
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            }
-        },
-        {
-            "label": "Check Mamba Installation",
-            "type": "shell",
-            "command": "mamba info",
-            "problemMatcher": [],
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            }
-        },
-        {
-            "label": "Test Workflow",
-            "type": "shell",
-            "command": "bash .github/local-testing/test-workflow.sh ${input:workflowFile} ${input:eventType}",
-            "problemMatcher": [],
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            }
+            "group": "test"
         },
         {
             "label": "Test with Python 3.11",
             "type": "shell",
-            "command": "bash .github/local-testing/test-workflow.sh ${input:workflowFile} push python-version=3.11",
+            "command": ".github/scripts/test-github-actions.sh --python 3.11 --workflow ${input:workflowFile}",
             "problemMatcher": [],
             "presentation": {
                 "reveal": "always",
                 "panel": "new"
-            }
+            },
+            "group": "test"
         },
         {
             "label": "Test with Python 3.12",
             "type": "shell",
-            "command": "bash .github/local-testing/test-workflow.sh ${input:workflowFile} push python-version=3.12",
+            "command": ".github/scripts/test-github-actions.sh --python 3.12 --workflow ${input:workflowFile}",
             "problemMatcher": [],
             "presentation": {
                 "reveal": "always",
                 "panel": "new"
-            }
+            },
+            "group": "test"
         },
         {
-            "label": "Test Both Python Versions",
+            "label": "Test with Both Python Versions",
             "type": "shell",
-            "command": "bash .github/local-testing/test-python-versions.sh ${input:workflowFile}",
+            "command": ".github/scripts/test-github-actions.sh --both-versions --workflow ${input:workflowFile}",
             "problemMatcher": [],
             "presentation": {
                 "reveal": "always",
                 "panel": "new"
-            }
+            },
+            "group": "test"
+        },
+        {
+            "label": "Test without Docker (Python 3.11)",
+            "type": "shell",
+            "command": ".github/scripts/test-github-actions.sh --skip-docker --python 3.11 --workflow ${input:workflowFile}",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "group": "test"
+        },
+        {
+            "label": "Test without Docker (Python 3.12)",
+            "type": "shell",
+            "command": ".github/scripts/test-github-actions.sh --skip-docker --python 3.12 --workflow ${input:workflowFile}",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "group": "test"
+        },
+        {
+            "label": "Run Tests with Hatch",
+            "type": "shell",
+            "command": "hatch run test",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "group": "test"
         }
     ],
     "inputs": [
@@ -236,34 +96,6 @@
             "description": "Workflow file path:",
             "default": ".github/workflows/ci.yml",
             "type": "promptString"
-        },
-        {
-            "id": "branchSuffix",
-            "description": "Feature branch suffix (workflow-test-{suffix}):",
-            "default": "feature",
-            "type": "promptString"
-        },
-        {
-            "id": "eventType",
-            "description": "Event type:",
-            "default": "push",
-            "type": "pickString",
-            "options": [
-                "push",
-                "pull_request",
-                "workflow_dispatch"
-            ]
-        },
-        {
-            "id": "environmentName",
-            "description": "GitHub Actions environment:",
-            "default": "testing",
-            "type": "pickString",
-            "options": [
-                "testing",
-                "staging",
-                "production"
-            ]
         }
     ]
 }
