@@ -611,8 +611,8 @@ class TestCreateCondaForgeEnvironment:
         # First call is for solver check, second for environment creation, rest for package installation
         # We need more responses for all the run_command calls
         mock_run.side_effect = [
-            "libmamba",  # solver check for fast solver
-            "mamba",  # which mamba check
+            "libmamba",  # solver check for fast solver with conda config --show solver
+            "mamba",     # which mamba check
             "Environment created successfully",  # environment creation
             "Packages installed successfully",  # conda packages batch
             "Packages installed successfully",  # individual package 1 (if batch fails)
@@ -652,6 +652,12 @@ class TestCreateCondaForgeEnvironment:
         assert "conda" in third_call_args or "mamba" in third_call_args
         assert "create" in third_call_args
         assert "target_env" in third_call_args
+
+        # The third call should be to create the base environment
+        third_call_args = mock_run.call_args_list[2][0][0]
+        assert "conda" in third_call_args or "mamba" in third_call_args
+        assert "create" in third_call_args
+        assert "target_env" in third_call_args
         assert "python=3.11.3" in third_call_args or any(
             arg.startswith("python=3.11.3") for arg in third_call_args
         )
@@ -671,8 +677,8 @@ class TestCreateCondaForgeEnvironment:
 
         # First call for solver check, second succeeds (create env), third call fails (install packages)
         mock_run.side_effect = [
-            "libmamba",  # solver check
-            "Environment created successfully",  # environment creation
+            "libmamba",  # solver check with conda config --show solver
+            "Environment created successfully",  # environment creation with conda create
             None,  # package installation failure
         ]
 

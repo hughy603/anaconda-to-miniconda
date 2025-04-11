@@ -89,6 +89,10 @@ test-fast = "pytest --cov=conda_forge_converter --cov-report=term-missing --cov-
 test-specific = "pytest --cov=conda_forge_converter --cov-report=term-missing --cov-fail-under=0"
 clean-coverage = "rm -f .coverage .coverage.* coverage.xml && rm -rf htmlcov"
 
+# Linting and type checking
+lint = "ruff check ."
+type-check = "pyright"
+
 # Documentation scripts
 docs-build = "mkdocs build"
 docs-serve = "mkdocs serve"
