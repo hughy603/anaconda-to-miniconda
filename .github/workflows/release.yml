@@ -42,7 +42,7 @@ jobs:
       - name: Install UV
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
 
       - name: Cache dependencies
         uses: actions/cache@v4
@@ -89,7 +89,7 @@ jobs:
         shell: bash
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
 
       - name: Cache dependencies
         uses: actions/cache@v4
@@ -161,7 +161,7 @@ jobs:
       - name: Install UV
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
 
       - name: Install dependencies
         run: |
@@ -186,7 +186,7 @@ jobs:
           fi
           # Extract version from _version.py
           VERSION=$(python -c "from conda_forge_converter import __version__; print(__version__)")
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -206,7 +206,7 @@ jobs:
           semantic-release publish
           # Extract version from _version.py again to ensure we have the latest
           VERSION=$(python -c "from conda_forge_converter import __version__; print(__version__)")
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPOSITORY_URL: https://upload.pypi.org/legacy/
@@ -238,9 +238,9 @@ jobs:
           pip install conda-forge-converter==${{ needs.release.outputs.version }} --no-cache-dir
           # Verify installation
           if conda-forge-converter --version | grep -q "${{ needs.release.outputs.version }}"; then
-            echo "status=success" >> $GITHUB_OUTPUT
+            echo "status=success" >> "$GITHUB_OUTPUT"
           else
-            echo "status=failure" >> $GITHUB_OUTPUT
+            echo "status=failure" >> "$GITHUB_OUTPUT"
             exit 1
           fi
 
@@ -251,7 +251,7 @@ jobs:
           # Run a basic test to ensure the package works
           conda-forge-converter --help
           # Add more comprehensive tests as needed
-          echo "status=success" >> $GITHUB_OUTPUT
+          echo "status=success" >> "$GITHUB_OUTPUT"
 
   rollback:
     name: Rollback Release
@@ -278,7 +278,7 @@ jobs:
         run: |
           # Get the previous version tag
           PREV_VERSION=$(git describe --abbrev=0 --tags $(git rev-list --tags --skip=1 --max-count=1))
-          echo "version=${PREV_VERSION#v}" >> $GITHUB_OUTPUT
+          echo "version=${PREV_VERSION#v}" >> "$GITHUB_OUTPUT"
 
       - name: Create rollback PR
         uses: peter-evans/create-pull-request@v6

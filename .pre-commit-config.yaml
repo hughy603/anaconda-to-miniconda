@@ -92,7 +92,7 @@ repos:
         name: Lint GitHub Actions workflows
         description: Run actionlint on GitHub Actions workflow files
         entry: actionlint
-        args: ["-color", "-ignore", "SC2016"]
+        args: ["-color"]
         language: system
         # Check all workflow files, including examples
         files: ^\.github/workflows/.*\.(ya?ml|ya?ml\.example)$
