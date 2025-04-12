@@ -26,10 +26,21 @@ pip install uv
 uv venv
 uv pip install -e ".[dev,test]"
 
-# Install pre-commit hooks
-pre-commit install
-pre-commit install --hook-type commit-msg
-pre-commit install --hook-type pre-push  # Ensures all files are checked before pushing
+# Set up Git hooks and commit validation (recommended)
+python scripts/setup_git_hooks.py
+
+# Alternatively, you can set up hooks manually:
+# pre-commit install
+# pre-commit install --hook-type commit-msg
+# pre-commit install --hook-type pre-push
+# git config --local commit.template .github/commit-template.txt
+
+# IMPORTANT: The commit-msg hook will prevent commits with invalid message formats
+# Valid commit types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert
+# Example: feat: add new feature
+# Example: fix(core): resolve issue with parser
+#
+# A commit template has been provided at .github/commit-template.txt to help you write valid messages
 
 # Configure Git to use merge strategy for pulls (important for this project)
 git config pull.rebase false
