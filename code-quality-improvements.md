@@ -10,6 +10,8 @@ This document outlines the simplifications and standardizations made to the code
    - Moved Python compatibility check to CI (already handled there)
    - Removed shellcheck verification requirement
    - Consolidated GitHub Actions validation scripts
+   - Moved formatting checks to pre-commit stage (instead of pre-push)
+   - Removed semantic-release validation from pre-push
 
 1. **Consolidated GitHub Actions Validation**
 
@@ -17,11 +19,12 @@ This document outlines the simplifications and standardizations made to the code
    - Improved error reporting and validation logic
    - Reduced complexity while maintaining the same validation coverage
 
-1. **Simplified Pre-Push Checks**
+1. **Optimized Git Hooks**
 
-   - Created a focused pre-push script that runs only essential checks
-   - Ensures code quality without slowing down the development process
-   - Fixed issues with pre-push hook configuration
+   - Moved formatting checks to pre-commit stage for immediate feedback
+   - Limited pre-push checks to only type checking (faster pushes)
+   - Fixed command execution in scripts to use Python modules
+   - Removed dependency on external tools in the pre-push stage
 
 1. **Removed Redundant Scripts**
 
@@ -85,8 +88,7 @@ The new pre-push hook implementation:
 
 1. Runs only essential checks:
 
-   - Ruff linting and formatting
-   - Pyright type checking
+   - Pyright type checking only (formatting moved to pre-commit stage)
 
 1. Provides clear error messages when checks fail
 

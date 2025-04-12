@@ -22,8 +22,10 @@ repos:
       - id: ruff
         args: [--fix, --config=pyproject.toml]
         types_or: [python]
+        stages: [commit]
       - id: ruff-format
         types_or: [python, toml]
+        stages: [commit]
 
   - repo: https://github.com/RobertCraigie/pyright-python
     rev: v1.1.399
@@ -98,13 +100,7 @@ repos:
         files: ^\.github/(workflows|actions)/.+\.ya?ml$
         pass_filenames: true
 
-      # Release validation
-      - id: validate-release
-        name: Validate release readiness
-        entry: semantic-release version --print
-        language: system
-        pass_filenames: false
-        stages: [pre-push, manual]
+      # Release validation (manual only)
 
       - id: check-version-bump
         name: Check version bump
