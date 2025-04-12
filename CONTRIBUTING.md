@@ -20,11 +20,7 @@ cd conda-forge-converter
 # Install UV (recommended to use pipx for global installation)
 pip install uv
 
-# Install shellcheck (required for pre-commit hooks)
-# On Windows: scoop install shellcheck
-# On macOS: brew install shellcheck
-# On Ubuntu/Debian: apt-get install shellcheck
-# On Fedora/RHEL: dnf install ShellCheck
+# Set up development environment
 
 # Set up development environment
 uv venv
@@ -85,12 +81,9 @@ This ensures that when you pull changes that include automatic version bump comm
 
 1. **Run pre-commit checks**: `pre-commit run --all-files`
 
-   - Note: A pre-push hook has been added that automatically runs this check before pushing, helping prevent CI failures due to formatting or linting issues
-   - The pre-push hook will block pushes if any linting or formatting issues are found, ensuring code quality standards are maintained
    - Many hooks are configured to automatically fix issues when possible (like ruff with --fix flag)
-
-- The pre-push hook will block pushes if any linting or formatting issues are found, ensuring code quality standards are maintained
-  - Note: A pre-push hook has been added that automatically runs this check before pushing, helping prevent CI failures due to formatting or linting issues
+   - Running this before committing helps prevent CI failures due to formatting or linting issues
+   - For a faster development cycle, you can run specific hooks: `pre-commit run ruff`
 
 1. **Run tests**: `pytest`
 
@@ -150,9 +143,17 @@ Common types:
 
 For detailed examples and guidelines, see the [Conventional Commits Guide](docs/dev/conventional-commits.md).
 
-## Code Style
+## Code Style and Quality
 
-We use Ruff for linting and formatting, and Pyright for type checking. These tools are configured in `pyproject.toml` and run automatically via pre-commit hooks.
+We use a simplified, standardized code quality process:
+
+1. **Linting and Formatting**: Ruff for linting and formatting Python code
+2. **Type Checking**: Pyright for static type checking
+3. **Dependency Management**: UV for dependency locking and management
+4. **GitHub Actions Validation**: Simplified validation of workflows and actions
+5. **CI Checks**: Comprehensive testing across multiple Python versions and platforms
+
+All these tools are configured in `pyproject.toml` and `.pre-commit-config.yaml`, and run automatically via pre-commit hooks for local validation and CI workflows for comprehensive testing.
 
 ## Code of Conduct
 
