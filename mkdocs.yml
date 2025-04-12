@@ -66,6 +66,7 @@ nav:
       - Tools and Configuration:
           - Build Tools: dev/build-tools.md
           - Documentation: dev/documentation.md
+          - Performance Benchmarks: dev/benchmarks.md
           - Quick Reference: dev/quick-reference.md
       - Documentation:
           - Documentation Guide: dev/documentation.md

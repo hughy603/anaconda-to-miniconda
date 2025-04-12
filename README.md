@@ -89,7 +89,32 @@ hatch run docs-serve
 
 # Test GitHub Actions workflows locally
 .github/local-testing/test-workflow.sh .github/workflows/ci.yml
+
+# Initialize gh-pages branch for benchmarks (one-time setup)
+# Run this workflow from GitHub Actions UI before running benchmarks
+# Go to Actions -> Initialize gh-pages Branch -> Run workflow -> Type "yes" to confirm
 ```
+
+### Performance Benchmarks
+
+This project includes performance benchmarking to track code efficiency over time:
+
+1. **Setup**: Before running benchmarks for the first time, you need to initialize the gh-pages branch:
+
+   - Go to GitHub Actions -> "Initialize gh-pages Branch" workflow
+   - Click "Run workflow"
+   - Type "yes" to confirm and run the workflow
+
+1. **Running Benchmarks**:
+
+   - Benchmarks run automatically on PRs and weekly
+   - You can manually trigger the benchmark workflow from Actions tab
+   - Results are published to GitHub Pages
+
+1. **Viewing Results**:
+
+   - Benchmark results are available at: <https://yourusername.github.io/conda-forge-converter/dev/bench/>
+   - Performance regressions (>200%) will trigger alerts on PRs
 
 ### VSCode Integration
 

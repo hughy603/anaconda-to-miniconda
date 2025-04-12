@@ -90,6 +90,12 @@ jobs:
           comment-on-alert: true
           fail-on-alert: false
           alert-comment-cc-users: '@yourusername'
+          # Configure gh-pages branch and directory for benchmark data
+          gh-pages-branch: gh-pages
+          benchmark-data-dir-path: dev/bench
+          # Create gh-pages branch if it doesn't exist
+          skip-fetch-gh-pages: false
+          save-data-file: true
 
       - name: Upload benchmark results
         uses: actions/upload-artifact@v4
