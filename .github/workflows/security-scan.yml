@@ -11,6 +11,7 @@ on:
 env:
   PYTHON_VERSION: "3.11"
   UV_VERSION: "0.7.1"
+  ACT_LOCAL_TESTING: ${{ vars.ACT_LOCAL_TESTING || 'false' }}
 
 jobs:
   sonarqube:
@@ -52,8 +53,10 @@ jobs:
         run: |
           hatch run test
 
-      - name: SonarQube Scan
+      # This step is skipped in local testing mode
+      - name: SonarQube Scan (Production)
         uses: SonarSource/sonarqube-scan-action@v1
+        if: ${{ !env.ACT_LOCAL_TESTING || env.ACT_LOCAL_TESTING != 'true' }}
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
@@ -65,6 +68,15 @@ jobs:
             -Dsonar.tests=tests
             -Dsonar.python.xunit.reportPath=pytest.xml
             -Dsonar.qualitygate.wait=true
+
+      # This step only runs in local testing mode
+      - name: Mock SonarQube Scan (Local Testing)
+        if: ${{ env.ACT_LOCAL_TESTING == 'true' }}
+        run: |
+          echo "Mocking SonarQube scan for local testing"
+          echo "In production, this would analyze code quality and security issues"
+          echo "Coverage report generated at coverage.xml"
+          echo "You can run local static analysis with: hatch run lint"
 
   secret-scanning:
     name: Secret Scanning Notification
@@ -81,6 +93,11 @@ jobs:
           # Check if we're running in a PR context
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
             echo "::notice::Checking for potential secrets in this PR..."
-            git diff ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | \
-            grep -E '(password|token|key|secret|credential).*[=:][^=:]*[a-zA-Z0-9_-]{16,}' || true
+            if [[ "${{ !env.ACT_LOCAL_TESTING || env.ACT_LOCAL_TESTING != 'true' }}" == "true" ]]; then
+              git diff ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | \
+              grep -E '(password|token|key|secret|credential).*[=:][^=:]*[a-zA-Z0-9_-]{16,}' || true
+            else
+              echo "::notice::Mock secret scanning for local testing"
+              echo "::notice::In production, this would scan for potential secrets in the PR diff"
+            fi
           fi

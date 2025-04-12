@@ -12,6 +12,9 @@ on:
 env:
   PYTHON_VERSION: "3.11"
   UV_VERSION: "0.7.1"
+  ACT_LOCAL_TESTING: ${{ vars.ACT_LOCAL_TESTING || 'false' }}
+  # This will be 'true' when running locally with act
+  ACT: ${{ vars.ACT || 'false' }}
 
 jobs:
   benchmark:
@@ -77,7 +80,10 @@ jobs:
       - name: Run benchmarks
         run: python -m pytest tests/benchmarks/ --benchmark-json=benchmark-results.json
 
-      - name: Store benchmark result
+      # This step is completely skipped in local testing mode
+      # Only run in GitHub Actions environment
+      - name: Store benchmark result (Production)
+        if: ${{ !env.ACT_LOCAL_TESTING || env.ACT_LOCAL_TESTING != 'true' }}
         uses: benchmark-action/github-action-benchmark@v1
         with:
           name: Python Benchmark
@@ -97,17 +103,38 @@ jobs:
           skip-fetch-gh-pages: false
           save-data-file: true
 
-      - name: Upload benchmark results
+      # This step only runs in local testing mode
+      - name: Mock benchmark result storage (Local Testing)
+        if: ${{ env.ACT_LOCAL_TESTING == 'true' }}
+        run: |
+          echo "Mocking benchmark result storage for local testing"
+          echo "In production, this would store results in GitHub Pages"
+          mkdir -p local-benchmark-results
+          cp benchmark-results.json local-benchmark-results/
+          echo "Benchmark results saved to local-benchmark-results/"
+
+      # This step is skipped in local testing mode
+      - name: Upload benchmark results (Production)
+        if: ${{ !env.ACT_LOCAL_TESTING || env.ACT_LOCAL_TESTING != 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: benchmark-results
           path: benchmark-results.json
           retention-days: 90  # Keep benchmark results for longer analysis
 
+      # This step only runs in local testing mode
+      - name: Mock artifact upload (Local Testing)
+        if: ${{ env.ACT_LOCAL_TESTING == 'true' }}
+        run: |
+          echo "Mocking artifact upload for local testing"
+          echo "In production, this would upload the benchmark results as an artifact"
+          echo "Benchmark results are available at benchmark-results.json"
+
+  # This job only runs in GitHub Actions environment
   compare:
     name: Compare Benchmarks
     needs: benchmark
-    if: github.event_name == 'pull_request'
+    if: ${{ github.event_name == 'pull_request' && !vars.ACT_LOCAL_TESTING }}
     runs-on: ubuntu-latest
     steps:
       - name: Download benchmark results
@@ -151,3 +178,16 @@ jobs:
               console.error('Error processing benchmark results:', error);
               core.setFailed('Failed to process benchmark results');
             }
+
+  # This job only runs in local testing mode
+  compare-local:
+    name: Mock Benchmark Comparison (Local Testing)
+    needs: benchmark
+    if: ${{ github.event_name == 'pull_request' && vars.ACT_LOCAL_TESTING == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mock benchmark comparison
+        run: |
+          echo "Mocking benchmark comparison for local testing"
+          echo "In production, this would create a PR comment with benchmark results"
+          echo "Local benchmark results available in local-benchmark-results/"

@@ -79,7 +79,13 @@ We provide two simple scripts for local testing:
 
 # Enable verbose output
 ./github-actions-local.ps1 -WorkflowFile .github/workflows/ci.yml -VerboseOutput
+
+# Path handling on Windows (both formats work)
+./github-actions-local.ps1 -WorkflowFile .github/workflows/ci.yml
+./github-actions-local.ps1 -WorkflowFile .\.github\workflows\ci.yml
 ```
+
+The PowerShell script automatically normalizes paths to use forward slashes when passing them to act, which prevents path-related errors.
 
 ## Environment Variables
 
@@ -209,6 +215,12 @@ You can customize these templates or create new ones for other event types (e.g.
 
    - act runs everything in Linux containers, even when simulating Windows or macOS
    - Platform-specific commands may not work as expected
+
+1. **Path handling issues on Windows**
+
+   - If you encounter path-related errors, ensure you're using the latest version of the script
+   - The script automatically converts Windows backslashes to forward slashes
+   - You can use either format in your command parameters (e.g., `.github\workflows\ci.yml` or `.github/workflows/ci.yml`)
 
 1. **Tests pass locally but fail in CI**
 

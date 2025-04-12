@@ -21,15 +21,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Run actionlint
-        if: env.ACT_LOCAL_TESTING != 'true'
+      # This step is skipped in local testing mode
+      - name: Run actionlint (Production)
+        if: ${{ !env.ACT_LOCAL_TESTING || env.ACT_LOCAL_TESTING != 'true' }}
         uses: reviewdog/action-actionlint@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           fail_on_error: true
 
-      - name: Skip actionlint for local testing
-        if: env.ACT_LOCAL_TESTING == 'true'
+      # This step only runs in local testing mode
+      - name: Mock actionlint (Local Testing)
+        if: ${{ env.ACT_LOCAL_TESTING == 'true' }}
         run: |
-          echo "Skipping actionlint in local testing mode"
-          echo "This step would normally validate GitHub Actions workflow files"
+          echo "Mocking actionlint for local testing"
+          echo "In production, this would validate GitHub Actions workflow files"
+          echo "You can run actionlint locally with: actionlint .github/workflows/*.yml"

@@ -9,6 +9,8 @@ param(
     [string]$Platform = "ubuntu-latest",
     [switch]$Bind = $false,
     [switch]$VerboseOutput = $false,
+    [string]$GitHubToken = "",  # Empty token to prevent authentication attempts
+    [string]$ActionCachePath = "./.act-cache",  # Local cache for actions
     [switch]$Help = $false
 )
 
@@ -24,6 +26,8 @@ function Show-Help {
     Write-Host "  -Platform PLATFORM     Platform to run on (default: ubuntu-latest)"
     Write-Host "  -Bind                  Bind working directory to act container"
     Write-Host "  -VerboseOutput         Enable verbose output"
+    Write-Host "  -GitHubToken TOKEN     GitHub token for authentication (default: empty)"
+    Write-Host "  -ActionCachePath PATH  Path to cache GitHub Actions (default: ./.act-cache)"
     Write-Host "  -Help                  Show this help message"
     Write-Host ""
     Write-Host "Examples:"
@@ -103,46 +107,77 @@ if (-not (Test-Path $eventFile)) {
     }
 }
 
-# Build the command
-$cmd = "act"
+# Normalize paths to use forward slashes (act prefers this)
+$normalizedWorkflowFile = $WorkflowFile.Replace('\', '/')
+$normalizedEventFile = $eventFile.Replace('\', '/')
+
+# Build the command arguments as an array (safer than string concatenation)
+$cmdArgs = @()
 
 # Add workflow file
-$cmd += " -W `"$WorkflowFile`""
+$cmdArgs += "-W"
+$cmdArgs += "$normalizedWorkflowFile"
 
 # Add event file
-$cmd += " -e `"$eventFile`""
+$cmdArgs += "-e"
+$cmdArgs += "$normalizedEventFile"
 
 # Add job filter if provided
 if ($JobFilter) {
-    $cmd += " --job `"$JobFilter`""
+    $cmdArgs += "--job"
+    $cmdArgs += "$JobFilter"
 }
 
 # Add platform mappings
-$cmd += " -P $Platform=ghcr.io/catthehacker/ubuntu:act-latest"
+$cmdArgs += "-P"
+$cmdArgs += "$Platform=ghcr.io/catthehacker/ubuntu:act-latest"
 
 # Add bind option if specified
 if ($Bind) {
-    $cmd += " --bind"
+    $cmdArgs += "--bind"
 }
 
 # Add verbose option if specified
 if ($VerboseOutput) {
-    $cmd += " --verbose"
+    $cmdArgs += "--verbose"
 }
 
 # Set environment variables for local testing
-$cmd += " --env ACT=true"
-$cmd += " --env ACT_LOCAL_TESTING=true"
-$cmd += " --env GITHUB_TOKEN=local-testing-token"
-$cmd += " -s GITHUB_TOKEN=local-testing-token"
+$cmdArgs += "--env"
+$cmdArgs += "ACT=true"
+$cmdArgs += "--env"
+$cmdArgs += "ACT_LOCAL_TESTING=true"
+
+# Use the GitHubToken parameter to set the GitHub token
+# Empty token prevents authentication attempts in local testing
+$cmdArgs += "--env"
+$cmdArgs += "GITHUB_TOKEN=$GitHubToken"
+$cmdArgs += "-s"
+$cmdArgs += "GITHUB_TOKEN=$GitHubToken"
+
+# Set additional secrets
+$cmdArgs += "-s"
+$cmdArgs += "ACT=true"
+$cmdArgs += "-s"
+$cmdArgs += "ACT_LOCAL_TESTING=true"
 
 # Display the command
-Write-Host "Running: $cmd" -ForegroundColor Green
+$cmdDisplay = "act " + ($cmdArgs -join " ")
+Write-Host "Running: $cmdDisplay" -ForegroundColor Green
 Write-Host "-----------------------------------" -ForegroundColor Cyan
 
-# Run the command safely without Invoke-Expression
-$cmdArgs = $cmd -replace '^act\s+', ''  # Remove 'act' from the beginning
-& act $cmdArgs.Split(' ')
+# Create action cache directory if it doesn't exist
+if (-not (Test-Path $ActionCachePath)) {
+    New-Item -Path $ActionCachePath -ItemType Directory -Force | Out-Null
+    Write-Host "Created actions cache directory at $ActionCachePath" -ForegroundColor Green
+}
+
+# Add action cache path to arguments
+$cmdArgs += "--action-cache-path"
+$cmdArgs += "$ActionCachePath"
+
+# Run the command directly with arguments as an array
+& act $cmdArgs
 
 # Display completion message
 Write-Host "-----------------------------------" -ForegroundColor Cyan
