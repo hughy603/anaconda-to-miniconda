@@ -32,7 +32,7 @@ repos:
     hooks:
       - id: pyright
         args: ["--project=./pyrightconfig.json"]
-        stages: [commit, pre-push]
+        stages: [pre-commit, pre-push]
 
   # Commit message format validation
   - repo: https://github.com/compilerla/conventional-pre-commit
@@ -73,7 +73,7 @@ repos:
         language: system
         files: ^(pyproject\.toml|requirements\.lock)$
         pass_filenames: false
-        stages: [commit]
+        stages: [pre-commit]
 
       - id: uv-lock
         name: Update UV lockfile
@@ -81,7 +81,7 @@ repos:
         language: system
         files: ^(pyproject\.toml|uv\.lock)$
         pass_filenames: false
-        stages: [commit]
+        stages: [pre-commit]
 
       # GitHub Actions validation (simplified)
       - id: validate-github-actions
@@ -91,7 +91,7 @@ repos:
         additional_dependencies: [pyyaml]
         files: ^\.github/(workflows|actions)/.+\.ya?ml$
         pass_filenames: true
-        stages: [commit, pre-push]
+        stages: [pre-commit, pre-push]
 
       # Release validation (manual only)
 
