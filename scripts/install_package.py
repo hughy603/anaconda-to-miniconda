@@ -29,18 +29,48 @@ def parse_args():
     return parser.parse_args()
 
 
-def check_uv_installed():
+def check_uv_installed() -> bool:
     """Check if UV is installed."""
     try:
-        subprocess.run(
-            ["uv", "--version"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-        )
+        subprocess.run(["uv", "--version"], check=True, capture_output=True)
         return True
     except (subprocess.SubprocessError, FileNotFoundError):
         return False
 
 
-def install_packages(args):
+def _handle_editable_project(args: argparse.Namespace) -> list[str]:
+    """Handle editable installation for the current project."""
+    cmd = ["uv", "pip", "install", "-e"]
+
+    if args.all:
+        cmd.append(".[all]")
+        return cmd
+
+    extras = []
+    if args.dev:
+        extras.append("dev")
+    if args.test:
+        extras.append("test")
+    if args.docs:
+        extras.append("docs")
+
+    if extras:
+        cmd.append(f".[{','.join(extras)}]")
+    else:
+        cmd.append(".")
+    return cmd
+
+
+def _handle_editable_packages(args: argparse.Namespace) -> None:
+    """Handle editable installation for specific packages."""
+    base_cmd = ["uv", "pip", "install"]
+    for pkg in args.packages:
+        editable_cmd = base_cmd.copy()
+        editable_cmd.extend(["-e", pkg])
+        run_install_command(editable_cmd)
+
+
+def install_packages(args: argparse.Namespace) -> list[str] | None:
     """Install packages using UV."""
     if not check_uv_installed():
         print("ERROR: UV is not installed. Please install it with:")
@@ -49,37 +79,17 @@ def install_packages(args):
         print("    pip install uv")
         sys.exit(1)
 
-    # Build the command
-    cmd = ["uv", "pip", "install"]
-
     # Handle editable mode for the current project
     if args.editable and not args.packages and not args.requirement:
-        cmd.append("-e")
-        extras = []
-        if args.dev:
-            extras.append("dev")
-        if args.test:
-            extras.append("test")
-        if args.docs:
-            extras.append("docs")
-        if args.all:
-            cmd.append("-e")
-            cmd.append(".[all]")
-            return cmd
-
-        if extras:
-            cmd.append(f".[{','.join(extras)}]")
-        else:
-            cmd.append(".")
-        return cmd
+        return _handle_editable_project(args)
 
     # Handle editable mode for specific packages
     if args.editable:
-        for pkg in args.packages:
-            editable_cmd = cmd.copy()
-            editable_cmd.extend(["-e", pkg])
-            run_install_command(editable_cmd)
+        _handle_editable_packages(args)
         return None
+
+    # Build the command for non-editable installations
+    cmd = ["uv", "pip", "install"]
 
     # Handle requirements file
     if args.requirement:
@@ -95,11 +105,10 @@ def install_packages(args):
     if not any([args.editable, args.requirement, args.packages]):
         print("ERROR: No packages specified. Use -h for help.")
         sys.exit(1)
-
     return None
 
 
-def run_install_command(cmd):
+def run_install_command(cmd: list[str]) -> None:
     """Run the install command."""
     print(f"Running: {' '.join(cmd)}")
     try:
