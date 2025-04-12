@@ -42,25 +42,13 @@ jobs:
           echo "Kernel: $(uname -r)"
           echo "Architecture: $(uname -m)"
 
-      - name: Install actionlint
-        run: |
-          # Install actionlint
-          bash <(curl "https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash")
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - name: Install and run actionlint
+        uses: reviewdog/action-actionlint@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          fail_on_error: true
 
-      - name: Run actionlint
-        run: |
-          echo "Running actionlint on all workflow files..."
-          actionlint -color
-
-          # Count issues
-          ISSUES=$(actionlint -format "{{range \$err := .}}{{\$err.Message}}{{end}}" | wc -l)
-          echo "Found $ISSUES issues"
-
-          if [ "$ISSUES" -gt 0 ]; then
-            echo "::error::Actionlint found $ISSUES issues in workflow files"
-            exit 1
-          fi
+      # The actionlint step above already runs actionlint and reports issues
 
       - name: Check for deprecated actions
         run: |
