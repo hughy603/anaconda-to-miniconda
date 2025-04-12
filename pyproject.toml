@@ -48,7 +48,7 @@ dev = [
     "hatch>=1.9.0",
     "types-pyyaml>=6.0.12.20250402",
 ]
-test = ["pytest>=8.0.0", "pytest-cov>=4.1.0"]
+test = ["pytest>=8.0.0", "pytest-cov>=4.1.0", "pytest-benchmark>=4.0.0"]
 docs = [
     "mkdocs>=1.5.0",
     "mkdocs-material>=9.5.0",
@@ -140,7 +140,10 @@ markers = [
     "unit: marks tests as unit tests",
     "integration: marks tests as integration tests",
     "slow: marks tests as slow tests that may take longer to run",
+    "benchmark: marks tests as benchmark tests",
 ]
+# Exclude benchmark tests from regular test runs
+addopts = "--ignore=tests/benchmarks/"
 
 # Python-Semantic-Release configuration
 [tool.semantic_release]
