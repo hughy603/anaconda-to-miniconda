@@ -1,15 +1,11 @@
 # CHANGELOG
 
-## v1.0.0 (2025-04-10)
+## v0.0.1-dev.1 (2025-04-10)
 
 ### Bug Fixes
 
 - Fix GitHub Actions workflow by updating version format and adding missing imports
   ([`commit_id`](https://github.com/hughy603/anaconda-to-miniconda/commit/commit_id))
-
-## v0.0.1-dev.1 (2025-04-10)
-
-### Bug Fixes
 
 - Ensure git pull.rebase is set to false to prevent divergent branches
   ([`4a0a7c1`](https://github.com/hughy603/anaconda-to-miniconda/commit/4a0a7c175857f924b9cd528b3e6c5016677f40b3))
