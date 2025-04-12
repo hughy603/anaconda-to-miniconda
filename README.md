@@ -10,14 +10,27 @@ A tool to convert Anaconda environments to conda-forge environments while preser
 
 ## Table of Contents
 
-- [Quick Start](#quick-start)
-- [Features](#features)
-- [Advanced Usage](#advanced-usage)
-- [Development Setup](#development-setup)
-- [Dependency Management](#dependency-management)
-- [Testing](#testing)
-- [GitHub Actions](#github-actions)
-- [Project Structure](#project-structure)
+- [Conda-Forge Converter](#conda-forge-converter)
+  - [Table of Contents](#table-of-contents)
+  - [Quick Start](#quick-start)
+  - [Features](#features)
+  - [Advanced Usage](#advanced-usage)
+    - [Specify Channels](#specify-channels)
+    - [Control Package Handling](#control-package-handling)
+    - [Validation Options](#validation-options)
+  - [Development Setup](#development-setup)
+    - [Prerequisites](#prerequisites)
+    - [Installation](#installation)
+  - [Dependency Management](#dependency-management)
+    - [Key Rules](#key-rules)
+    - [Common Commands](#common-commands)
+  - [Testing](#testing)
+  - [GitHub Actions](#github-actions)
+    - [GitHub Actions Workflow Validation](#github-actions-workflow-validation)
+      - [Key Features](#key-features)
+    - [Local Workflow Testing](#local-workflow-testing)
+  - [Project Structure](#project-structure)
+  - [License](#license)
 
 ## Quick Start
 
@@ -150,61 +163,54 @@ hatch run security
 
 ## GitHub Actions
 
-### Local Workflow Testing
+### GitHub Actions Workflow Validation
 
-Test GitHub Actions workflows locally before pushing changes using our standardized scripts:
+This project includes comprehensive tools for validating GitHub Actions workflows locally:
 
 ```bash
-# Test a workflow (defaults to push event)
-./github-actions-local.sh -w .github/workflows/ci.yml
+# Validate all workflows
+./validate-all-workflows.sh  # Unix/Linux/macOS
+.\validate-all-workflows.ps1  # Windows
 
-# Test with a specific job
-./github-actions-local.sh -w .github/workflows/ci.yml -j build
+# Validate only changed workflows
+./validate-all-workflows.sh --changed-only
+.\validate-all-workflows.ps1 -ChangedOnly
 
-# Test with a different event type
-./github-actions-local.sh -w .github/workflows/ci.yml -e pull_request
+# Fast validation (dry run mode)
+./validate-all-workflows.sh --dry-run
+.\validate-all-workflows.ps1 -DryRun
 ```
 
-For Windows users (PowerShell):
+#### Key Features
 
-```powershell
-# Test a workflow
+- **Syntax Validation**: Check for errors and best practices
+- **Execution Validation**: Run workflows in local containers
+- **Selective Testing**: Validate only changed workflows
+- **Parallel Execution**: Run validations concurrently
+- **Mock Secrets**: Use local secrets for testing
+- **Custom Docker Images**: More accurate testing environment
+- **VSCode Integration**: Convenient tasks for validation
+- **Pre-commit Integration**: Automatic validation on commit
+
+For detailed information, see [GitHub Actions Validation](GITHUB_ACTIONS_VALIDATION.md).
+
+### Local Workflow Testing
+
+Test individual GitHub Actions workflows locally:
+
+```bash
+# Unix/Linux/macOS
+./github-actions-local.sh -w .github/workflows/ci.yml  # Test a workflow
+./github-actions-local.sh -w .github/workflows/ci.yml -j build  # Test specific job
+./github-actions-local.sh -w .github/workflows/ci.yml -e pull_request  # Test event type
+
+# Windows (PowerShell)
 ./github-actions-local.ps1 -WorkflowFile .github/workflows/ci.yml
-
-# Test a specific job
 ./github-actions-local.ps1 -WorkflowFile .github/workflows/ci.yml -JobFilter build
-
-# Test with a different event type
 ./github-actions-local.ps1 -WorkflowFile .github/workflows/ci.yml -EventType pull_request
 ```
 
-For detailed information about local testing, see [GITHUB_ACTIONS_LOCAL.md](GITHUB_ACTIONS_LOCAL.md).
-
-### Environment Variables for Local Testing
-
-The following environment variables are automatically set during local testing:
-
-| Variable                  | Value  | Purpose                                     |
-| ------------------------- | ------ | ------------------------------------------- |
-| `ACT`                     | `true` | Identify when running in act                |
-| `ACT_LOCAL_TESTING`       | `true` | Identify when running in local testing mode |
-| `SKIP_LONG_RUNNING_TESTS` | `true` | Skip long-running tests in local testing    |
-
-### Troubleshooting Workflow Issues
-
-1. **Docker not running**
-
-   - Start Docker Desktop and try again
-
-1. **"Unknown action" error**
-
-   - For composite actions, use relative paths: `./.github/actions/my-action`
-   - Some third-party actions may not be compatible with Act
-
-1. **Tests pass locally but fail in CI**
-
-   - Check for environment differences
-   - Ensure dependencies are properly specified
+For detailed information about workflow validation, local testing, and troubleshooting, see [GitHub Actions Validation](GITHUB_ACTIONS_VALIDATION.md).
 
 ## Project Structure
 

@@ -4,14 +4,7 @@ on:
   pull_request:
     paths:
       - '.github/workflows/**'
-  push:
-    branches: [master, develop]
-    paths:
-      - '.github/workflows/**'
-  workflow_dispatch:
-
-env:
-  ACT_LOCAL_TESTING: ${{ vars.ACT_LOCAL_TESTING || 'false' }}
+  workflow_dispatch:  # Allow manual triggering
 
 jobs:
   validate:
@@ -20,19 +13,102 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      # This step is skipped in local testing mode
-      - name: Run actionlint (Production)
-        if: ${{ !env.ACT_LOCAL_TESTING || env.ACT_LOCAL_TESTING != 'true' }}
-        uses: reviewdog/action-actionlint@v1
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          fail_on_error: true
+          fetch-depth: 0  # Full history for accurate diff
 
-      # This step only runs in local testing mode
-      - name: Mock actionlint (Local Testing)
-        if: ${{ env.ACT_LOCAL_TESTING == 'true' }}
+      - name: Install act
         run: |
-          echo "Mocking actionlint for local testing"
-          echo "In production, this would validate GitHub Actions workflow files"
-          echo "You can run actionlint locally with: actionlint .github/workflows/*.yml"
+          curl -s https://raw.githubusercontent.com/nektos/act/master/install.sh | sudo bash
+
+      - name: Install actionlint
+        run: |
+          curl -sL https://github.com/rhysd/actionlint/releases/latest/download/actionlint_linux_amd64.tar.gz | tar xz
+          sudo mv actionlint /usr/local/bin/
+
+      - name: Validate workflow syntax
+        run: |
+          echo "Validating workflow syntax with actionlint..."
+          actionlint
+
+      - name: Identify changed workflows
+        id: changed-workflows
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            CHANGED_FILES="$(git diff --name-only "${{ github.event.pull_request.base.sha }}" "${{ github.sha }}" | grep -E "^\.github/workflows/.*\.ya?ml$" || true)"
+          else
+            CHANGED_FILES="$(find .github/workflows -name "*.yml" -o -name "*.yaml")"
+          fi
+
+          if [[ -z "$CHANGED_FILES" ]]; then
+            echo "No workflow files to validate."
+            echo "changed_files=" >> "$GITHUB_OUTPUT"
+          else
+            echo "Changed workflow files:"
+            echo "$CHANGED_FILES"
+            {
+              echo "changed_files<<EOF"
+              echo "$CHANGED_FILES"
+              echo "EOF"
+            } >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Validate workflows with act
+        if: steps.changed-workflows.outputs.changed_files != ''
+        run: |
+          echo "Validating workflows with act..."
+
+          # Create a directory for act cache
+          mkdir -p .act-cache
+
+          # Read the list of changed files
+          IFS=$'\n' read -d '' -ra WORKFLOWS <<< "${{ steps.changed-workflows.outputs.changed_files }}"
+
+          # Validate each workflow
+          for workflow in "${WORKFLOWS[@]}"; do
+            if [[ "$workflow" != ".github/workflows/validate-workflows.yml" ]]; then
+              echo "Validating $workflow..."
+              if ! act -W "$workflow" -n --action-cache-path .act-cache; then
+                echo "::error::Workflow $workflow validation failed"
+                exit 1
+              fi
+            fi
+          done
+
+          echo "All workflows validated successfully!"
+
+      - name: Check for workflow best practices
+        run: |
+          echo "Checking for workflow best practices..."
+
+          # Find all workflow files
+          WORKFLOW_FILES=$(find .github/workflows -name "*.yml" -o -name "*.yaml")
+
+          # Initialize error flag
+          ERRORS=0
+
+          for file in $WORKFLOW_FILES; do
+            echo "Checking $file..."
+
+            # Check for use of latest/master tags instead of specific versions
+            if grep -q "uses:.*@master" "$file" || grep -q "uses:.*@main" "$file"; then
+              echo "::warning file=$file::Using @master or @main tags instead of specific versions"
+              ERRORS=1
+            fi
+
+            # Check for missing timeout-minutes
+            if ! grep -q "timeout-minutes:" "$file"; then
+              echo "::warning file=$file::Missing timeout-minutes in jobs"
+              ERRORS=1
+            fi
+
+            # Check for missing continue-on-error where appropriate
+            if grep -q "npm test" "$file" && ! grep -q "continue-on-error:" "$file"; then
+              echo "::warning file=$file::Consider adding continue-on-error for test steps"
+            fi
+          done
+
+          if [[ $ERRORS -ne 0 ]]; then
+            echo "::warning::Workflow files have best practice issues. See warnings above."
+          else
+            echo "All workflows follow best practices!"
+          fi

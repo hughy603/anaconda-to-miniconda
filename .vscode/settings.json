@@ -71,5 +71,37 @@
             ".github/actions/*/action.yml",
             ".github/actions/*/action.yaml"
         ]
-    }
+    },
+    "yaml.customTags": [
+        "!include_dir_named",
+        "!include_dir_list",
+        "!include_dir_merge_named",
+        "!include_dir_merge_list",
+        "!secret"
+    ],
+    "yaml.format.enable": true,
+    "yaml.validate": true,
+    "yaml.hover": true,
+    "yaml.completion": true,
+    "[yaml]": {
+        "editor.defaultFormatter": "redhat.vscode-yaml",
+        "editor.formatOnSave": true,
+        "editor.autoIndent": "advanced",
+        "editor.quickSuggestions": {
+            "other": true,
+            "comments": false,
+            "strings": true
+        }
+    },
+    "problems.decorations.enabled": true,
+    "problems.showCurrentInStatus": true,
+    "filewatcher.commands": [
+        {
+            "match": "\\.github/(workflows|actions)/.*\\.ya?ml$",
+            "isRegex": true,
+            "cmd": "${workspaceRoot}/.vscode/scripts/validate-workflows.sh ${file}",
+            "cmdWindows": "powershell -ExecutionPolicy Bypass -File ${workspaceRoot}/.vscode/scripts/validate-workflows.ps1 -FilePath \"${file}\"",
+            "event": "onSave"
+        }
+    ]
 }

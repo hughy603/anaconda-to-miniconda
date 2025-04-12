@@ -2,99 +2,150 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Test GitHub Actions Workflow",
+            "label": "Validate Workflow Syntax",
             "type": "shell",
-            "command": ".github/scripts/test-github-actions.sh --workflow ${input:workflowFile}",
-            "problemMatcher": [],
+            "command": "pre-commit run actionlint --all-files",
+            "group": "test",
             "presentation": {
                 "reveal": "always",
                 "panel": "new"
+            }
+        },
+        {
+            "label": "Validate All Workflows (Local Execution)",
+            "type": "shell",
+            "command": "./validate-all-workflows.sh",
+            "windows": {
+                "command": ".\\validate-all-workflows.ps1"
+            },
+            "group": "test",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Validate Changed Workflows Only",
+            "type": "shell",
+            "command": "./validate-all-workflows.sh --changed-only",
+            "windows": {
+                "command": ".\\validate-all-workflows.ps1 -ChangedOnly"
+            },
+            "group": "test",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Validate Workflows in Parallel",
+            "type": "shell",
+            "command": "./validate-all-workflows.sh --parallel",
+            "windows": {
+                "command": ".\\validate-all-workflows.ps1 -Parallel"
+            },
+            "group": "test",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Validate Current Workflow (Local Execution)",
+            "type": "shell",
+            "command": "./github-actions-local.sh -w ${file}",
+            "windows": {
+                "command": ".\\github-actions-local.ps1 -WorkflowFile ${file}"
+            },
+            "group": "test",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Validate Current Workflow File",
+            "type": "shell",
+            "command": ".vscode/scripts/validate-workflows.sh ${file}",
+            "windows": {
+                "command": "powershell -ExecutionPolicy Bypass -File .vscode/scripts/validate-workflows.ps1 -FilePath \"${file}\""
+            },
+            "problemMatcher": {
+                "owner": "actionlint",
+                "pattern": {
+                    "regexp": "^(.+):(\\d+):(\\d+): \\[(.+)\\] (.+)$",
+                    "file": 1,
+                    "line": 2,
+                    "column": 3,
+                    "severity": 4,
+                    "message": 5
+                }
+            },
+            "presentation": {
+                "reveal": "silent",
+                "panel": "shared",
+                "clear": true
             },
             "group": "test"
         },
         {
-            "label": "Validate GitHub Actions Workflow",
+            "label": "Validate Workflows with Custom Settings",
             "type": "shell",
-            "command": ".github/scripts/test-github-actions.sh --validate --workflow ${input:workflowFile}",
-            "problemMatcher": [],
+            "command": "./validate-all-workflows.sh",
+            "windows": {
+                "command": ".\\validate-all-workflows.ps1"
+            },
+            "args": [
+                {
+                    "value": "--secrets-file",
+                    "quoting": "escape"
+                },
+                {
+                    "value": "${input:secretsFile}",
+                    "quoting": "escape"
+                },
+                {
+                    "value": "--cache-path",
+                    "quoting": "escape"
+                },
+                {
+                    "value": "${input:cachePath}",
+                    "quoting": "escape"
+                },
+                {
+                    "value": "--custom-image",
+                    "quoting": "escape"
+                },
+                {
+                    "value": "${input:customImage}",
+                    "quoting": "escape"
+                }
+            ],
+            "group": "test",
             "presentation": {
                 "reveal": "always",
                 "panel": "new"
-            },
-            "group": "test"
-        },
-        {
-            "label": "Test with Python 3.11",
-            "type": "shell",
-            "command": ".github/scripts/test-github-actions.sh --python 3.11 --workflow ${input:workflowFile}",
-            "problemMatcher": [],
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            },
-            "group": "test"
-        },
-        {
-            "label": "Test with Python 3.12",
-            "type": "shell",
-            "command": ".github/scripts/test-github-actions.sh --python 3.12 --workflow ${input:workflowFile}",
-            "problemMatcher": [],
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            },
-            "group": "test"
-        },
-        {
-            "label": "Test with Both Python Versions",
-            "type": "shell",
-            "command": ".github/scripts/test-github-actions.sh --both-versions --workflow ${input:workflowFile}",
-            "problemMatcher": [],
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            },
-            "group": "test"
-        },
-        {
-            "label": "Test without Docker (Python 3.11)",
-            "type": "shell",
-            "command": ".github/scripts/test-github-actions.sh --skip-docker --python 3.11 --workflow ${input:workflowFile}",
-            "problemMatcher": [],
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            },
-            "group": "test"
-        },
-        {
-            "label": "Test without Docker (Python 3.12)",
-            "type": "shell",
-            "command": ".github/scripts/test-github-actions.sh --skip-docker --python 3.12 --workflow ${input:workflowFile}",
-            "problemMatcher": [],
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            },
-            "group": "test"
-        },
-        {
-            "label": "Run Tests with Hatch",
-            "type": "shell",
-            "command": "hatch run test",
-            "problemMatcher": [],
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            },
-            "group": "test"
+            }
         }
     ],
     "inputs": [
         {
-            "id": "workflowFile",
-            "description": "Workflow file path:",
-            "default": ".github/workflows/ci.yml",
+            "id": "secretsFile",
+            "description": "Path to secrets file",
+            "default": ".github/local-secrets.json",
+            "type": "promptString"
+        },
+        {
+            "id": "cachePath",
+            "description": "Path to cache directory",
+            "default": "./.act-cache",
+            "type": "promptString"
+        },
+        {
+            "id": "customImage",
+            "description": "Custom Docker image (e.g., ubuntu-latest=ghcr.io/catthehacker/ubuntu:act-latest)",
+            "default": "",
             "type": "promptString"
         }
     ]

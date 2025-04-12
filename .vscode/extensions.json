@@ -15,7 +15,9 @@
         "yzhang.markdown-all-in-one",
         "streetsidesoftware.code-spell-checker",
         "eamodio.gitlens",
-        "github.vscode-github-actions"
+        "github.vscode-github-actions",
+        "usernamehw.errorlens",
+        "appulate.filewatcher"
     ],
     "unwantedRecommendations": [
         "ms-python.flake8",

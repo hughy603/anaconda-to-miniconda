@@ -83,8 +83,36 @@ repos:
         pass_filenames: false
         stages: [pre-commit]
 
-      # Release validation (manual only)
+      # GitHub Actions workflow validation
 
+      # Validate changed workflows on commit (fast)
+      - id: validate-changed-workflows
+        name: Validate changed workflows
+        entry: powershell -ExecutionPolicy Bypass -File ./validate-all-workflows.ps1 -ChangedOnly -DryRun
+        language: system
+        files: ^\.github/workflows/.*\.ya?ml$
+        pass_filenames: false
+        stages: [pre-commit]
+
+      # Validate all workflows (manual, thorough)
+      - id: validate-workflows-execution
+        name: Validate all workflows by running locally
+        entry: powershell -ExecutionPolicy Bypass -File ./validate-all-workflows.ps1
+        language: system
+        files: ^\.github/workflows/.*\.ya?ml$
+        pass_filenames: false
+        stages: [manual]
+
+      # Validate workflows before push
+      - id: validate-workflows-pre-push
+        name: Validate workflows before push
+        entry: powershell -ExecutionPolicy Bypass -File ./validate-all-workflows.ps1 -ChangedOnly
+        language: system
+        files: ^\.github/workflows/.*\.ya?ml$
+        pass_filenames: false
+        stages: [pre-push]
+
+      # Release validation (manual only)
       - id: check-version-bump
         name: Check version bump
         entry: semantic-release version --no-commit --no-tag --no-push --no-vcs-release
