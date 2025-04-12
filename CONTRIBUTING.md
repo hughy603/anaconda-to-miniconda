@@ -33,6 +33,7 @@ uv pip install -e ".[dev,test]"
 # Install pre-commit hooks
 pre-commit install
 pre-commit install --hook-type commit-msg
+pre-commit install --hook-type pre-push  # Ensures all files are checked before pushing
 
 # Configure Git to use merge strategy for pulls (important for this project)
 git config pull.rebase false
@@ -83,6 +84,7 @@ This ensures that when you pull changes that include automatic version bump comm
 1. **Make your changes**: Implement your feature or bug fix
 
 1. **Run pre-commit checks**: `pre-commit run --all-files`
+   - Note: A pre-push hook has been added that automatically runs this check before pushing, helping prevent CI failures due to formatting or linting issues
 
 1. **Run tests**: `pytest`
 
@@ -118,8 +120,8 @@ This project uses the following branch strategy:
 The workflow is:
 
 1. Create feature branches from `develop`
-2. Submit PRs to merge feature branches into `develop`
-3. Periodically, `develop` is merged into `master` for releases
+1. Submit PRs to merge feature branches into `develop`
+1. Periodically, `develop` is merged into `master` for releases
 
 ## Conventional Commits
 

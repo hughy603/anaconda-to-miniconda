@@ -62,6 +62,15 @@ repos:
   # Dependency management and local hooks
   - repo: local
     hooks:
+      # Pre-push full check
+      - id: pre-push-full-check
+        name: Run pre-commit on all files before push
+        entry: pre-commit run --all-files
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+        verbose: true
+
       # Dependency management
       - id: deps-lock
         name: Lock dependencies with UV

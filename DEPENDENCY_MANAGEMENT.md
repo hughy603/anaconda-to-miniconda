@@ -30,6 +30,7 @@ pre-commit install
 ### Common Commands
 
 > **NEW:** Use the helper script `scripts/install_package.py` to ensure UV is always used for package installation:
+>
 > ```bash
 > # Install a package with UV
 > python scripts/install_package.py package_name
@@ -95,6 +96,6 @@ uv pip install package-name
 For Hatch-managed environments, you should:
 
 1. Add the dependency to `pyproject.toml` under the appropriate section
-2. Recreate the environment: `hatch env remove default && hatch env create`
+1. Recreate the environment: `hatch env remove default && hatch env create`
 
 For detailed information about dependency management, including resolution strategy, CI/CD integration, and automated updates, please refer to the [Build Tools Guide](docs/dev/build-tools.md).
