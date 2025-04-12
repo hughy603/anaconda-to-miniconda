@@ -42,8 +42,8 @@ jobs:
 
       - name: Install UV
         run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh
-          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+          python -m pip install --upgrade pip
+          pip install uv==${{ env.UV_VERSION }}
 
       - name: Cache dependencies
         uses: actions/cache@v4
@@ -87,10 +87,9 @@ jobs:
           cache: 'pip'
 
       - name: Install UV
-        shell: bash
         run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh
-          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+          python -m pip install --upgrade pip
+          pip install uv==${{ env.UV_VERSION }}
 
       - name: Cache dependencies
         uses: actions/cache@v4
@@ -161,8 +160,8 @@ jobs:
 
       - name: Install UV
         run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh
-          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+          python -m pip install --upgrade pip
+          pip install uv==${{ env.UV_VERSION }}
 
       - name: Install dependencies
         run: |
