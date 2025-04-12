@@ -12,6 +12,8 @@ This document outlines the simplifications and standardizations made to the code
    - Consolidated GitHub Actions validation scripts
    - Moved formatting checks to pre-commit stage (instead of pre-push)
    - Removed semantic-release validation from pre-push
+   - Explicitly specified stages for all hooks
+   - Ensured consistent tool availability across all stages
 
 1. **Consolidated GitHub Actions Validation**
 
@@ -22,9 +24,12 @@ This document outlines the simplifications and standardizations made to the code
 1. **Optimized Git Hooks**
 
    - Moved formatting checks to pre-commit stage for immediate feedback
-   - Limited pre-push checks to only type checking (faster pushes)
-   - Fixed command execution in scripts to use Python modules
-   - Removed dependency on external tools in the pre-push stage
+   - Configured type checking to run at both commit and push stages
+   - Used pre-commit's built-in infrastructure for tool management
+   - Ensured consistent tool availability across all stages
+   - Eliminated custom scripts in favor of standardized hooks
+   - Added explicit stage configuration for all hooks
+   - Ensured proper dependency management at commit time
 
 1. **Removed Redundant Scripts**
 
@@ -86,9 +91,15 @@ To ensure no errors are committed despite the simplifications:
 
 The new pre-push hook implementation:
 
-1. Runs only essential checks:
+1. Uses pre-commit's built-in infrastructure:
 
-   - Pyright type checking only (formatting moved to pre-commit stage)
+   - Pyright runs at both commit and push stages
+   - GitHub Actions validation runs at both commit and push stages
+   - Dependency management runs at commit time
+   - Tools are automatically installed and managed by pre-commit
+   - Consistent environment across all stages
+   - No custom scripts or workarounds needed
+   - Explicit stage configuration for all hooks
 
 1. Provides clear error messages when checks fail
 

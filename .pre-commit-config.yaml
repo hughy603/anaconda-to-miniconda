@@ -22,16 +22,17 @@ repos:
       - id: ruff
         args: [--fix, --config=pyproject.toml]
         types_or: [python]
-        stages: [commit]
+        stages: [pre-commit]
       - id: ruff-format
         types_or: [python, toml]
-        stages: [commit]
+        stages: [pre-commit]
 
   - repo: https://github.com/RobertCraigie/pyright-python
     rev: v1.1.399
     hooks:
       - id: pyright
         args: ["--project=./pyrightconfig.json"]
+        stages: [commit, pre-push]
 
   # Commit message format validation
   - repo: https://github.com/compilerla/conventional-pre-commit
@@ -65,17 +66,6 @@ repos:
   # Dependency management and local hooks
   - repo: local
     hooks:
-      # Simple pre-push check
-      - id: pre-push-essential
-        name: Run essential checks before push
-        entry: bash .github/scripts/pre-push.sh
-        language: system
-        pass_filenames: false
-        stages: [pre-push]
-        verbose: true
-
-  - repo: local
-    hooks:
       # Dependency management
       - id: deps-lock
         name: Lock dependencies with UV
@@ -83,6 +73,7 @@ repos:
         language: system
         files: ^(pyproject\.toml|requirements\.lock)$
         pass_filenames: false
+        stages: [commit]
 
       - id: uv-lock
         name: Update UV lockfile
@@ -90,6 +81,7 @@ repos:
         language: system
         files: ^(pyproject\.toml|uv\.lock)$
         pass_filenames: false
+        stages: [commit]
 
       # GitHub Actions validation (simplified)
       - id: validate-github-actions
@@ -99,6 +91,7 @@ repos:
         additional_dependencies: [pyyaml]
         files: ^\.github/(workflows|actions)/.+\.ya?ml$
         pass_filenames: true
+        stages: [commit, pre-push]
 
       # Release validation (manual only)
 
