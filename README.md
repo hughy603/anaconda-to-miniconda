@@ -15,8 +15,11 @@ A simple tool to convert Anaconda environments to conda-forge environments while
 ## Quick Start
 
 ```bash
-# Install
-pip install conda-forge-converter
+# Install with UV (recommended)
+uv pip install conda-forge-converter
+
+# Or with pipx for isolated installation
+pipx install conda-forge-converter
 
 # Convert and replace a single environment (original is backed up as myenv_anaconda_backup)
 conda-forge-converter -s myenv
@@ -47,6 +50,8 @@ conda-forge-converter --batch --pattern 'data*' --no-replace
 - [Dependency Management](DEPENDENCY_MANAGEMENT.md)
 
 ## Development
+
+> **⚠️ IMPORTANT:** Always use UV for all package installations (`uv pip install`) instead of regular pip. Using regular pip can lead to dependency conflicts and test failures. See [Dependency Management](DEPENDENCY_MANAGEMENT.md) for details.
 
 ```bash
 # Install UV (recommended to use pipx for global installation)
