@@ -63,7 +63,7 @@ repos:
   - repo: local
     hooks:
       # Pre-push full check
-      - id: pre-push-full-check
+      - id: pre-push-check-all
         name: Run pre-commit on all files before push
         entry: pre-commit run --all-files
         language: system
