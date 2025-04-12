@@ -84,6 +84,7 @@ This ensures that when you pull changes that include automatic version bump comm
 1. **Make your changes**: Implement your feature or bug fix
 
 1. **Run pre-commit checks**: `pre-commit run --all-files`
+
    - Note: A pre-push hook has been added that automatically runs this check before pushing, helping prevent CI failures due to formatting or linting issues
 
 1. **Run tests**: `pytest`
