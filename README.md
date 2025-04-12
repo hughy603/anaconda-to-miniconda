@@ -152,28 +152,33 @@ hatch run security
 
 ### Local Workflow Testing
 
-Test GitHub Actions workflows locally before pushing changes:
+Test GitHub Actions workflows locally before pushing changes using our standardized scripts:
 
 ```bash
 # Test a workflow (defaults to push event)
-.github/local-testing/local-test.sh .github/workflows/ci.yml
+./github-actions-local.sh -w .github/workflows/ci.yml
 
-# Test with a specific Python version
-.github/local-testing/local-test.sh .github/workflows/ci.yml push "" python-version=3.11
+# Test with a specific job
+./github-actions-local.sh -w .github/workflows/ci.yml -j build
 
-# Validate a workflow file
-.github/local-testing/validate-workflow.sh .github/workflows/ci.yml
+# Test with a different event type
+./github-actions-local.sh -w .github/workflows/ci.yml -e pull_request
 ```
 
 For Windows users (PowerShell):
 
 ```powershell
 # Test a workflow
-.github/local-testing/local-test.ps1 -WorkflowFile .github/workflows/ci.yml
+./github-actions-local.ps1 -WorkflowFile .github/workflows/ci.yml
 
-# Test with a specific Python version
-.github/local-testing/local-test.ps1 -WorkflowFile .github/workflows/ci.yml -PythonVersion 3.11
+# Test a specific job
+./github-actions-local.ps1 -WorkflowFile .github/workflows/ci.yml -JobFilter build
+
+# Test with a different event type
+./github-actions-local.ps1 -WorkflowFile .github/workflows/ci.yml -EventType pull_request
 ```
+
+For detailed information about local testing, see [GITHUB_ACTIONS_LOCAL.md](GITHUB_ACTIONS_LOCAL.md).
 
 ### Environment Variables for Local Testing
 
@@ -181,8 +186,8 @@ The following environment variables are automatically set during local testing:
 
 | Variable                  | Value  | Purpose                                     |
 | ------------------------- | ------ | ------------------------------------------- |
+| `ACT`                     | `true` | Identify when running in act                |
 | `ACT_LOCAL_TESTING`       | `true` | Identify when running in local testing mode |
-| `SKIP_DOCKER_BUILDS`      | `true` | Skip Docker build steps in local testing    |
 | `SKIP_LONG_RUNNING_TESTS` | `true` | Skip long-running tests in local testing    |
 
 ### Troubleshooting Workflow Issues

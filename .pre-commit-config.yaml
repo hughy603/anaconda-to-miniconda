@@ -83,16 +83,6 @@ repos:
         pass_filenames: false
         stages: [pre-commit]
 
-      # GitHub Actions validation (simplified)
-      - id: validate-github-actions
-        name: Validate GitHub Actions
-        entry: python .github/scripts/validate-github-actions.py
-        language: python
-        additional_dependencies: [pyyaml]
-        files: ^\.github/(workflows|actions)/.+\.ya?ml$
-        pass_filenames: true
-        stages: [pre-commit, pre-push]
-
       # Release validation (manual only)
 
       - id: check-version-bump
@@ -101,6 +91,13 @@ repos:
         language: system
         pass_filenames: false
         stages: [manual]
+
+      - id: powershell-script-analyzer
+        name: PowerShell Script Analyzer
+        entry: pwsh -NoProfile -ExecutionPolicy Bypass -Command "if (-not (Get-Module -ListAvailable -Name PSScriptAnalyzer)) { Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser -SkipPublisherCheck }; $files = @(git ls-files '*.ps1'); if ($files.Count -gt 0) { $results = $files | ForEach-Object { Invoke-ScriptAnalyzer -Path $_ -Settings .vscode/PSScriptAnalyzerSettings.psd1 }; if ($results) { $results | Format-Table -AutoSize; exit 1 } else { exit 0 } } else { exit 0 }"
+        language: system
+        pass_filenames: false
+        types: [powershell]
 
   # Markdown formatting
   - repo: https://github.com/executablebooks/mdformat
@@ -111,3 +108,13 @@ repos:
           - mdformat-gfm
           - mdformat-black
           - mdformat-myst
+
+  # Shell script validation
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.9.0.6
+    hooks:
+      - id: shellcheck
+        name: Validate shell scripts
+        description: Checks shell scripts for syntax errors and potential issues
+        types: [shell]
+        args: ["--severity=warning", "--enable=all", "--shell=bash"]

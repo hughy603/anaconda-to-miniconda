@@ -115,6 +115,10 @@ conda_env_backups*
 actionlint
 .actrc
 act-secrets.env
+.github/events/*.json
+!.github/events/templates/
+.github/local-testing/
+.github/templates/
 
 # Test output
 test_output.txt
@@ -133,3 +137,7 @@ test_output.txt
 *.swp
 *.orig
 .~*
+=*
+
+# Example files
+*.example

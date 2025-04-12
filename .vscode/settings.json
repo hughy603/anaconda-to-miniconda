@@ -56,5 +56,20 @@
         "**/.pytest_cache": true,
         "**/.mypy_cache": true,
         "**/.ruff_cache": true
+    },
+    "powershell.scriptAnalysis.enable": true,
+    "powershell.scriptAnalysis.settingsPath": ".vscode/PSScriptAnalyzerSettings.psd1",
+    "[powershell]": {
+        "editor.defaultFormatter": "ms-vscode.powershell"
+    },
+    "yaml.schemas": {
+        "https://json.schemastore.org/github-workflow.json": [
+            ".github/workflows/*.yml",
+            ".github/workflows/*.yaml"
+        ],
+        "https://json.schemastore.org/github-action.json": [
+            ".github/actions/*/action.yml",
+            ".github/actions/*/action.yaml"
+        ]
     }
 }
