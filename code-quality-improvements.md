@@ -84,13 +84,14 @@ To ensure no errors are committed despite the simplifications:
 The new pre-push hook implementation:
 
 1. Runs only essential checks:
+
    - Ruff linting and formatting
    - Pyright type checking
 
-2. Provides clear error messages when checks fail
+1. Provides clear error messages when checks fail
 
-3. Is significantly faster than the previous implementation
+1. Is significantly faster than the previous implementation
 
-4. Focuses on preventing common errors without being overly restrictive
+1. Focuses on preventing common errors without being overly restrictive
 
 This approach ensures that code quality is maintained while allowing developers to work efficiently.
