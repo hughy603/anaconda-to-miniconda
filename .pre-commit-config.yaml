@@ -63,6 +63,17 @@ repos:
   # Dependency management and local hooks
   - repo: local
     hooks:
+      # Simple pre-push check
+      - id: pre-push-essential
+        name: Run essential checks before push
+        entry: bash .github/scripts/pre-push.sh
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+        verbose: true
+
+  - repo: local
+    hooks:
       # Dependency management
       - id: deps-lock
         name: Lock dependencies with UV

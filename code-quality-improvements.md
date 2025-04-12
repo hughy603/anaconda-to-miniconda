@@ -17,6 +17,12 @@ This document outlines the simplifications and standardizations made to the code
    - Improved error reporting and validation logic
    - Reduced complexity while maintaining the same validation coverage
 
+1. **Simplified Pre-Push Checks**
+
+   - Created a focused pre-push script that runs only essential checks
+   - Ensures code quality without slowing down the development process
+   - Fixed issues with pre-push hook configuration
+
 1. **Removed Redundant Scripts**
 
    - Deleted `.github/scripts/pre-push-check.sh` (functionality already in pre-commit)
@@ -71,3 +77,20 @@ To ensure no errors are committed despite the simplifications:
 1. **Simplified but Complete Validation** - All critical checks are maintained
 1. **Clear Documentation** - Better guidance on the code quality process
 1. **Focused Pre-commit Hooks** - Essential checks run locally, comprehensive checks in CI
+1. **Streamlined Pre-Push Checks** - Fast, essential checks run before pushing
+
+## Pre-Push Hook Implementation
+
+The new pre-push hook implementation:
+
+1. Runs only essential checks:
+   - Ruff linting and formatting
+   - Pyright type checking
+
+2. Provides clear error messages when checks fail
+
+3. Is significantly faster than the previous implementation
+
+4. Focuses on preventing common errors without being overly restrictive
+
+This approach ensures that code quality is maintained while allowing developers to work efficiently.
