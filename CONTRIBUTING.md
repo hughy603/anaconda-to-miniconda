@@ -148,10 +148,10 @@ For detailed examples and guidelines, see the [Conventional Commits Guide](docs/
 We use a simplified, standardized code quality process:
 
 1. **Linting and Formatting**: Ruff for linting and formatting Python code
-2. **Type Checking**: Pyright for static type checking
-3. **Dependency Management**: UV for dependency locking and management
-4. **GitHub Actions Validation**: Simplified validation of workflows and actions
-5. **CI Checks**: Comprehensive testing across multiple Python versions and platforms
+1. **Type Checking**: Pyright for static type checking
+1. **Dependency Management**: UV for dependency locking and management
+1. **GitHub Actions Validation**: Simplified validation of workflows and actions
+1. **CI Checks**: Comprehensive testing across multiple Python versions and platforms
 
 All these tools are configured in `pyproject.toml` and `.pre-commit-config.yaml`, and run automatically via pre-commit hooks for local validation and CI workflows for comprehensive testing.
 
