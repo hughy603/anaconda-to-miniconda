@@ -7,10 +7,10 @@ A simple tool to convert Anaconda environments to conda-forge environments while
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 [![Release](https://github.com/yourusername/conda-forge-converter/actions/workflows/release.yml/badge.svg)](https://github.com/yourusername/conda-forge-converter/actions/workflows/release.yml)
 [![Maintenance](https://github.com/yourusername/conda-forge-converter/actions/workflows/maintenance.yml/badge.svg)](https://github.com/yourusername/conda-forge-converter/actions/workflows/maintenance.yml)
-[![Code Coverage](https://codecov.io/gh/yourusername/conda-forge-converter/branch/main/graph/badge.svg)](https://codecov.io/gh/yourusername/conda-forge-converter)
+[![Code Coverage](https://codecov.io/gh/yourusername/conda-forge-converter/branch/master/graph/badge.svg)](https://codecov.io/gh/yourusername/conda-forge-converter)
 [![PyPI version](https://badge.fury.io/py/conda-forge-converter.svg)](https://badge.fury.io/py/conda-forge-converter)
 [![Python Versions](https://img.shields.io/pypi/pyversions/conda-forge-converter.svg)](https://pypi.org/project/conda-forge-converter/)
-[![License](https://img.shields.io/github/license/yourusername/conda-forge-converter.svg)](https://github.com/yourusername/conda-forge-converter/blob/main/LICENSE)
+[![License](https://img.shields.io/github/license/yourusername/conda-forge-converter.svg)](https://github.com/yourusername/conda-forge-converter/blob/master/LICENSE)
 
 ## Quick Start
 

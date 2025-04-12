@@ -106,6 +106,21 @@ This ensures that when you pull changes that include automatic version bump comm
 
 1. **Submit a pull request**: Create a PR from your branch to the develop branch
 
+## Branch Strategy
+
+This project uses the following branch strategy:
+
+- **master**: The production branch. All releases are made from this branch.
+- **develop**: The integration branch for features. All feature branches should be created from and merged back to this branch.
+- **feature/\***: Feature branches for new development. Always branch from `develop`.
+- **fix/\***: Bug fix branches. Can branch from either `master` (for hotfixes) or `develop` (for regular fixes).
+
+The workflow is:
+
+1. Create feature branches from `develop`
+2. Submit PRs to merge feature branches into `develop`
+3. Periodically, `develop` is merged into `master` for releases
+
 ## Conventional Commits
 
 We use the [Conventional Commits](https://www.conventionalcommits.org/) standard for commit messages. This is enforced by pre-commit hooks.
