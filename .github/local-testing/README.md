@@ -2,15 +2,11 @@
 
 This directory contains tools for testing GitHub Actions workflows locally without maintaining duplicate workflow files.
 
-## Act Compatibility Note
+## Important Note
 
-The `act` tool doesn't fully support all GitHub Actions expression syntax, particularly complex expressions with environment variables and conditionals. For this reason, we provide two approaches:
+This documentation has been consolidated into the main GitHub Actions guide. Please refer to the [GitHub Actions Guide](../../github-actions-guide.md) for the most up-to-date information.
 
-1. **GitHub-Compatible Workflows**: Files like `ci-local-compatible.yml` and `sample-local-testing.yml` use the full GitHub Actions syntax with environment variables and conditionals. These files work correctly on GitHub but may have issues with `act`.
-
-1. **Act-Compatible Workflows**: Files like `ci-act-compatible.yml` and `sample-act-compatible.yml` use simplified syntax that works reliably with `act`. These files are recommended for local testing.
-
-When testing locally, prefer using the act-compatible workflow files.
+The scripts in this directory are still used for local testing, but the documentation has been moved to the main guide for better organization.
 
 ## Prerequisites
 
@@ -206,70 +202,15 @@ You can customize these files or create new ones for specific testing scenarios.
 - Check for missing secrets or environment variables
 - Verify workflow file syntax with actionlint
 
-## Workflow Compatibility Approaches
+## Workflow Compatibility
 
-### 1. GitHub-Compatible Approach
+We now use a single approach for workflow compatibility with local testing:
 
-This approach uses environment variables and conditionals to adapt workflows for local testing:
+1. Use the `ACT_LOCAL_TESTING` environment variable to adapt behavior
+1. Simplify matrix configurations when running locally
+1. Skip steps that won't work in local testing
 
-```yaml
-env:
-  # Add this for local testing
-  ACT_LOCAL_TESTING: ${{ vars.ACT_LOCAL_TESTING || 'false' }}
-
-jobs:
-  test:
-    strategy:
-      matrix:
-        # Simplify matrix for local testing
-        python-version: ${{ env.ACT_LOCAL_TESTING == 'true' && fromJSON('["3.11"]') || fromJSON('["3.11", "3.12"]') }}
-        os: ${{ env.ACT_LOCAL_TESTING == 'true' && fromJSON('["ubuntu-latest"]') || fromJSON('["ubuntu-latest", "windows-latest", "macos-latest"]') }}
-```
-
-**Pros:**
-
-- Single source of truth for workflows
-- Automatically adapts based on environment
-- Works perfectly on GitHub
-
-**Cons:**
-
-- May not work with act due to limited expression support
-- More complex syntax
-
-### 2. Act-Compatible Approach
-
-This approach uses simplified workflows specifically for local testing:
-
-```yaml
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.11"]
-```
-
-**Pros:**
-
-- Works reliably with act
-- Simple syntax
-- Faster local testing
-
-**Cons:**
-
-- Separate from the GitHub workflows
-- May diverge from GitHub workflows over time
-
-### Recommended Approach
-
-For the best experience:
-
-1. Use the GitHub-compatible approach for your actual workflow files
-1. Create simplified act-compatible versions for local testing
-1. Use the act-compatible versions when running local tests
-
-This gives you the benefits of both approaches while minimizing the drawbacks.
+For detailed information on making workflows compatible with local testing, see the [GitHub Actions Guide](../../github-actions-guide.md).
 
 ## Additional Resources
 

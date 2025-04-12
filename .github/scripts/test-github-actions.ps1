@@ -96,7 +96,7 @@ function Validate-Workflow {
         $_ -notmatch "grep" -and
         $_ -notmatch "if.*uses: actions/"
     }
-    
+
     $usesDeprecatedActions = $false
     foreach ($line in $actionLines) {
         if ($line -match "@master") {
@@ -104,7 +104,7 @@ function Validate-Workflow {
             Write-Host "Found deprecated action: $line" -ForegroundColor Yellow
         }
     }
-    
+
     if ($usesDeprecatedActions) {
         Write-Host "ERROR: Uses actions with @master tag instead of version tag" -ForegroundColor Red
         Write-Host "Replace @master with specific version tags like @v4" -ForegroundColor Yellow
@@ -140,9 +140,8 @@ function Run-TestsWithPython {
             return $false
         }
 
-        # Use hatch or poetry based on what's available
+        # Check if hatch is installed
         $hatchInstalled = $null
-        $poetryInstalled = $null
 
         try {
             $hatchInstalled = Get-Command hatch -ErrorAction SilentlyContinue
@@ -150,23 +149,26 @@ function Run-TestsWithPython {
             $hatchInstalled = $null
         }
 
+        # Check if uv is installed
+        $uvInstalled = $null
+
         try {
-            $poetryInstalled = Get-Command poetry -ErrorAction SilentlyContinue
+            $uvInstalled = Get-Command uv -ErrorAction SilentlyContinue
         } catch {
-            $poetryInstalled = $null
+            $uvInstalled = $null
         }
 
         if ($hatchInstalled) {
             Write-Host "Using hatch to run tests..." -ForegroundColor Green
             hatch env create python$PythonVersion
             hatch run test
-        } elseif ($poetryInstalled) {
-            Write-Host "Using poetry to run tests..." -ForegroundColor Green
-            poetry env use $PythonVersion
-            poetry install
-            poetry run pytest
+        } elseif ($uvInstalled) {
+            Write-Host "Using uv to run tests..." -ForegroundColor Green
+            uv venv
+            uv pip install -e ".[test]" --system
+            python -m pytest
         } else {
-            Write-Host "Neither hatch nor poetry found. Using system Python..." -ForegroundColor Yellow
+            Write-Host "Neither hatch nor uv found. Using system Python..." -ForegroundColor Yellow
             python -m pytest
         }
 
@@ -186,7 +188,7 @@ function Run-TestsWithPython {
         } else {
             $eventFile = "$eventsDir/$EventType.json"
         }
-        
+
         if (-not (Test-Path $eventFile)) {
             Write-Host "Creating sample $EventType event..." -ForegroundColor Green
             @{
@@ -199,7 +201,7 @@ function Run-TestsWithPython {
 
         # Add workflow file
         $cmd += " -W `"$WorkflowFile`""
-        
+
         # For validate-workflows.yml, explicitly specify the job ID
         if ($WorkflowFile -match "validate-workflows\.yml") {
             $cmd += " --job validate"
@@ -312,9 +314,8 @@ if ($PythonVersion) {
 if ($SkipDocker) {
     Write-Host "Running tests with default Python version..." -ForegroundColor Green
 
-    # Use hatch or poetry based on what's available
+    # Check if hatch is installed
     $hatchInstalled = $null
-    $poetryInstalled = $null
 
     try {
         $hatchInstalled = Get-Command hatch -ErrorAction SilentlyContinue
@@ -322,21 +323,25 @@ if ($SkipDocker) {
         $hatchInstalled = $null
     }
 
+    # Check if uv is installed
+    $uvInstalled = $null
+
     try {
-        $poetryInstalled = Get-Command poetry -ErrorAction SilentlyContinue
+        $uvInstalled = Get-Command uv -ErrorAction SilentlyContinue
     } catch {
-        $poetryInstalled = $null
+        $uvInstalled = $null
     }
 
     if ($hatchInstalled) {
         Write-Host "Using hatch to run tests..." -ForegroundColor Green
         hatch run test
-    } elseif ($poetryInstalled) {
-        Write-Host "Using poetry to run tests..." -ForegroundColor Green
-        poetry install
-        poetry run pytest
+    } elseif ($uvInstalled) {
+        Write-Host "Using uv to run tests..." -ForegroundColor Green
+        uv venv
+        uv pip install -e ".[test]" --system
+        python -m pytest
     } else {
-        Write-Host "Neither hatch nor poetry found. Using system Python..." -ForegroundColor Yellow
+        Write-Host "Neither hatch nor uv found. Using system Python..." -ForegroundColor Yellow
         python -m pytest
     }
 } else {
@@ -353,7 +358,7 @@ if ($SkipDocker) {
     } else {
         $eventFile = "$eventsDir/$EventType.json"
     }
-    
+
     if (-not (Test-Path $eventFile)) {
         Write-Host "Creating sample $EventType event..." -ForegroundColor Green
         @{
@@ -366,7 +371,7 @@ if ($SkipDocker) {
 
     # Add workflow file
     $cmd += " -W `"$WorkflowFile`""
-    
+
     # For validate-workflows.yml, explicitly specify the job ID
     if ($WorkflowFile -match "validate-workflows\.yml") {
         $cmd += " --job validate"

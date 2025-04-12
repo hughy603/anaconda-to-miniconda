@@ -91,29 +91,29 @@ jobs:
           # Get the base and head SHAs for the PR
           BASE_SHA=${{ github.event.pull_request.base.sha }}
           HEAD_SHA=${{ github.event.pull_request.head.sha }}
-          
+
           echo "Checking commit messages between $BASE_SHA and $HEAD_SHA"
-          
+
           # Get all commits in the PR
           COMMITS=$(git log --no-merges --pretty=format:"%H" "$BASE_SHA".."$HEAD_SHA")
-          
+
           if [ -z "$COMMITS" ]; then
             echo "No non-merge commits found in this PR. Skipping commit message check."
             exit 0
           fi
-          
+
           INVALID_COMMITS=0
-          
+
           # Check each commit message
           for COMMIT in ${COMMITS}; do
             COMMIT_MSG=$(git log -1 --pretty=%B "$COMMIT")
-            
+
             # Skip check for merge commits (just in case)
             if echo "$COMMIT_MSG" | grep -E "^Merge " > /dev/null; then
               echo "Detected merge commit, skipping: $COMMIT_MSG"
               continue
             fi
-            
+
             # Check for conventional commit format
             if ! echo "$COMMIT_MSG" | grep -E "^(feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert)(\([a-z0-9-]+\))?: .+" > /dev/null; then
               echo "Error: Invalid commit message format in commit $COMMIT"
@@ -125,7 +125,7 @@ jobs:
               echo "✓ Valid commit message: $COMMIT_MSG"
             fi
           done
-          
+
           if [ ${INVALID_COMMITS} -gt 0 ]; then
             echo "Found ${INVALID_COMMITS} commit(s) with invalid message format."
             exit 1
@@ -240,7 +240,7 @@ jobs:
               core.warning('- Require branches to be up to date before merging');
               core.warning('- Include administrators');
             }
-            
+
       - name: Mock branch protection verification for local testing
         if: env.ACT_LOCAL_TESTING == 'true'
         run: |

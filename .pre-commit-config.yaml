@@ -1,3 +1,4 @@
+# Pre-commit configuration
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
@@ -28,7 +29,6 @@ repos:
     hooks:
       - id: pyright
         args: ["--project=./pyrightconfig.json"]
-        # Using the central pyrightconfig.json configuration
 
   # Commit message format validation
   - repo: https://github.com/compilerla/conventional-pre-commit
@@ -51,9 +51,18 @@ repos:
             revert,
           ]
 
-  # Dependency management
+  # GitHub workflow validation
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.6.26
+    hooks:
+      - id: actionlint
+        name: Validate GitHub Actions workflows
+        files: ^\.github/workflows/.*\.ya?ml$
+
+  # Dependency management and local hooks
   - repo: local
     hooks:
+      # Dependency management
       - id: deps-lock
         name: Lock dependencies with UV
         entry: uv pip compile pyproject.toml --output-file=requirements.lock --extra=dev --extra=test
@@ -68,7 +77,7 @@ repos:
         files: ^(pyproject\.toml|uv\.lock)$
         pass_filenames: false
 
-      # Documentation quality hooks
+      # Python compatibility check
       - id: python-version-check
         name: Python 3.11/3.12 Compatibility Check
         entry: python .github/scripts/check_python_compatibility.py
@@ -76,51 +85,33 @@ repos:
         pass_filenames: false
         stages: [pre-push, manual]
         verbose: true
-  - repo: https://github.com/executablebooks/mdformat
-    rev: 0.7.22
-    hooks:
-      - id: mdformat
-        additional_dependencies:
-          - mdformat-gfm
-          - mdformat-black
-          - mdformat-myst
 
-  # GitHub workflow validation hooks
-  - repo: local
-    hooks:
-      - id: actionlint
-        name: Lint GitHub Actions workflows
-        description: Run actionlint on GitHub Actions workflow files
-        entry: actionlint
-        args: ["-color", "-config-file", ".github/actionlint.yaml", "-verbose"]
-        language: system
-        # Check all workflow files, including examples
-        files: ^\.github/workflows/.*\.(ya?ml|ya?ml\.example)$
-        # This will use your locally installed actionlint
+      # GitHub Actions validation
+      - id: check-composite-actions
+        name: Validate composite actions
+        entry: python .github/scripts/validate-composite-actions.py
+        language: python
+        additional_dependencies: [pyyaml]
+        files: ^\.github/actions/.*/action\.ya?ml$
+        pass_filenames: true
 
-  # Check for required dependencies
-  - repo: local
-    hooks:
+      - id: check-workflow-references
+        name: Check workflow references
+        entry: python .github/scripts/check-workflow-references.py
+        language: python
+        additional_dependencies: [pyyaml]
+        files: ^\.github/workflows/.*\.ya?ml$
+        pass_filenames: true
+
+      # Shellcheck verification
       - id: check-shellcheck
         name: Check shellcheck installation
-        description: Verify shellcheck is installed for GitHub Actions workflow validation
         entry: powershell -ExecutionPolicy Bypass -File .github/scripts/check-shellcheck-installed.ps1
         language: system
         pass_filenames: false
         always_run: true
 
-  # Check for sensitive data in GitHub workflows
-  # Temporarily disabled due to false positives
-  # - repo: https://github.com/zricethezav/gitleaks
-  #   rev: v8.24.2
-  #   hooks:
-  #     - id: gitleaks
-  #       args: ["--config=.gitleaks.toml"]
-  #       stages: [pre-commit]
-
-  # Release validation
-  - repo: local
-    hooks:
+      # Release validation
       - id: validate-release
         name: Validate release readiness
         entry: semantic-release version --print
@@ -134,3 +125,13 @@ repos:
         language: system
         pass_filenames: false
         stages: [manual]
+
+  # Markdown formatting
+  - repo: https://github.com/executablebooks/mdformat
+    rev: 0.7.22
+    hooks:
+      - id: mdformat
+        additional_dependencies:
+          - mdformat-gfm
+          - mdformat-black
+          - mdformat-myst

@@ -1,0 +1,234 @@
+name: Validate All Workflows
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - '.github/workflows/**'
+      - '.github/actions/**'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - '.github/workflows/**'
+      - '.github/actions/**'
+  workflow_dispatch:
+    inputs:
+      debug:
+        description: 'Enable debug mode'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  PYTHON_VERSION: "3.11"
+  ACT_LOCAL_TESTING: ${{ vars.ACT_LOCAL_TESTING || 'false' }}
+
+jobs:
+  static-analysis:
+    name: Static Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Diagnostic information
+        run: |
+          echo "=== Diagnostic Information ==="
+          echo "Date: $(date)"
+          echo "GitHub Actions Runner: $RUNNER_NAME"
+          echo "OS: $(uname -s)"
+          echo "Kernel: $(uname -r)"
+          echo "Architecture: $(uname -m)"
+
+      - name: Install actionlint
+        run: |
+          # Install actionlint
+          bash <(curl "https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash")
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Run actionlint
+        run: |
+          echo "Running actionlint on all workflow files..."
+          actionlint -color
+
+          # Count issues
+          ISSUES=$(actionlint -format "{{range \$err := .}}{{\$err.Message}}{{end}}" | wc -l)
+          echo "Found $ISSUES issues"
+
+          if [ "$ISSUES" -gt 0 ]; then
+            echo "::error::Actionlint found $ISSUES issues in workflow files"
+            exit 1
+          fi
+
+      - name: Check for deprecated actions
+        run: |
+          echo "Checking for deprecated actions..."
+
+          # Find all workflow files
+          WORKFLOW_FILES=$(find .github/workflows -name "*.yml" -o -name "*.yaml")
+
+          # Check for deprecated action versions
+          DEPRECATED=0
+          for file in $WORKFLOW_FILES; do
+            echo "Checking $file..."
+
+            # Check for actions with @master tag
+            if grep -q "uses:.*@master" "$file"; then
+              echo "::error::$file uses actions with @master tag instead of version tag"
+              DEPRECATED=1
+            fi
+
+            # Check for old versions of common actions
+            if grep -q "uses: actions/checkout@v[1-3]" "$file"; then
+              echo "::warning::$file uses outdated actions/checkout version, consider upgrading to v4"
+            fi
+
+            if grep -q "uses: actions/setup-python@v[1-4]" "$file"; then
+              echo "::warning::$file uses outdated actions/setup-python version, consider upgrading to v5"
+            fi
+          done
+
+          if [ "$DEPRECATED" -eq 1 ]; then
+            echo "::error::Found deprecated actions"
+            exit 1
+          fi
+
+  test-workflows:
+    name: Test Workflows
+    needs: static-analysis
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        workflow: ['ci.yml', 'docs.yml', 'validate-workflows.yml']
+      fail-fast: false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install act
+        run: |
+          curl -s https://raw.githubusercontent.com/nektos/act/master/install.sh | sudo bash
+
+      - name: Create test event
+        run: |
+          mkdir -p .github/local-testing/events
+          echo '{
+            "ref": "refs/heads/main",
+            "repository": {
+              "name": "test-repo",
+              "full_name": "user/test-repo"
+            }
+          }' > .github/local-testing/events/push.json
+
+      - name: Test workflow
+        run: |
+          echo "Testing workflow: ${{ matrix.workflow }}"
+
+          # Set environment variables for act
+          export ACT_LOCAL_TESTING=true
+          export SKIP_DOCKER_BUILDS=true
+          export SKIP_LONG_RUNNING_TESTS=true
+
+          # Run act with minimal job execution
+          act -W .github/workflows/${{ matrix.workflow }} \
+            -e .github/local-testing/events/push.json \
+            --env ACT_LOCAL_TESTING=true \
+            --env SKIP_DOCKER_BUILDS=true \
+            --env SKIP_LONG_RUNNING_TESTS=true \
+            -P ubuntu-latest=ghcr.io/catthehacker/ubuntu:act-latest \
+            --detect-event \
+            --dryrun
+
+          echo "Workflow ${{ matrix.workflow }} passed dry-run validation"
+
+  test-composite-actions:
+    name: Test Composite Actions
+    needs: static-analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate composite actions
+        run: |
+          echo "Validating composite actions..."
+
+          # Find all action.yml files
+          ACTION_FILES=$(find .github/actions -name "action.yml" -o -name "action.yaml")
+
+          # Check each action file
+          for file in $ACTION_FILES; do
+            echo "Checking $file..."
+
+            # Validate YAML syntax
+            python -c "import yaml; yaml.safe_load(open('$file'))" || {
+              echo "::error::Invalid YAML in $file"
+              exit 1
+            }
+
+            # Check for required fields
+            python -c "import yaml; action = yaml.safe_load(open('$file')); assert 'name' in action, 'Missing name field'; assert 'description' in action, 'Missing description field'; assert 'runs' in action, 'Missing runs field'; assert 'using' in action['runs'], 'Missing using field in runs'; assert action['runs']['using'] != 'composite' or 'steps' in action['runs'], 'Missing steps field in runs'" || {
+              echo "::error::Missing required fields in $file"
+              exit 1
+            }
+
+            echo "✓ $file is valid"
+          done
+
+          echo "All composite actions are valid"
+
+  summary:
+    name: Workflow Validation Summary
+    if: always()
+    needs: [static-analysis, test-workflows, test-composite-actions]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build summary
+        run: |
+          echo "## Workflow Validation Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+          # Static Analysis
+          if [[ "${{ needs.static-analysis.result }}" == "success" ]]; then
+            echo "✅ **Static Analysis:** Passed" >> "$GITHUB_STEP_SUMMARY"
+          elif [[ "${{ needs.static-analysis.result }}" == "failure" ]]; then
+            echo "❌ **Static Analysis:** Failed" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "⚠️ **Static Analysis:** Skipped or Cancelled" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          # Test Workflows
+          if [[ "${{ needs.test-workflows.result }}" == "success" ]]; then
+            echo "✅ **Test Workflows:** Passed" >> "$GITHUB_STEP_SUMMARY"
+          elif [[ "${{ needs.test-workflows.result }}" == "failure" ]]; then
+            echo "❌ **Test Workflows:** Failed" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "⚠️ **Test Workflows:** Skipped or Cancelled" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          # Test Composite Actions
+          if [[ "${{ needs.test-composite-actions.result }}" == "success" ]]; then
+            echo "✅ **Test Composite Actions:** Passed" >> "$GITHUB_STEP_SUMMARY"
+          elif [[ "${{ needs.test-composite-actions.result }}" == "failure" ]]; then
+            echo "❌ **Test Composite Actions:** Failed" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "⚠️ **Test Composite Actions:** Skipped or Cancelled" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "For detailed information, see the job logs." >> "$GITHUB_STEP_SUMMARY"

@@ -24,11 +24,16 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
 
+      - name: Install UV
+        shell: bash
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install -e ".[dev,test]"
+          uv pip install -e ".[dev,test]" --system
 
       - name: Run specific tests
         run: |
-          python -m pytest tests/test_core.py::TestCreateCondaForgeEnvironment::test_successful_creation tests/test_core.py::TestConvertEnvironment::test_successful_conversion tests/test_core.py::TestConvertMultipleEnvironments::test_disk_space_check tests/test_core.py::TestConvertMultipleEnvironments::test_parallel_conversion -v
+          hatch run pytest tests/test_core.py::TestCreateCondaForgeEnvironment::test_successful_creation tests/test_core.py::TestConvertEnvironment::test_successful_conversion tests/test_core.py::TestConvertMultipleEnvironments::test_disk_space_check tests/test_core.py::TestConvertMultipleEnvironments::test_parallel_conversion -v

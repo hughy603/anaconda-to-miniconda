@@ -15,7 +15,7 @@ if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "win32" || "$OSTYPE" == "cygwin" ]]; t
         echo "Please restart your terminal or add it to PATH."
         exit 1
     fi
-    
+
     # Check chocolatey installation
     if [ -f "/c/ProgramData/chocolatey/bin/shellcheck.exe" ]; then
         echo "shellcheck is installed via chocolatey but not in PATH."

@@ -23,16 +23,21 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Install UV
+        shell: bash
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
           if [[ "${{ env.ACT_LOCAL_TESTING }}" == "true" ]]; then
             # Simplified dependencies for local testing
             echo "Installing minimal dependencies for local testing"
-            pip install pytest
+            uv pip install pytest --system
           else
             # Full dependencies for GitHub
-            pip install -r requirements.txt
+            uv pip install -e ".[test]" --system
           fi
 
       - name: Run tests
@@ -43,7 +48,7 @@ jobs:
             python -c "print('Local testing successful!')"
           else
             # Full tests for GitHub
-            pytest
+            hatch run test
           fi
 
   lint:
@@ -59,14 +64,19 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Install UV
+        shell: bash
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+
       - name: Install linting tools
         run: |
-          python -m pip install --upgrade pip
-          pip install ruff
+          uv pip install -e ".[dev]" --system
 
       - name: Run linting
         run: |
-          ruff check .
+          hatch run lint
 
   local-only:
     # Only run this job if in local testing mode

@@ -28,23 +28,23 @@ ISSUES_FOUND=0
 # Process each workflow file
 for file in $WORKFLOW_FILES; do
   echo -e "${YELLOW}Checking $file...${NC}"
-  
+
   # Extract shell scripts from run: sections
   grep -n "run: |" "$file" | while read -r line; do
     line_num=$(echo "$line" | cut -d':' -f1)
     script_start=$((line_num + 1))
-    
+
     # Extract the script content
     script_content=$(sed -n "${script_start},/^[[:space:]]*[^[:space:]]/p" "$file" | sed '/^[[:space:]]*[^[:space:]]/d')
-    
+
     if [ -n "$script_content" ]; then
       # Save to temporary file
       temp_script="$TEMP_DIR/$(basename "$file")_line_${line_num}.sh"
       echo "$script_content" > "$temp_script"
-      
+
       # Run shellcheck with specific focus on SC2086 (unquoted variables)
       shellcheck_output=$(shellcheck -s bash -S warning "$temp_script" 2>&1 || true)
-      
+
       # Check specifically for SC2086 errors
       if echo "$shellcheck_output" | grep -q "SC2086"; then
         echo -e "${RED}SC2086 error found in $file at line $line_num:${NC}"
