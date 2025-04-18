@@ -23,6 +23,15 @@ from github_actions_validator.validators.execution import validate_all_execution
 RICH_AVAILABLE = importlib.util.find_spec("rich") is not None
 
 
+def _create_console() -> object | None:
+    """Create a Rich console if available."""
+    if RICH_AVAILABLE:
+        from rich.console import Console
+
+        return Console()
+    return None
+
+
 def main() -> int:
     """Validate all GitHub Actions workflows."""
     # Parse command-line arguments
@@ -55,8 +64,9 @@ def main() -> int:
 
     args = parser.parse_args()
 
-    # Create a Rich console if available (for future use)
-    # console = Console() if RICH_AVAILABLE else None
+    # Create a Rich console if available (but not used yet)
+    # Uncomment and use the console variable when needed
+    # console = _create_console()
 
     # Create an error reporter (for future use)
     # error_reporter = ErrorReporter(console)

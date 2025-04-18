@@ -86,8 +86,17 @@ def build_act_command(
     if job:
         cmd.extend(["--job", job])
 
-    # Add platform mapping
-    cmd.extend(["-P", "ubuntu-latest=ghcr.io/catthehacker/ubuntu:act-latest"])
+    # Add platform mappings for Linux containers only
+    cmd.extend(
+        [
+            "-P",
+            "ubuntu-latest=ghcr.io/catthehacker/ubuntu:act-latest",
+            "-P",
+            "windows-latest=ghcr.io/catthehacker/ubuntu:act-latest",  # Windows -> Linux
+            "-P",
+            "macos-latest=ghcr.io/catthehacker/ubuntu:act-latest",  # macOS -> Linux
+        ]
+    )
 
     # Add cache path
     if os.path.exists(config.cache_path):
