@@ -14,6 +14,7 @@ function show_help {
   echo "  -p, --platform PLATFORM Platform to run on (default: ubuntu-latest)"
   echo "  -b, --bind              Bind working directory to act container"
   echo "  -v, --verbose           Enable verbose output"
+  echo "  --action-cache-path PATH Path to cache GitHub Actions (default: ./.act-cache)"
   echo "  -h, --help              Show this help message"
   echo ""
   echo "Examples:"
@@ -31,6 +32,7 @@ JOB_FILTER=""
 PLATFORM="ubuntu-latest"
 BIND_OPTION=""
 VERBOSE=""
+ACTION_CACHE_PATH="./.act-cache"
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
@@ -58,6 +60,10 @@ while [[ $# -gt 0 ]]; do
     -v|--verbose)
       VERBOSE="--verbose"
       shift
+      ;;
+    --action-cache-path)
+      ACTION_CACHE_PATH="$2"
+      shift 2
       ;;
     -h|--help)
       show_help
@@ -106,7 +112,7 @@ if [ ! -f "$EVENT_FILE" ]; then
   else
     echo "Creating basic $EVENT_TYPE event..."
     echo '{
-      "event_type": "'$EVENT_TYPE'"
+      "event_type": "'"$EVENT_TYPE"'"
     }' > "$EVENT_FILE"
 
     # If this is a pull_request event, warn about using the template
@@ -145,6 +151,11 @@ if [ -n "$VERBOSE" ]; then
   CMD="$CMD $VERBOSE"
 fi
 
+# Add action cache path
+if [ -n "$ACTION_CACHE_PATH" ]; then
+  CMD="$CMD --action-cache-path $ACTION_CACHE_PATH"
+fi
+
 # Set environment variables for local testing
 CMD="$CMD --env ACT=true"
 CMD="$CMD --env ACT_LOCAL_TESTING=true"
@@ -156,7 +167,7 @@ echo "Running: $CMD"
 echo "-----------------------------------"
 
 # Run the command
-eval $CMD
+eval "$CMD"
 
 # Display completion message
 echo "-----------------------------------"

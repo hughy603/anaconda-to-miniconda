@@ -1,0 +1,45 @@
+name: Validate GitHub Actions Workflows
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/**'
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - '.github/workflows/**'
+  workflow_dispatch:
+
+jobs:
+  validate:
+    name: Validate GitHub Actions Workflows
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          pip install pytest pytest-cov
+
+      - name: Run GitHub Actions validator tests
+        run: |
+          pytest tests/test_github_actions_validator.py -v
+
+      - name: Validate all workflows
+        run: |
+          python validate-all-workflows.py --verbose
+
+      - name: Validate specific workflow
+        run: |
+          python validate-all-workflows.py --workflow-file .github/workflows/validate-github-actions.yml --verbose

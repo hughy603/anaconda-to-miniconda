@@ -43,6 +43,10 @@
         {
             "name": "conda_forge_converter",
             "depth": 5
+        },
+        {
+            "name": "github_actions_validator",
+            "depth": 5
         }
     ],
     "files.exclude": {
@@ -56,11 +60,6 @@
         "**/.pytest_cache": true,
         "**/.mypy_cache": true,
         "**/.ruff_cache": true
-    },
-    "powershell.scriptAnalysis.enable": true,
-    "powershell.scriptAnalysis.settingsPath": ".vscode/PSScriptAnalyzerSettings.psd1",
-    "[powershell]": {
-        "editor.defaultFormatter": "ms-vscode.powershell"
     },
     "yaml.schemas": {
         "https://json.schemastore.org/github-workflow.json": [
@@ -100,7 +99,7 @@
             "match": "\\.github/(workflows|actions)/.*\\.ya?ml$",
             "isRegex": true,
             "cmd": "${workspaceRoot}/.vscode/scripts/validate-workflows.sh ${file}",
-            "cmdWindows": "powershell -ExecutionPolicy Bypass -File ${workspaceRoot}/.vscode/scripts/validate-workflows.ps1 -FilePath \"${file}\"",
+            "cmdWindows": "${workspaceRoot}/.vscode/scripts/validate-workflows.sh ${file}",
             "event": "onSave"
         }
     ]

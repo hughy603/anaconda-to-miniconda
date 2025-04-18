@@ -1,0 +1,33 @@
+[run]
+source =
+    conda_forge_converter
+    github_actions_validator
+branch = True
+omit =
+    */tests/*
+    */__pycache__/*
+    */__init__.py
+    */examples/*
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    if self\.debug:
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    pass
+    raise ImportError
+    except ImportError:
+    def __str__
+    def __unicode__
+    def __bytes__
+fail_under = 59.90
+show_missing = True
+precision = 2
+
+[html]
+directory = htmlcov
+
+[xml]
+output = coverage.xml

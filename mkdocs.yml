@@ -1,12 +1,12 @@
-site_name: Conda-Forge Converter
-site_description: A tool to convert Anaconda environments to conda-forge environments
-site_author: Your Name
-repo_url: https://github.com/yourusername/conda-forge-converter
-repo_name: yourusername/conda-forge-converter
-edit_uri: edit/main/docs/
+site_name: Anaconda to Miniconda
+site_description: Tools for converting Anaconda environments to conda-forge and validating GitHub Actions workflows
+site_author: Anaconda Team
+repo_url: https://github.com/anaconda/anaconda-to-miniconda
+repo_name: anaconda/anaconda-to-miniconda
+edit_uri: edit/master/docs/
 
 # GitHub Pages configuration
-site_url: https://yourusername.github.io/conda-forge-converter/
+site_url: https://anaconda.github.io/anaconda-to-miniconda/
 use_directory_urls: false
 
 theme:
@@ -116,6 +116,6 @@ plugins:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/yourusername/conda-forge-converter
+      link: https://github.com/anaconda/anaconda-to-miniconda
   version:
     provider: mike

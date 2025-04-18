@@ -5,12 +5,12 @@ build-backend = "hatchling.build"
 [project]
 name = "conda-forge-converter"
 dynamic = ["version"] # Version is dynamically determined from _version.py
-description = "Convert Anaconda environments to conda-forge with the same top-level dependency versions"
+description = "Tools for converting Anaconda environments to conda-forge and validating GitHub Actions workflows"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { file = "LICENSE" }
-authors = [{ name = "Your Name", email = "your.email@example.com" }]
-maintainers = [{ name = "Your Name", email = "your.email@example.com" }]
+authors = [{ name = "Adam Rice", email = "rice.adam@gmail.com" }]
+maintainers = [{ name = "Adam Rice", email = "rice.adam@gmail.com" }]
 keywords = [
     "conda",
     "conda-forge",
@@ -32,13 +32,15 @@ classifiers = [
     "Topic :: System :: Installation/Setup",
     "Topic :: System :: Systems Administration",
 ]
-
 dependencies = [
     "pyyaml>=6.0.1",
     "typing_extensions>=4.10.0", # For additional type hints if needed
+    "click>=8.1.0",              # Modern CLI framework
+    "rich>=13.0.0",              # Terminal formatting
+    "pydantic>=2.0.0",           # Data validation and settings management
 ]
-
 [project.optional-dependencies]
+validation = ["actionlint>=1.6.0"]
 dev = [
     "ruff>=0.3.0",
     "pyright>=1.1.350",
@@ -48,7 +50,13 @@ dev = [
     "hatch>=1.9.0",
     "types-pyyaml>=6.0.12.20250402",
 ]
-test = ["pytest>=8.0.0", "pytest-cov>=4.1.0", "pytest-benchmark>=4.0.0"]
+test = [
+    "pytest>=8.0.0",
+    "pytest-cov>=4.1.0",
+    "pytest-benchmark>=4.0.0",
+    "pytest-mock>=3.10.0",
+    "pytest-xdist>=3.3.0",
+]
 docs = [
     "mkdocs>=1.5.0",
     "mkdocs-material>=9.5.0",
@@ -58,10 +66,36 @@ docs = [
     "mkdocs-redirects>=1.2.1",
     "hatch>=1.9.0",
 ]
-all = ["conda-forge-converter[dev,test,docs]"]
-
+all = [
+    # Include all dependencies from other groups directly
+    "actionlint>=1.6.0", # validation
+    # dev dependencies
+    "ruff>=0.3.0",
+    "pyright>=1.1.350",
+    "python-semantic-release>=9.0.0",
+    "pre-commit>=3.5.0",
+    "build>=1.0.0",
+    "hatch>=1.9.0",
+    "types-pyyaml>=6.0.12.20250402",
+    # test dependencies
+    "pytest>=8.0.0",
+    "pytest-cov>=4.1.0",
+    "pytest-benchmark>=4.0.0",
+    "pytest-mock>=3.10.0",
+    "pytest-xdist>=3.3.0",
+    # docs dependencies
+    "mkdocs>=1.5.0",
+    "mkdocs-material>=9.5.0",
+    "mkdocstrings>=0.24.0",
+    "mkdocstrings-python>=1.8.0",
+    "mkdocs-minify-plugin>=0.7.0",
+    "mkdocs-redirects>=1.2.1",
+]
 [project.scripts]
-conda-forge-converter = "conda_forge_converter.cli:main"
+anaconda-to-miniconda = "conda_forge_converter.cli:main"
+validate-github-workflows = "github_actions_validator.cli:main"
+validate-github-workflows-standard = "github_actions_validator.cli_standard:main"
+
 
 [project.urls]
 Homepage = "https://github.com/yourusername/conda-forge-converter"
@@ -75,8 +109,14 @@ source = "regex"
 regex = "__version__ = '(?P<version>[^']+)'"
 path = "src/conda_forge_converter/_version.py"
 
+# Also track github_actions_validator version
+[tool.hatch.version.github_actions_validator]
+source = "regex"
+regex = "__version__ = '(?P<version>[^']+)'"
+path = "src/github_actions_validator/_version.py"
+
 [tool.hatch.build.targets.wheel]
-packages = ["src/conda_forge_converter"]
+packages = ["src/conda_forge_converter", "src/github_actions_validator"]
 
 # Environment management is now handled by UV
 [tool.hatch.envs.default.scripts]
@@ -84,11 +124,16 @@ bump-version = "semantic-release version --no-commit --no-tag --no-push --no-vcs
 prepare-release = "semantic-release version --print"
 check-next-version = "semantic-release version --print"
 
-# Test scripts
-test = "pytest --cov=conda_forge_converter --cov-report=term-missing --cov-report=xml tests/"
-test-fast = "pytest --cov=conda_forge_converter --cov-report=term-missing --cov-fail-under=0 tests/test_cli.py"
-test-specific = "pytest --cov=conda_forge_converter --cov-report=term-missing --cov-fail-under=0"
-clean-coverage = "rm -f .coverage .coverage.* coverage.xml && rm -rf htmlcov"
+# Test scripts - using pytest.ini and .coveragerc for configuration
+test = "pytest"
+test-unit = "pytest -m 'unit'"
+test-integration = "pytest -m 'integration'"
+test-github-actions = "pytest tests/test_github_actions_validator.py tests/test_coverage.py"
+test-conda-forge = "pytest tests/test_cli.py"
+test-fast = "pytest -k 'not slow and not integration'"
+test-specific = "pytest"
+clean-coverage = "python -c \"import pathlib; [p.unlink() for p in pathlib.Path('.').glob('.coverage*') if p.is_file()]; [p.unlink() for p in pathlib.Path('.').glob('coverage.xml') if p.is_file()]; import shutil; shutil.rmtree('htmlcov', ignore_errors=True)\""
+update-coverage-threshold = "python scripts/update_coverage_threshold.py"
 
 # Linting and type checking
 lint = "ruff check ."
@@ -96,7 +141,7 @@ format = "ruff format"
 type-check = "pyright"
 
 # Documentation scripts
-docs-build = "mkdocs build"
+docs-build = "mkdocs build --strict"
 docs-serve = "mkdocs serve"
 
 # Type checking configuration is now in pyrightconfig.json
@@ -127,27 +172,26 @@ convention = "google"
 # Ignore missing return type annotations in decorator wrappers
 "src/conda_forge_converter/progress.py" = ["ANN401"]
 "src/conda_forge_converter/cli.py" = ["E501"]
+"src/github_actions_validator/cli.py" = ["E501", "C901"]
+"src/github_actions_validator/runners/act.py" = ["C901"]
+"src/github_actions_validator/validators/act.py" = ["C901"]
+"src/github_actions_validator/validators/actionlint.py" = ["C901"]
+"src/github_actions_validator/validators/execution.py" = ["C901"]
+"src/github_actions_validator/validators/syntax.py" = ["C901"]
 
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
 line-ending = "auto"
 
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-python_files = "test_*.py"
-markers = [
-    "unit: marks tests as unit tests",
-    "integration: marks tests as integration tests",
-    "slow: marks tests as slow tests that may take longer to run",
-    "benchmark: marks tests as benchmark tests",
-]
-# Exclude benchmark tests from regular test runs
-addopts = "--ignore=tests/benchmarks/"
+# Pytest configuration is now in pytest.ini
 
 # Python-Semantic-Release configuration
 [tool.semantic_release]
-version_variable = ["src/conda_forge_converter/_version.py:__version__"]
+version_variable = [
+    "src/conda_forge_converter/_version.py:__version__",
+    "src/github_actions_validator/_version.py:__version__",
+]
 branch = "master"
 upload_to_pypi = true
 upload_to_release = true
@@ -197,20 +241,7 @@ prerelease_token = "feature"
 [tool.uv]
 # UV will automatically use requirements.lock for reproducible installations
 
-# Coverage configuration
-[tool.coverage.run]
-source = ["conda_forge_converter"]
-branch = false
+# Coverage configuration is now in .coveragerc
 
-[tool.coverage.report]
-exclude_lines = [
-    "pragma: no cover",
-    "def __repr__",
-    "if self.debug:",
-    "raise NotImplementedError",
-    "if __name__ == .__main__.:",
-    "pass",
-    "raise ImportError",
-]
-fail_under = 50
-show_missing = true
+[dependency-groups]
+dev = ["types-pyyaml>=6.0.12.20250402"]

@@ -116,6 +116,7 @@ actionlint
 .actrc
 act-secrets.env
 .github/events/*.json
+bin/act  # Large binary file
 !.github/events/templates/
 .github/local-testing/
 .github/templates/
@@ -141,3 +142,4 @@ test_output.txt
 
 # Example files
 *.example
+.act-cache

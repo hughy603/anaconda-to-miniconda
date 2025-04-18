@@ -13,38 +13,42 @@ Our validation system provides two key capabilities:
 
 ```bash
 # Validate all workflows
-./validate-all-workflows.sh
-.\validate-all-workflows.ps1
+python validate-all-workflows.py
+./validate-all-workflows.sh  # Unix/Linux wrapper
 
 # Validate only changed workflows
+python validate-all-workflows.py --changed-only
 ./validate-all-workflows.sh --changed-only
-.\validate-all-workflows.ps1 -ChangedOnly
 
 # Fast validation (dry run mode)
+python validate-all-workflows.py --dry-run
 ./validate-all-workflows.sh --dry-run
-.\validate-all-workflows.ps1 -DryRun
 ```
 
 ## Prerequisites
 
+- Python 3.11 or higher
+
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running
+
 - [pre-commit](https://pre-commit.com/) installed
+
 - [act](https://github.com/nektos/act) installed
 
 ## Validation Methods
 
 ### 1. Command Line Validation
 
-The `validate-all-workflows.sh` (or `.ps1`) script provides comprehensive validation:
+The `validate-all-workflows.py` script provides comprehensive validation:
 
 ```bash
 # Basic usage
-./validate-all-workflows.sh
-.\validate-all-workflows.ps1
+python validate-all-workflows.py
+./validate-all-workflows.sh  # Unix/Linux wrapper
 
 # Advanced options
+python validate-all-workflows.py --changed-only --parallel --max-parallel 3 --secrets-file .github/local-secrets.json
 ./validate-all-workflows.sh --changed-only --parallel --max-parallel 3 --secrets-file .github/local-secrets.json
-.\validate-all-workflows.ps1 -ChangedOnly -Parallel -MaxParallel 3 -SecretsFile .github/local-secrets.json
 ```
 
 #### Available Options
@@ -125,12 +129,66 @@ For faster validation of large workflows:
 
 ```bash
 # Test only the 'build' job
+python validate-all-workflows.py --workflow-file .github/workflows/ci.yml --job build
 ./github-actions-local.sh -w .github/workflows/ci.yml -j build
-.\github-actions-local.ps1 -WorkflowFile .github/workflows/ci.yml -JobFilter build
 
 # Test a pull request event
+python validate-all-workflows.py --workflow-file .github/workflows/ci.yml --default-event pull_request
 ./github-actions-local.sh -w .github/workflows/ci.yml -e pull_request
-.\github-actions-local.ps1 -WorkflowFile .github/workflows/ci.yml -EventType pull_request
+```
+
+## Python Implementation
+
+We've replaced the PowerShell implementation with a more robust Python implementation that provides better error handling and follows industry best practices. The Python implementation is structured as a package that can be easily extended or extracted into its own repository.
+
+### Key Features
+
+- **Improved Error Handling**: Detailed error messages with suggestions for fixes
+- **Better YAML Parsing**: Proper parsing of GitHub Actions workflow files
+- **Modular Design**: Clear separation of concerns for easier maintenance
+- **Comprehensive Documentation**: Detailed documentation and examples
+- **Cross-Platform**: Works on Windows, macOS, and Linux
+
+### Usage
+
+```bash
+# Basic usage
+python validate-all-workflows.py
+
+# Validate only changed workflows
+python validate-all-workflows.py --changed-only
+
+# Validate a specific workflow
+python validate-all-workflows.py --workflow-file .github/workflows/ci.yml
+
+# Run validations in parallel
+python validate-all-workflows.py --parallel --max-parallel 4
+
+# Get help
+python validate-all-workflows.py --help
+```
+
+### Python API
+
+You can also use the Python API directly in your scripts:
+
+```python
+from github_actions_validator.config import Config
+from github_actions_validator.discovery import find_workflows
+from github_actions_validator.error_handling import ErrorReporter
+from github_actions_validator.validators.execution import validate_workflows
+
+# Create configuration
+config = Config(changed_only=True, parallel=True, max_parallel=3)
+
+# Find workflows
+workflow_files = find_workflows(changed_only=config.changed_only)
+
+# Create error reporter
+error_reporter = ErrorReporter()
+
+# Validate workflows
+success, errors = validate_workflows(workflow_files, config, error_reporter)
 ```
 
 ## Troubleshooting

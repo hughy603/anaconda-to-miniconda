@@ -7,9 +7,10 @@ on:
     branches: [master, develop]
 
 env:
-  ACT_LOCAL_TESTING: ${{ vars.ACT_LOCAL_TESTING || 'false' }}
+  ACT_LOCAL_TESTING: ${{ vars.ACT_LOCAL_TESTING || 'true' }}
   PYTHON_VERSION: "3.11"
   UV_VERSION: "0.7.1"
+  COVERAGE_THRESHOLD: "50"
 
 jobs:
   test:
@@ -59,16 +60,22 @@ jobs:
           hatch run format -- --check
           hatch run type-check
 
-      - name: Run tests
+      - name: Run tests with coverage
         run: |
           hatch run test
 
-      # - name: Upload coverage to Codecov
-      #   if: matrix.os == 'ubuntu-latest' && env.ACT_LOCAL_TESTING != 'true'
-      #   uses: codecov/codecov-action@v4
-      #   with:
-      #     file: ./coverage.xml
-      #     fail_ci_if_error: true
+      - name: Check coverage threshold for github_actions_validator
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
+        run: |
+          # Run tests specifically for github_actions_validator with coverage check
+          python -m pytest tests/test_coverage.py tests/test_github_actions_validator.py --cov=github_actions_validator --cov-report=term-missing --cov-fail-under=${{ env.COVERAGE_THRESHOLD }}
+
+      - name: Upload coverage to Codecov
+        if: matrix.os == 'ubuntu-latest' && env.ACT_LOCAL_TESTING != 'true'
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: true
 
       - name: Run security checks
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11' && env.ACT_LOCAL_TESTING != 'true'

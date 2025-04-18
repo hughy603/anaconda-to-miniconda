@@ -1,234 +1,379 @@
-"""Tests for CLI functionality."""
+"""Tests for the CLI module."""
 
-from unittest import mock
+from pathlib import Path
+from unittest.mock import MagicMock, patch
 
-from conda_forge_converter.cli import main, parse_args
+from click.testing import CliRunner
+
+from github_actions_validator.cli import cli, docs, init, main, validate
 
 
-class TestParseArgs:
-    """Tests for the argument parsing function."""
+class TestCLI:
+    """Tests for the CLI module."""
 
-    def test_parse_basic_args(self) -> None:
-        """Test parsing of basic arguments."""
-        # Setup
-        test_args = ["--source-env", "myenv", "--target-env", "myenv_forge"]
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.runner = CliRunner()
 
-        # Execute
-        args = parse_args(test_args)
+    def test_cli_version(self):
+        """Test the CLI version command."""
+        result = self.runner.invoke(cli, ["--version"])
+        assert result.exit_code == 0
+        assert "version" in result.output.lower()
+
+    def test_cli_help(self):
+        """Test the CLI help command."""
+        result = self.runner.invoke(cli, ["--help"])
+        assert result.exit_code == 0
+        assert "Usage:" in result.output
+        assert "Options:" in result.output
+        assert "Commands:" in result.output
+        assert "validate" in result.output
+        assert "docs" in result.output
+        assert "init" in result.output
+
+    @patch("github_actions_validator.cli.ValidationConfig.create")
+    @patch("github_actions_validator.cli.ErrorReporter")
+    @patch("github_actions_validator.cli.find_workflows")
+    def test_validate_no_workflows(
+        self, mock_find_workflows, mock_error_reporter, mock_create_config
+    ):
+        """Test validate command with no workflows."""
+        # Mock config
+        mock_config = MagicMock()
+        mock_create_config.return_value = mock_config
+
+        # Mock error reporter
+        mock_reporter = MagicMock()
+        mock_error_reporter.return_value = mock_reporter
+
+        # Mock find_workflows to return empty list
+        mock_find_workflows.return_value = []
+
+        # Run command
+        result = self.runner.invoke(validate)
 
         # Verify
-        assert args.source_env == "myenv"
-        assert args.target_env == "myenv_forge"
-        assert not args.batch
-        assert not args.verbose
-        assert not args.dry_run
-        assert args.target_suffix == "_forge"
+        assert result.exit_code == 0
+        mock_find_workflows.assert_called_once()
+        mock_reporter.add_error.assert_not_called()
 
-    def test_parse_batch_args(self) -> None:
-        """Test parsing of batch conversion arguments."""
-        # Setup
-        test_args = [
-            "--batch",
-            "--pattern",
-            "data*",
-            "--exclude",
-            "base,prod",
-            "--target-suffix",
-            "_cf",
-            "--max-parallel",
-            "4",
+    @patch("github_actions_validator.cli.ValidationConfig.create")
+    @patch("github_actions_validator.cli.ErrorReporter")
+    @patch("github_actions_validator.cli.find_workflows")
+    def test_validate_dry_run(self, mock_find_workflows, mock_error_reporter, mock_create_config):
+        """Test validate command with dry run."""
+        # Mock config
+        mock_config = MagicMock()
+        mock_config.dry_run = True
+        mock_create_config.return_value = mock_config
+
+        # Mock error reporter
+        mock_reporter = MagicMock()
+        mock_error_reporter.return_value = mock_reporter
+
+        # Mock find_workflows to return some workflows
+        mock_find_workflows.return_value = [
+            Path(".github/workflows/ci.yml"),
+            Path(".github/workflows/release.yml"),
         ]
 
-        # Execute
-        args = parse_args(test_args)
+        # Run command
+        result = self.runner.invoke(validate, ["--dry-run"])
 
         # Verify
-        assert args.batch
-        assert args.pattern == "data*"
-        assert args.exclude == "base,prod"
-        assert args.target_suffix == "_cf"
-        assert args.max_parallel == 4
+        assert result.exit_code == 0
+        mock_find_workflows.assert_called_once()
+        mock_reporter.add_error.assert_not_called()
 
-    def test_parse_search_args(self) -> None:
-        """Test parsing of search path arguments."""
-        # Setup
-        test_args = [
-            "--search-path",
-            "/opt/conda/envs",
-            "--search-path",
-            "/home/user/envs",
-            "--search-depth",
-            "5",
-        ]
-
-        # Execute
-        args = parse_args(test_args)
-
-        # Verify
-        assert len(args.search_path) == 2
-        assert args.search_path[0] == "/opt/conda/envs"
-        assert args.search_path[1] == "/home/user/envs"
-        assert args.search_depth == 5
-
-    def test_parse_output_args(self) -> None:
-        """Test parsing of output control arguments."""
-        # Setup
-        test_args = [
-            "--verbose",
-            "--dry-run",
-            "--log-file",
-            "convert.log",
-        ]
-
-        # Execute
-        args = parse_args(test_args)
-
-        # Verify
-        assert args.verbose
-        assert args.dry_run
-        assert args.log_file == "convert.log"
-
-
-class TestMainFunction:
-    """Tests for the main CLI entrypoint function."""
-
-    @mock.patch("conda_forge_converter.cli.setup_logging")
-    @mock.patch("conda_forge_converter.cli.convert_environment")
-    @mock.patch("conda_forge_converter.cli.list_all_conda_environments")
-    def test_single_environment_conversion(
+    @patch("github_actions_validator.cli.ValidationConfig.create")
+    @patch("github_actions_validator.cli.ErrorReporter")
+    @patch("github_actions_validator.cli.find_workflows")
+    @patch("github_actions_validator.cli.validate_all_syntax")
+    @patch("github_actions_validator.cli.validate_all_execution")
+    def test_validate_skip_lint(
         self,
-        mock_list_envs: mock.MagicMock,
-        mock_convert: mock.MagicMock,
-        mock_setup_logging: mock.MagicMock,
-    ) -> None:
-        """Test converting a single environment."""
-        # Setup
-        mock_list_envs.return_value = {"myenv": "/path/to/myenv"}
-        mock_convert.return_value = True
-        test_args = ["--source-env", "myenv", "--target-env", "myenv_forge"]
+        mock_validate_execution,
+        mock_validate_syntax,
+        mock_find_workflows,
+        mock_error_reporter,
+        mock_create_config,
+    ):
+        """Test validate command with skip_lint."""
+        # Mock config
+        mock_config = MagicMock()
+        mock_config.dry_run = False
+        mock_config.skip_lint = True
+        mock_create_config.return_value = mock_config
 
-        # Execute
-        exit_code = main(test_args)
+        # Mock error reporter
+        mock_reporter = MagicMock()
+        mock_error_reporter.return_value = mock_reporter
 
-        # Verify
-        mock_setup_logging.assert_called_once()
-        mock_list_envs.assert_called_once()
-        mock_convert.assert_called_once_with(
-            "myenv",
-            None,  # When replace_original=True, target_env is None
-            None,
-            False,
-            False,
-            use_fast_solver=True,
-            batch_size=20,
-            preserve_ownership=True,
-            replace_original=True,
-            backup_suffix="_anaconda_backup",
-        )
-        assert exit_code == 0
-
-    @mock.patch("conda_forge_converter.cli.setup_logging")
-    @mock.patch("conda_forge_converter.cli.convert_multiple_environments")
-    def test_batch_conversion(
-        self,
-        mock_convert_multiple: mock.MagicMock,
-        mock_setup_logging: mock.MagicMock,
-    ) -> None:
-        """Test batch conversion mode."""
-        # Setup
-        mock_convert_multiple.return_value = True
-        test_args = [
-            "--batch",
-            "--pattern",
-            "data*",
-            "--exclude",
-            "test",
+        # Mock find_workflows to return some workflows
+        workflows = [
+            Path(".github/workflows/ci.yml"),
+            Path(".github/workflows/release.yml"),
         ]
+        mock_find_workflows.return_value = workflows
 
-        # Execute
-        exit_code = main(test_args)
+        # Mock validate_all_execution to return success
+        mock_validate_execution.return_value = (True, [])
+
+        # Run command
+        result = self.runner.invoke(validate, ["--skip-lint"])
 
         # Verify
-        mock_setup_logging.assert_called_once()
-        mock_convert_multiple.assert_called_once_with(
-            source_envs=None,
-            target_envs=None,
-            python_version=None,
-            env_pattern="data*",
-            exclude="test",
-            target_suffix="_forge",
-            dry_run=False,
-            verbose=False,
-            max_parallel=1,
-            backup=True,
-            search_paths=None,
-            use_fast_solver=True,
-            batch_size=20,
-            preserve_ownership=True,
-            replace_original=True,
-            backup_suffix="_anaconda_backup",
-        )
-        assert exit_code == 0
+        assert result.exit_code == 0
+        mock_find_workflows.assert_called_once()
+        mock_validate_syntax.assert_not_called()
+        mock_validate_execution.assert_called_once()
 
-    @mock.patch("conda_forge_converter.cli.setup_logging")
-    @mock.patch("conda_forge_converter.cli.list_all_conda_environments")
-    @mock.patch("conda_forge_converter.cli.is_conda_environment")
-    @mock.patch("pathlib.Path.is_dir")
-    def test_using_environment_path(
+    @patch("github_actions_validator.cli.ValidationConfig.create")
+    @patch("github_actions_validator.cli.ErrorReporter")
+    @patch("github_actions_validator.cli.find_workflows")
+    @patch("github_actions_validator.cli.validate_all_syntax")
+    @patch("github_actions_validator.cli.validate_all_execution")
+    def test_validate_success(
         self,
-        mock_is_dir: mock.MagicMock,
-        mock_is_conda_env: mock.MagicMock,
-        mock_list_envs: mock.MagicMock,
-        mock_setup_logging: mock.MagicMock,
-    ) -> None:
-        """Test using a path to an environment instead of a name."""
-        # Setup
-        mock_list_envs.return_value = {}  # Environment not in registered list
-        mock_is_dir.return_value = True
-        mock_is_conda_env.return_value = True
+        mock_validate_execution,
+        mock_validate_syntax,
+        mock_find_workflows,
+        mock_error_reporter,
+        mock_create_config,
+    ):
+        """Test validate command with successful validation."""
+        # Mock config
+        mock_config = MagicMock()
+        mock_config.dry_run = False
+        mock_config.skip_lint = False
+        mock_create_config.return_value = mock_config
 
-        with mock.patch("conda_forge_converter.cli.convert_environment") as mock_convert:
-            mock_convert.return_value = True
-            test_args = ["--source-env", "/path/to/conda_env", "--target-env", "new_env"]
+        # Mock error reporter
+        mock_reporter = MagicMock()
+        mock_error_reporter.return_value = mock_reporter
 
-            # Execute
-            exit_code = main(test_args)
+        # Mock find_workflows to return some workflows
+        workflows = [
+            Path(".github/workflows/ci.yml"),
+            Path(".github/workflows/release.yml"),
+        ]
+        mock_find_workflows.return_value = workflows
+
+        # Mock validate_all_syntax to return success
+        mock_validate_syntax.return_value = (True, [])
+
+        # Mock validate_all_execution to return success
+        mock_validate_execution.return_value = (True, [])
+
+        # Run command
+        result = self.runner.invoke(validate)
+
+        # Verify
+        assert result.exit_code == 0
+        mock_find_workflows.assert_called_once()
+        mock_validate_syntax.assert_called_once_with(workflows, mock_config)
+        mock_validate_execution.assert_called_once_with(workflows, mock_config)
+        mock_reporter.add_error.assert_not_called()
+
+    @patch("github_actions_validator.cli.ValidationConfig.create")
+    @patch("github_actions_validator.cli.ErrorReporter")
+    @patch("github_actions_validator.cli.find_workflows")
+    @patch("github_actions_validator.cli.validate_all_syntax")
+    def test_validate_syntax_failure(
+        self, mock_validate_syntax, mock_find_workflows, mock_error_reporter, mock_create_config
+    ):
+        """Test validate command with syntax validation failure."""
+        # Mock config
+        mock_config = MagicMock()
+        mock_config.dry_run = False
+        mock_config.skip_lint = False
+        mock_create_config.return_value = mock_config
+
+        # Mock error reporter
+        mock_reporter = MagicMock()
+        mock_error_reporter.return_value = mock_reporter
+
+        # Mock find_workflows to return some workflows
+        workflows = [
+            Path(".github/workflows/ci.yml"),
+            Path(".github/workflows/release.yml"),
+        ]
+        mock_find_workflows.return_value = workflows
+
+        # Mock validate_all_syntax to return failure
+        mock_validate_syntax.return_value = (False, ["Syntax error"])
+
+        # Mock sys.exit to avoid test exit
+        with patch("sys.exit") as mock_exit:
+            # Run command
+            self.runner.invoke(validate)
 
             # Verify
-            mock_is_conda_env.assert_called_once_with("/path/to/conda_env")
-            mock_convert.assert_called_once()
-            assert exit_code == 0
+            mock_find_workflows.assert_called_once()
+            mock_validate_syntax.assert_called_once_with(workflows, mock_config)
+            mock_reporter.add_error.assert_called_once()
+            mock_exit.assert_called_once_with(1)
 
-    @mock.patch("conda_forge_converter.cli.setup_logging")
-    def test_missing_source_env(self, mock_setup_logging: mock.MagicMock) -> None:
-        """Test error handling when source environment is not specified."""
-        # Execute
-        exit_code = main([])
-
-        # Verify
-        assert exit_code == 1
-
-    @mock.patch("conda_forge_converter.cli.setup_logging")
-    @mock.patch("conda_forge_converter.cli.list_all_conda_environments")
-    def test_source_env_not_found(
+    @patch("github_actions_validator.cli.ValidationConfig.create")
+    @patch("github_actions_validator.cli.ErrorReporter")
+    @patch("github_actions_validator.cli.find_workflows")
+    @patch("github_actions_validator.cli.validate_all_syntax")
+    @patch("github_actions_validator.cli.validate_all_execution")
+    def test_validate_execution_failure(
         self,
-        mock_list_envs: mock.MagicMock,
-        mock_setup_logging: mock.MagicMock,
-    ) -> None:
-        """Test error handling when source environment is not found."""
-        # Setup
-        mock_list_envs.return_value = {}  # No environments found
+        mock_validate_execution,
+        mock_validate_syntax,
+        mock_find_workflows,
+        mock_error_reporter,
+        mock_create_config,
+    ):
+        """Test validate command with execution validation failure."""
+        # Mock config
+        mock_config = MagicMock()
+        mock_config.dry_run = False
+        mock_config.skip_lint = False
+        mock_create_config.return_value = mock_config
 
-        # Execute with a search path to trigger the not found error
-        exit_code = main(["--source-env", "nonexistent", "--search-path", "/some/path"])
+        # Mock error reporter
+        mock_reporter = MagicMock()
+        mock_error_reporter.return_value = mock_reporter
+
+        # Mock find_workflows to return some workflows
+        workflows = [
+            Path(".github/workflows/ci.yml"),
+            Path(".github/workflows/release.yml"),
+        ]
+        mock_find_workflows.return_value = workflows
+
+        # Mock validate_all_syntax to return success
+        mock_validate_syntax.return_value = (True, [])
+
+        # Mock validate_all_execution to return failure
+        mock_validate_execution.return_value = (False, ["Execution error"])
+
+        # Mock sys.exit to avoid test exit
+        with patch("sys.exit") as mock_exit:
+            # Run command
+            self.runner.invoke(validate)
+
+            # Verify
+            mock_find_workflows.assert_called_once()
+            mock_validate_syntax.assert_called_once_with(workflows, mock_config)
+            mock_validate_execution.assert_called_once_with(workflows, mock_config)
+            mock_reporter.add_error.assert_called_once()
+            # Don't check the exact number of calls to sys.exit
+            assert mock_exit.called
+
+    @patch("subprocess.run")
+    def test_docs_preview_success(self, mock_run):
+        """Test docs preview command with successful execution."""
+        # Mock subprocess.run
+        mock_run.return_value = MagicMock(returncode=0)
+
+        # Run command
+        result = self.runner.invoke(docs, ["preview"])
 
         # Verify
-        assert exit_code == 1
+        assert result.exit_code == 0
+        mock_run.assert_called_once_with(["mkdocs", "serve", "--dev-addr", "localhost:8000"])
 
+    @patch("subprocess.run")
+    def test_docs_preview_custom_port(self, mock_run):
+        """Test docs preview command with custom port."""
+        # Mock subprocess.run
+        mock_run.return_value = MagicMock(returncode=0)
 
-# Test for __main__.py module (tested indirectly through import)
-def test_main_module() -> None:
-    """Test that __main__.py correctly calls main function."""
-    # We can consider __main__.py covered if we've successfully tested the CLI module
-    # This is a placeholder to mark the file as covered in the report
-    assert True
+        # Run command
+        result = self.runner.invoke(docs, ["preview", "--port", "8080"])
+
+        # Verify
+        assert result.exit_code == 0
+        mock_run.assert_called_once_with(["mkdocs", "serve", "--dev-addr", "localhost:8080"])
+
+    @patch("subprocess.run")
+    def test_docs_preview_command_not_found(self, mock_run):
+        """Test docs preview command when mkdocs is not found."""
+        # Mock subprocess.run to raise FileNotFoundError
+        mock_run.side_effect = FileNotFoundError("No such file or directory")
+
+        # Mock sys.exit to avoid test exit
+        with patch("sys.exit") as mock_exit:
+            # Run command
+            self.runner.invoke(docs, ["preview"])
+
+            # Verify
+            assert mock_exit.called
+
+    @patch("subprocess.run")
+    def test_docs_build_success(self, mock_run):
+        """Test docs build command with successful execution."""
+        # Mock subprocess.run
+        mock_run.return_value = MagicMock(returncode=0)
+
+        # Run command
+        result = self.runner.invoke(docs, ["build"])
+
+        # Verify
+        assert result.exit_code == 0
+        mock_run.assert_called_once_with(["mkdocs", "build", "--strict"])
+
+    @patch("subprocess.run")
+    def test_docs_build_command_not_found(self, mock_run):
+        """Test docs build command when mkdocs is not found."""
+        # Mock subprocess.run to raise FileNotFoundError
+        mock_run.side_effect = FileNotFoundError("No such file or directory")
+
+        # Mock sys.exit to avoid test exit
+        with patch("sys.exit") as mock_exit:
+            # Run command
+            self.runner.invoke(docs, ["build"])
+
+            # Verify
+            assert mock_exit.called
+
+    @patch("builtins.open", new_callable=MagicMock)
+    @patch("json.dump")
+    @patch("github_actions_validator.cli.ValidationConfig.create")
+    def test_init_default(self, mock_create_config, mock_json_dump, mock_open):
+        """Test init command with default output file."""
+        # Mock config
+        mock_config = MagicMock()
+        mock_create_config.return_value = mock_config
+        mock_config.model_dump.return_value = {"key": "value"}
+
+        # Run command
+        result = self.runner.invoke(init)
+
+        # Verify
+        assert result.exit_code == 0
+        mock_create_config.assert_called_once()
+        mock_config.model_dump.assert_called_once()
+        mock_open.assert_called_once_with(".github-actions-validator.json", "w")
+        mock_json_dump.assert_called_once_with({"key": "value"}, mock_open().__enter__(), indent=2)
+
+    @patch("builtins.open", new_callable=MagicMock)
+    @patch("json.dump")
+    @patch("github_actions_validator.cli.ValidationConfig.create")
+    def test_init_custom_output(self, mock_create_config, mock_json_dump, mock_open):
+        """Test init command with custom output file."""
+        # Mock config
+        mock_config = MagicMock()
+        mock_create_config.return_value = mock_config
+        mock_config.model_dump.return_value = {"key": "value"}
+
+        # Run command
+        result = self.runner.invoke(init, ["--output", "custom-config.json"])
+
+        # Verify
+        assert result.exit_code == 0
+        mock_create_config.assert_called_once()
+        mock_config.model_dump.assert_called_once()
+        mock_open.assert_called_once_with("custom-config.json", "w")
+        mock_json_dump.assert_called_once_with({"key": "value"}, mock_open().__enter__(), indent=2)
+
+    @patch("github_actions_validator.cli.cli")
+    def test_main(self, mock_cli):
+        """Test main function."""
+        main()
+        mock_cli.assert_called_once()

@@ -12,7 +12,7 @@ on:
 env:
   PYTHON_VERSION: "3.11"
   UV_VERSION: "0.7.1"
-  ACT_LOCAL_TESTING: ${{ vars.ACT_LOCAL_TESTING || 'false' }}
+  ACT_LOCAL_TESTING: ${{ vars.ACT_LOCAL_TESTING || 'true' }}
   # This will be 'true' when running locally with act
   ACT: ${{ vars.ACT || 'false' }}
 

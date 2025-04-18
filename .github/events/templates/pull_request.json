@@ -27,11 +27,11 @@
                 "html_url": "https://github.com/local-tester/conda-forge-converter",
                 "description": "Local testing repository",
                 "fork": true,
-                "default_branch": "main"
+                "default_branch": "master"
             }
         },
         "base": {
-            "ref": "main",
+            "ref": "master",
             "sha": "fedcba9876543210fedcba9876543210fedcba98",
             "repo": {
                 "id": 87654321,
@@ -45,7 +45,7 @@
                 "html_url": "https://github.com/yourusername/conda-forge-converter",
                 "description": "A tool to convert Anaconda environments to conda-forge environments",
                 "fork": false,
-                "default_branch": "main"
+                "default_branch": "master"
             }
         },
         "merged": false,
@@ -70,7 +70,7 @@
         "html_url": "https://github.com/yourusername/conda-forge-converter",
         "description": "A tool to convert Anaconda environments to conda-forge environments",
         "fork": false,
-        "default_branch": "main"
+        "default_branch": "master"
     },
     "sender": {
         "login": "local-tester",

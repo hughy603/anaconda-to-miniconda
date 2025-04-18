@@ -7,6 +7,7 @@ repos:
       - id: end-of-file-fixer
       - id: check-yaml
       - id: check-added-large-files
+        exclude: ^bin/act$
       - id: check-ast
       - id: check-json
       - id: check-merge-conflict
@@ -77,9 +78,18 @@ repos:
 
       - id: uv-lock
         name: Update UV lockfile
-        entry: uv lock
+        entry: uv pip compile pyproject.toml --output-file=requirements.lock --extra=dev --extra=test
         language: system
         files: ^(pyproject\.toml|uv\.lock)$
+        pass_filenames: false
+        stages: [pre-commit]
+
+      # Run tests
+      - id: pytest-check
+        name: Run pytest
+        entry: pytest -v -k "not slow and not integration"
+        language: system
+        types: [python]
         pass_filenames: false
         stages: [pre-commit]
 
@@ -88,7 +98,7 @@ repos:
       # Validate changed workflows on commit (fast)
       - id: validate-changed-workflows
         name: Validate changed workflows
-        entry: powershell -ExecutionPolicy Bypass -File ./validate-all-workflows.ps1 -ChangedOnly -DryRun
+        entry: python validate-all-workflows.py --changed-only --dry-run
         language: system
         files: ^\.github/workflows/.*\.ya?ml$
         pass_filenames: false
@@ -97,7 +107,7 @@ repos:
       # Validate all workflows (manual, thorough)
       - id: validate-workflows-execution
         name: Validate all workflows by running locally
-        entry: powershell -ExecutionPolicy Bypass -File ./validate-all-workflows.ps1
+        entry: python validate-all-workflows.py
         language: system
         files: ^\.github/workflows/.*\.ya?ml$
         pass_filenames: false
@@ -106,7 +116,7 @@ repos:
       # Validate workflows before push
       - id: validate-workflows-pre-push
         name: Validate workflows before push
-        entry: powershell -ExecutionPolicy Bypass -File ./validate-all-workflows.ps1 -ChangedOnly
+        entry: python validate-all-workflows.py --changed-only
         language: system
         files: ^\.github/workflows/.*\.ya?ml$
         pass_filenames: false
@@ -123,6 +133,20 @@ repos:
       - id: powershell-script-analyzer
         name: PowerShell Script Analyzer
         entry: pwsh -NoProfile -ExecutionPolicy Bypass -Command "if (-not (Get-Module -ListAvailable -Name PSScriptAnalyzer)) { Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser -SkipPublisherCheck }; $files = @(git ls-files '*.ps1'); if ($files.Count -gt 0) { $results = $files | ForEach-Object { Invoke-ScriptAnalyzer -Path $_ -Settings .vscode/PSScriptAnalyzerSettings.psd1 }; if ($results) { $results | Format-Table -AutoSize; exit 1 } else { exit 0 } } else { exit 0 }"
+        language: system
+        pass_filenames: false
+        types: [powershell]
+
+      - id: powershell-formatter
+        name: PowerShell Formatter
+        entry: pwsh -NoProfile -ExecutionPolicy Bypass -Command "if (-not (Get-Module -ListAvailable -Name PSScriptAnalyzer)) { Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser -SkipPublisherCheck }; $files = @(git ls-files '*.ps1'); if ($files.Count -gt 0) { foreach ($file in $files) { $content = Get-Content -Path $file -Raw; $formatted = Invoke-Formatter -ScriptDefinition $content -Settings .vscode/PSScriptAnalyzerSettings.psd1; if ($formatted -ne $content) { Set-Content -Path $file -Value $formatted -NoNewline -Encoding UTF8; Write-Output \"Formatted $file\" } } }"
+        language: system
+        pass_filenames: false
+        types: [powershell]
+
+      - id: powershell-encoding-fixer
+        name: PowerShell Encoding Fixer
+        entry: pwsh -NoProfile -ExecutionPolicy Bypass -Command "$files = @(git ls-files '*.ps1'); if ($files.Count -gt 0) { foreach ($file in $files) { $content = Get-Content -Path $file -Raw; $utf8BomEncoding = New-Object System.Text.UTF8Encoding $true; [System.IO.File]::WriteAllText($file, $content, $utf8BomEncoding); Write-Output \"Fixed encoding for $file\" } }"
         language: system
         pass_filenames: false
         types: [powershell]

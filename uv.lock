@@ -223,7 +223,9 @@ wheels = [
 name = "conda-forge-converter"
 source = { editable = "." }
 dependencies = [
+    { name = "click" },
     { name = "pyyaml" },
+    { name = "rich" },
     { name = "typing-extensions" },
 ]
 
@@ -270,10 +272,16 @@ test = [
     { name = "pytest-cov" },
 ]
 
+[package.dev-dependencies]
+dev = [
+    { name = "types-pyyaml" },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "build", marker = "extra == 'all'", specifier = ">=1.0.0" },
     { name = "build", marker = "extra == 'dev'", specifier = ">=1.0.0" },
+    { name = "click", specifier = ">=8.1.0" },
     { name = "hatch", marker = "extra == 'all'", specifier = ">=1.9.0" },
     { name = "hatch", marker = "extra == 'dev'", specifier = ">=1.9.0" },
     { name = "hatch", marker = "extra == 'docs'", specifier = ">=1.9.0" },
@@ -302,6 +310,7 @@ requires-dist = [
     { name = "python-semantic-release", marker = "extra == 'all'", specifier = ">=9.0.0" },
     { name = "python-semantic-release", marker = "extra == 'dev'", specifier = ">=9.0.0" },
     { name = "pyyaml", specifier = ">=6.0.1" },
+    { name = "rich", specifier = ">=13.0.0" },
     { name = "ruff", marker = "extra == 'all'", specifier = ">=0.3.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.3.0" },
     { name = "types-pyyaml", marker = "extra == 'all'", specifier = ">=6.0.12.20250402" },
@@ -309,6 +318,9 @@ requires-dist = [
     { name = "typing-extensions", specifier = ">=4.10.0" },
 ]
 provides-extras = ["all", "dev", "docs", "test"]
+
+[package.metadata.requires-dev]
+dev = [{ name = "types-pyyaml", specifier = ">=6.0.12.20250402" }]
 
 [[package]]
 name = "coverage"

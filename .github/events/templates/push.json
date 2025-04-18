@@ -1,5 +1,5 @@
 {
-    "ref": "refs/heads/main",
+    "ref": "refs/heads/master",
     "before": "6113728f27ae82c7b1a177c8d03f9e96e0adf246",
     "after": "0123456789abcdef0123456789abcdef01234567",
     "repository": {
@@ -16,7 +16,7 @@
         "html_url": "https://github.com/yourusername/conda-forge-converter",
         "description": "A tool to convert Anaconda environments to conda-forge environments",
         "fork": false,
-        "default_branch": "main"
+        "default_branch": "master"
     },
     "pusher": {
         "name": "local-tester",
