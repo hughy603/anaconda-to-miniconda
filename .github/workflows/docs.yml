@@ -77,9 +77,15 @@ jobs:
 
       - name: Build MkDocs site
         id: build
-        continue-on-error: true
         run: |
-          hatch run docs-build -- --strict || echo "::warning::Documentation build failed"
+          hatch run docs-build -- --strict
+
+      - name: Verify site directory exists
+        run: |
+          if [ ! -d "site" ]; then
+            echo "::error::site directory not found after build"
+            exit 1
+          fi
 
       - name: Upload artifact (Production)
         if: ${{ !env.ACT_LOCAL_TESTING || env.ACT_LOCAL_TESTING != 'true' }}
