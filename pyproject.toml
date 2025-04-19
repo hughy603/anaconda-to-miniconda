@@ -65,32 +65,13 @@ docs = [
     "mkdocs-redirects>=1.2.1",
     "hatch>=1.9.0",
     "pymdown-extensions>=10.14.3",
+    "mkdocs-git-revision-date-localized-plugin>=1.4.5",
 ]
 all = [
-    # Include all dependencies from other groups directly
     "actionlint>=1.6.0", # validation
-    # dev dependencies
-    "ruff>=0.3.0",
-    "pyright>=1.1.350",
-    "python-semantic-release>=9.0.0",
-    "pre-commit>=3.5.0",
-    "build>=1.0.0",
-    "hatch>=1.9.0",
-    "types-pyyaml>=6.0.12.20250402",
-    # test dependencies
-    "pytest>=8.0.0",
-    "pytest-cov>=4.1.0",
-    "pytest-benchmark>=4.0.0",
-    "pytest-mock>=3.10.0",
-    "pytest-xdist>=3.3.0",
-    # docs dependencies
-    "mkdocs>=1.5.0",
-    "mkdocs-material>=9.5.0",
-    "mkdocstrings>=0.24.0",
-    "mkdocstrings-python>=1.8.0",
-    "mkdocs-minify-plugin>=0.7.0",
-    "mkdocs-redirects>=1.2.1",
-    "mkdocs-git-revision-date-localized-plugin>=1.4.5",
+    { ref = "dev" },
+    { ref = "test" },
+    { ref = "docs" },
 ]
 [project.scripts]
 anaconda-to-miniconda = "conda_forge_converter.cli:main"
