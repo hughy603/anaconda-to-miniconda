@@ -137,6 +137,15 @@ repos:
         types: [powershell]
         stages: [pre-commit]
 
+      - id: mkdocs-strict-build
+        name: Validate MkDocs strict build
+        entry: hatch run docs-build -- --strict
+        language: system
+        pass_filenames: false
+        types: [markdown, yaml]
+        files: ^(docs/.*\.md|mkdocs\.yml)$
+        stages: [pre-commit]
+
   # Shell script validation
   - repo: https://github.com/shellcheck-py/shellcheck-py
     rev: v0.9.0.6

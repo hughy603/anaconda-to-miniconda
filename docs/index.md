@@ -86,5 +86,3 @@ We welcome contributions! Please see our [Contributing Guide](dev/contributing.m
 - 🧩 Better dependency resolution
 - 📚 Broader package selection
 - 🛠️ Active maintenance and support
-
-See our [TODO list](TODO.md) for current development status and planned features.

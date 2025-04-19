@@ -53,9 +53,6 @@ markdown_extensions:
       smart_enable: all
   - pymdownx.caret
   - pymdownx.details
-  - pymdownx.emoji:
-      emoji_index: material.extensions.emoji.twemoji
-      emoji_generator: material.extensions.emoji.to_svg
   - pymdownx.highlight:
       anchor_linenums: true
       line_spans: __span
@@ -127,7 +124,6 @@ nav:
       - System Design: design/system-design.md
       - Error Handling: design/error-handling.md
       - Package Resolution: design/package-resolution.md
-      - Improvement Plan: improvement-plan.md
   - Development:
       - Overview: dev/README.md
       - Setup: dev/setup.md
@@ -153,7 +149,6 @@ nav:
       - License: about/license.md
       - Changelog: about/changelog.md
   - 404: 404.md
-  - TODO: TODO.md
 
 extra:
   social:
