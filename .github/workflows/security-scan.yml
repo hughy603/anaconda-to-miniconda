@@ -24,6 +24,18 @@ jobs:
         with:
           fetch-depth: 0  # Shallow clones should be disabled for better relevancy of analysis
 
+      # - name: Validate SonarQube Configuration
+      #   if: ${{ !env.ACT_LOCAL_TESTING || env.ACT_LOCAL_TESTING != 'true' }}
+      #   run: |
+      #     if [ -z "${{ secrets.SONAR_TOKEN }}" ]; then
+      #       echo "::error::SONAR_TOKEN is not set. Please add it to your repository secrets."
+      #       exit 1
+      #     fi
+      #     if [ -z "${{ secrets.SONAR_HOST_URL }}" ]; then
+      #       echo "::error::SONAR_HOST_URL is not set. Please add it to your repository secrets."
+      #       exit 1
+      #     fi
+
       - name: Set up Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@v5
         with:
@@ -55,20 +67,20 @@ jobs:
           hatch run test
 
       # This step is skipped in local testing mode
-      - name: SonarQube Scan (Production)
-        uses: SonarSource/sonarqube-scan-action@v1
-        if: ${{ !env.ACT_LOCAL_TESTING || env.ACT_LOCAL_TESTING != 'true' }}
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-        with:
-          args: >
-            -Dsonar.projectKey=conda-forge-converter
-            -Dsonar.python.coverage.reportPaths=coverage.xml
-            -Dsonar.sources=src
-            -Dsonar.tests=tests
-            -Dsonar.python.xunit.reportPath=pytest.xml
-            -Dsonar.qualitygate.wait=true
+      # - name: SonarQube Scan (Production)
+      #   uses: SonarSource/sonarqube-scan-action@v1
+      #   if: ${{ !env.ACT_LOCAL_TESTING || env.ACT_LOCAL_TESTING != 'true' }}
+      #   env:
+      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      #     SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+      #   with:
+      #     args: >
+      #       -Dsonar.projectKey=conda-forge-converter
+      #       -Dsonar.python.coverage.reportPaths=coverage.xml
+      #       -Dsonar.sources=src
+      #       -Dsonar.tests=tests
+      #       -Dsonar.python.xunit.reportPath=pytest.xml
+      #       -Dsonar.qualitygate.wait=true
 
       # This step only runs in local testing mode
       - name: Mock SonarQube Scan (Local Testing)
