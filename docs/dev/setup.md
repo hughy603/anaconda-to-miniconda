@@ -14,8 +14,8 @@ This guide provides instructions for setting up a development environment for th
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/conda-forge-converter.git
-cd conda-forge-converter
+git clone https://github.com/ricea/anaconda-to-miniconda2.git
+cd anaconda-to-miniconda2
 ```
 
 ### 2. Create a Virtual Environment
@@ -91,7 +91,7 @@ mkdocs serve
 ## Project Structure
 
 ```text
-conda-forge-converter/
+anaconda-to-miniconda2/
 ├── src/                  # Source code
 │   ├── conda_forge_converter/  # Main package
 │   └── tests/            # Test files
@@ -99,7 +99,7 @@ conda-forge-converter/
 ├── scripts/              # Utility scripts
 ├── .pre-commit-config.yaml  # Pre-commit configuration
 ├── pyproject.toml        # Project configuration
-└── README.md             # Project overview
+└── README.md            # Project overview
 ```
 
 ## IDE Configuration
@@ -149,5 +149,5 @@ Recommended settings (`.vscode/settings.json`):
 ## Next Steps
 
 - Read the [Contributing Guide](contributing.md)
-- Review the [Architecture Documentation](architecture.md)
-- Set up your [Testing Environment](testing.md)
+- Review the [Architecture Documentation](../architecture.md)
+- Set up your testing environment

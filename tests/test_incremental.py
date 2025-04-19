@@ -180,7 +180,7 @@ class TestIncrementalUpdates:
     ) -> None:
         """Test adding missing packages."""
         # Setup
-        outdated_packages = []
+        outdated_packages: list[dict[str, str]] = []
 
         source_only_packages = [
             {"name": "matplotlib", "version": "3.7.1"},

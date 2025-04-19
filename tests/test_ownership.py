@@ -18,6 +18,12 @@ class TestOwnershipUtils:
 
     def test_is_root(self):
         """Test the is_root function."""
+        # Skip test on Windows
+        import sys
+
+        if sys.platform.startswith("win"):
+            return
+
         with mock.patch("os.geteuid") as mock_geteuid:
             # Test when running as root
             mock_geteuid.return_value = 0
@@ -43,6 +49,17 @@ class TestOwnershipUtils:
 
     def test_get_owner_names(self):
         """Test the get_owner_names function."""
+        # Skip test on Windows
+        import sys
+
+        if sys.platform.startswith("win"):
+            # On Windows, get_owner_names should always return ("unknown", "unknown")
+            username, groupname = get_owner_names(1000, 1000)
+            assert username == "unknown"
+            assert groupname == "unknown"
+            return
+
+        # On Unix-like systems, test the actual functionality
         with (
             mock.patch("pwd.getpwuid") as mock_getpwuid,
             mock.patch("grp.getgrgid") as mock_getgrgid,
@@ -69,6 +86,16 @@ class TestOwnershipUtils:
 
     def test_change_path_owner(self):
         """Test the change_path_owner function."""
+        # Skip test on Windows
+        import sys
+
+        if sys.platform.startswith("win"):
+            # On Windows, change_path_owner should always return True
+            result = change_path_owner("/path/to/env", 1000, 1000)
+            assert result is True
+            return
+
+        # On Unix-like systems, test the actual functionality
         with mock.patch("os.chown") as mock_chown, mock.patch("os.walk") as mock_walk:
             # Setup mock for os.walk
             mock_walk.return_value = [

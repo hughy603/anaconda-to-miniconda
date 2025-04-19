@@ -118,7 +118,23 @@ def parse_args(args: Sequence[str] | None = None) -> argparse.Namespace:
 
     # Single environment options
     parser.add_argument("-s", "--source-env", help="Name of the source Anaconda environment")
-    parser.add_argument("-t", "--target-env", help="Name for the new conda-forge environment")
+    parser.add_argument(
+        "-t",
+        "--target-env",
+        help="Name for the new conda-forge environment (only used with --no-replace)",
+    )
+
+    # Replacement behavior
+    parser.add_argument(
+        "--no-replace",
+        action="store_true",
+        help="Don't replace the original environment (create a new one with a different name)",
+    )
+    parser.add_argument(
+        "--backup-suffix",
+        default="_anaconda_backup",
+        help="Suffix to add to the backup environment name (default: _anaconda_backup)",
+    )
 
     # Batch conversion options
     parser.add_argument("--batch", action="store_true", help="Convert multiple environments")
@@ -222,17 +238,23 @@ def show_help(topic: str | None = None) -> None:
     """
     if topic == "basic" or topic is None:
         print("\n=== Basic Usage ===")
-        print("\nConverting a single environment:")
-        print("  conda-forge-converter -s myenv -t myenv_forge")
+        print("\nConverting and replacing an environment (default behavior):")
+        print("  conda-forge-converter -s myenv")
+        print("\nConverting to a new environment without replacing the original:")
+        print("  conda-forge-converter -s myenv --no-replace -t myenv_forge")
         print("\nTo specify a Python version:")
-        print("  conda-forge-converter -s myenv -t myenv_forge --python 3.9")
+        print("  conda-forge-converter -s myenv --python 3.9")
         print("\nTo preview without creating:")
-        print("  conda-forge-converter -s myenv -t myenv_forge --dry-run")
+        print("  conda-forge-converter -s myenv --dry-run")
+        print("\nTo customize the backup environment name:")
+        print("  conda-forge-converter -s myenv --backup-suffix _anaconda_bak")
 
     if topic == "batch" or topic is None:
         print("\n=== Batch Conversion ===")
-        print("\nConvert all environments:")
+        print("\nConvert and replace all environments (default behavior):")
         print("  conda-forge-converter --batch")
+        print("\nConvert all environments without replacing the originals:")
+        print("  conda-forge-converter --batch --no-replace")
         print("\nFilter environments by pattern:")
         print("  conda-forge-converter --batch --pattern 'data*'")
         print("\nExclude specific environments:")
@@ -241,6 +263,15 @@ def show_help(topic: str | None = None) -> None:
         print("  conda-forge-converter --batch --target-suffix '_cf'")
 
     if topic == "advanced" or topic is None:
+        print("\n=== Advanced Options ===")
+        print("\nReplacement behavior:")
+        print("  conda-forge-converter -s myenv  # Replace original (default)")
+        print(
+            "  conda-forge-converter -s myenv --no-replace -t myenv_forge  # Create new environment"
+        )
+        print(
+            "  conda-forge-converter -s myenv --backup-suffix _anaconda_bak  # Custom backup name"
+        )
         print("\n=== Advanced Options ===")
         print("\nRoot user options:")
         print("  conda-forge-converter -s myenv -t myenv_forge --no-preserve-ownership")
@@ -298,22 +329,26 @@ def show_help(topic: str | None = None) -> None:
 
     if topic == "examples" or topic is None:
         print("\n=== Common Examples ===")
-        print("\nExample 1: Convert a specific data science environment")
-        print("  conda-forge-converter -s data_science -t data_science_forge")
-        print("\nExample 2: Convert all environments with 'ml' in their name")
+        print("\nExample 1: Replace a specific data science environment")
+        print("  conda-forge-converter -s data_science")
+        print("\nExample 2: Convert a specific environment without replacing it")
+        print("  conda-forge-converter -s data_science --no-replace -t data_science_forge")
+        print("\nExample 3: Replace all environments with 'ml' in their name")
         print("  conda-forge-converter --batch --pattern '*ml*'")
-        print("\nExample 3: Convert everything except test environments")
+        print("\nExample 4: Convert everything except test environments")
         print("  conda-forge-converter --batch --exclude 'test_*'")
-        print("\nExample 4: Convert environments with advanced logging and parallelism")
+        print("\nExample 5: Convert environments with advanced logging and parallelism")
         print(
             "  conda-forge-converter --batch --verbose --max-parallel 4 --log-file conversion.log"
         )
-        print("\nExample 5: Full workflow with health checks, verification and reporting")
+        print("\nExample 6: Full workflow with health checks, verification and reporting")
         print(
-            "  conda-forge-converter -s myenv -t myenv_forge --health-check --verify --generate-report report.json"
+            "  conda-forge-converter -s myenv --health-check --verify --generate-report report.json"
         )
-        print("\nExample 6: Optimize conversion performance")
-        print("  conda-forge-converter -s myenv -t myenv_forge --batch-size 30")
+        print("\nExample 7: Optimize conversion performance")
+        print("  conda-forge-converter -s myenv --batch-size 30")
+        print("\nExample 8: Custom backup naming")
+        print("  conda-forge-converter -s myenv --backup-suffix _anaconda_backup_2023")
 
 
 def main(args: Sequence[str] | None = None) -> int:  # noqa: C901
@@ -511,6 +546,8 @@ def main(args: Sequence[str] | None = None) -> int:  # noqa: C901
             use_fast_solver=not parsed_args.no_fast_solver,
             batch_size=parsed_args.batch_size,
             preserve_ownership=preserve_ownership,
+            replace_original=not parsed_args.no_replace,
+            backup_suffix=parsed_args.backup_suffix,
         )
 
         # Generate summary report if requested
@@ -540,8 +577,13 @@ def main(args: Sequence[str] | None = None) -> int:  # noqa: C901
         else:
             _env_path = environments[parsed_args.source_env]
 
-        # Default target environment name if not specified
-        target_env = parsed_args.target_env or f"{parsed_args.source_env}_forge"
+        # Determine target environment name based on replacement behavior
+        if parsed_args.no_replace:
+            # If not replacing, use provided target or default
+            target_env = parsed_args.target_env or f"{parsed_args.source_env}_forge"
+        else:
+            # If replacing, target is None (will use source name)
+            target_env = None
 
         # Run health check on source environment if requested
         if parsed_args.health_check:
@@ -569,14 +611,21 @@ def main(args: Sequence[str] | None = None) -> int:  # noqa: C901
             use_fast_solver=not parsed_args.no_fast_solver,
             batch_size=parsed_args.batch_size,
             preserve_ownership=preserve_ownership,
+            replace_original=not parsed_args.no_replace,
+            backup_suffix=parsed_args.backup_suffix,
         )
 
         if success and not parsed_args.dry_run:
             # Generate report if requested
             if parsed_args.generate_report:
+                # Determine effective target name for the report
+                effective_target_name = (
+                    parsed_args.source_env if not parsed_args.no_replace else target_env
+                )
+                assert effective_target_name is not None, "Target environment name cannot be None"
                 report = generate_conversion_report(
                     parsed_args.source_env,
-                    target_env,
+                    effective_target_name,
                     success,
                     output_file=parsed_args.generate_report,
                     verbose=parsed_args.verbose,
@@ -588,8 +637,15 @@ def main(args: Sequence[str] | None = None) -> int:  # noqa: C901
 
             # Verify target environment if requested
             if parsed_args.verify:
-                logger.info(f"Verifying target environment '{target_env}'...")
-                verify_result = verify_environment(target_env, verbose=parsed_args.verbose)
+                # Determine effective target name for verification
+                effective_target_name = (
+                    parsed_args.source_env if not parsed_args.no_replace else target_env
+                )
+                assert effective_target_name is not None, "Target environment name cannot be None"
+                logger.info(f"Verifying target environment '{effective_target_name}'...")
+                verify_result = verify_environment(
+                    effective_target_name, verbose=parsed_args.verbose
+                )
 
                 if not verify_result:
                     logger.error("Target environment verification failed")
@@ -598,8 +654,15 @@ def main(args: Sequence[str] | None = None) -> int:  # noqa: C901
 
             # Health check on target environment if requested
             if parsed_args.health_check:
-                logger.info(f"Running health check on target environment '{target_env}'...")
-                target_health = check_environment_health(target_env, parsed_args.verbose)
+                # Determine effective target name for health check
+                effective_target_name = (
+                    parsed_args.source_env if not parsed_args.no_replace else target_env
+                )
+                assert effective_target_name is not None, "Target environment name cannot be None"
+                logger.info(
+                    f"Running health check on target environment '{effective_target_name}'..."
+                )
+                target_health = check_environment_health(effective_target_name, parsed_args.verbose)
 
                 if target_health["status"] != "GOOD":
                     logger.warning("Target environment health check found issues")

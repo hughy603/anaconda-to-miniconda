@@ -152,6 +152,39 @@ git push origin feature/your-feature-name
 1. **Address Feedback**: Make requested changes
 1. **Approval**: Once approved, your PR can be merged
 
+### Testing GitHub Actions Workflows Locally
+
+If your changes include modifications to GitHub Actions workflows, you should test them locally before submitting a PR:
+
+1. **Validate Syntax**:
+
+   ```bash
+   # Using pre-commit
+   pre-commit run actionlint --files .github/workflows/ci.yml
+
+   # Or directly
+   actionlint .github/workflows/ci.yml
+   ```
+
+1. **Test Execution**:
+
+   ```bash
+   # Test with default push event
+   .github/local-testing/test-workflow.sh .github/workflows/ci.yml
+
+   # Test with specific Python version
+   .github/local-testing/test-workflow.sh .github/workflows/ci.yml push python-version=3.11
+   ```
+
+1. **Test Matrix Builds**:
+
+   ```bash
+   # Test with both Python 3.11 and 3.12
+   .github/local-testing/test-python-versions.sh .github/workflows/ci.yml
+   ```
+
+For detailed instructions, see the [Testing Guide](testing.md#local-testing-of-github-actions-workflows).
+
 ### Merging
 
 PRs are typically merged by maintainers after approval.
@@ -201,7 +234,7 @@ uv run deps-update
 hatch run test:run
 
 # Run with coverage
-hatch run test:cov
+hatch run test
 
 # Run specific test file
 hatch run test:run tests/test_specific.py

@@ -165,4 +165,4 @@ If validation fails, check the following:
 1. **Version Mismatches**: Verify that package versions meet your requirements
 1. **Functionality Tests**: Debug any failing functionality tests
 
-For more help, see the [Troubleshooting Guide](../troubleshooting.md).
+For more help, see the [Troubleshooting Guide](troubleshooting.md).

@@ -184,7 +184,7 @@ This might be due to SELinux or filesystem restrictions:
 
 ### How do I report bugs or request features?
 
-You can report bugs or request features by opening an issue on our GitHub repository. Please use the provided issue templates and include as much information as possible.
+You can report bugs or request features by opening an issue on our [GitHub repository](https://github.com/ricea/anaconda-to-miniconda2). Please use the provided issue templates and include as much information as possible.
 
 ## Performance Questions
 

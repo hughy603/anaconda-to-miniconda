@@ -50,7 +50,7 @@ git push origin feature/your-feature-name
 hatch run test:run
 
 # Run with coverage
-hatch run test:cov
+hatch run test
 
 # Run specific test file
 hatch run test:run tests/test_specific.py
@@ -100,6 +100,28 @@ mkdocs serve
 
 # Build documentation
 mkdocs build
+```
+
+### GitHub Actions Local Testing
+
+```bash
+# Validate workflow syntax
+actionlint .github/workflows/ci.yml
+
+# Test workflow with push event
+.github/local-testing/test-workflow.sh .github/workflows/ci.yml
+
+# Test workflow with pull_request event
+.github/local-testing/test-workflow.sh .github/workflows/ci.yml pull_request
+
+# Test with Python 3.11
+.github/local-testing/test-workflow.sh .github/workflows/ci.yml push python-version=3.11
+
+# Test with Python 3.12
+.github/local-testing/test-workflow.sh .github/workflows/ci.yml push python-version=3.12
+
+# Test with both Python versions
+.github/local-testing/test-python-versions.sh .github/workflows/ci.yml
 ```
 
 ## Conventional Commits Cheat Sheet
@@ -152,11 +174,11 @@ test(cli): add tests for new verbose option
 
 ### Before Creating PR
 
-- [ ] All tests pass locally
-- [ ] Pre-commit checks pass
-- [ ] Documentation is updated
-- [ ] Code follows project style guidelines
-- [ ] Commits follow conventional commit format
+- \[ \] All tests pass locally
+- \[ \] Pre-commit checks pass
+- \[ \] Documentation is updated
+- \[ \] Code follows project style guidelines
+- \[ \] Commits follow conventional commit format
 
 ### PR Template Sections
 

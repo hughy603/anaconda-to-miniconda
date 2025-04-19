@@ -1,0 +1,47 @@
+{
+    "GitHub Actions Workflow": {
+        "prefix": "ghworkflow",
+        "body": [
+            "name: ${1:Workflow Name}",
+            "",
+            "on:",
+            "  push:",
+            "    branches: [${2:master, develop}]",
+            "  pull_request:",
+            "    branches: [${2:master, develop}]",
+            "",
+            "jobs:",
+            "  ${3:build}:",
+            "    runs-on: ${4:ubuntu-latest}",
+            "    steps:",
+            "      - uses: actions/checkout@v4",
+            "      - name: ${5:Run Task}",
+            "        run: |",
+            "          ${6:echo \"Hello World\"}",
+            ""
+        ],
+        "description": "Basic GitHub Actions workflow"
+    },
+    "GitHub Actions Job": {
+        "prefix": "ghjob",
+        "body": [
+            "${1:job_id}:",
+            "  name: ${2:Job Name}",
+            "  runs-on: ${3:ubuntu-latest}",
+            "  steps:",
+            "    - name: ${4:Step Name}",
+            "      run: ${5:echo \"Hello World\"}",
+            ""
+        ],
+        "description": "GitHub Actions job"
+    },
+    "GitHub Actions Step": {
+        "prefix": "ghstep",
+        "body": [
+            "- name: ${1:Step Name}",
+            "  ${2:run: ${3:echo \"Hello World\"}}",
+            ""
+        ],
+        "description": "GitHub Actions step"
+    }
+}

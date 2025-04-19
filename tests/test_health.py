@@ -74,7 +74,10 @@ class TestHealthCheck:
         # Verify
         assert result["status"] == "ERROR"
         assert len(result["issues"]) == 1
-        assert "Failed to list conda environments" in result["issues"][0]["message"]
+        assert isinstance(result["issues"], list)
+        assert any(
+            "Failed to list conda environments" in issue["message"] for issue in result["issues"]
+        )
 
     @mock.patch("conda_forge_converter.health.run_command")
     def test_check_environment_exists_invalid_json(self, mock_run: mock.MagicMock) -> None:

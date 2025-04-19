@@ -2,152 +2,128 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Install Development Dependencies",
+            "label": "Validate Workflow Syntax",
             "type": "shell",
-            "command": "uv pip install -e \".[dev,test]\"",
-            "problemMatcher": [],
+            "command": "./github-actions-local.sh --dry-run",
+            "group": "test",
             "presentation": {
                 "reveal": "always",
                 "panel": "new"
+            }
+        },
+        {
+            "label": "Validate All Workflows (Local Execution)",
+            "type": "shell",
+            "command": "./github-actions-local.sh",
+            "group": "test",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Validate Changed Workflows Only",
+            "type": "shell",
+            "command": "./github-actions-local.sh --changed-only",
+            "group": "test",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Validate Current Workflow (Local Execution)",
+            "type": "shell",
+            "command": "./github-actions-local.sh -w ${file}",
+            "group": "test",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Validate Current Workflow File",
+            "type": "shell",
+            "command": ".vscode/scripts/validate-workflows.sh ${file}",
+            "windows": {
+                "command": "powershell -ExecutionPolicy Bypass -File .vscode/scripts/validate-workflows.ps1 -FilePath \"${file}\""
             },
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            }
-        },
-        {
-            "label": "Run Tests",
-            "type": "shell",
-            "command": "pytest",
-            "problemMatcher": [],
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
+            "problemMatcher": {
+                "owner": "actionlint",
+                "pattern": {
+                    "regexp": "^(.+):(\\d+):(\\d+): \\[(.+)\\] (.+)$",
+                    "file": 1,
+                    "line": 2,
+                    "column": 3,
+                    "severity": 4,
+                    "message": 5
+                }
             },
-            "group": {
-                "kind": "test",
-                "isDefault": true
-            }
+            "presentation": {
+                "reveal": "silent",
+                "panel": "shared",
+                "clear": true
+            },
+            "group": "test"
         },
         {
-            "label": "Run Tests with Coverage",
+            "label": "Validate Workflows with Custom Settings",
             "type": "shell",
-            "command": "pytest --cov=conda_forge_converter tests/",
-            "problemMatcher": [],
+            "command": "./validate-all-workflows.sh",
+            "windows": {
+                "command": ".\\validate-all-workflows.ps1"
+            },
+            "args": [
+                {
+                    "value": "--secrets-file",
+                    "quoting": "escape"
+                },
+                {
+                    "value": "${input:secretsFile}",
+                    "quoting": "escape"
+                },
+                {
+                    "value": "--cache-path",
+                    "quoting": "escape"
+                },
+                {
+                    "value": "${input:cachePath}",
+                    "quoting": "escape"
+                },
+                {
+                    "value": "--custom-image",
+                    "quoting": "escape"
+                },
+                {
+                    "value": "${input:customImage}",
+                    "quoting": "escape"
+                }
+            ],
+            "group": "test",
             "presentation": {
                 "reveal": "always",
                 "panel": "new"
             }
+        }
+    ],
+    "inputs": [
+        {
+            "id": "secretsFile",
+            "description": "Path to secrets file",
+            "default": ".github/local-secrets.json",
+            "type": "promptString"
         },
         {
-            "label": "Lint with Ruff",
-            "type": "shell",
-            "command": "ruff check .",
-            "problemMatcher": [],
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            }
+            "id": "cachePath",
+            "description": "Path to cache directory",
+            "default": "./.act-cache",
+            "type": "promptString"
         },
         {
-            "label": "Format with Ruff",
-            "type": "shell",
-            "command": "ruff format .",
-            "problemMatcher": [],
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            }
-        },
-        {
-            "label": "Type Check with Pyright",
-            "type": "shell",
-            "command": "pyright",
-            "problemMatcher": [],
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            }
-        },
-        {
-            "label": "Lock Dependencies",
-            "type": "shell",
-            "command": "uv pip compile pyproject.toml --output-file=requirements.lock --extra=dev --extra=test",
-            "problemMatcher": [],
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            }
-        },
-        {
-            "label": "Install Pre-commit Hooks",
-            "type": "shell",
-            "command": "pre-commit install",
-            "problemMatcher": [],
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            }
-        },
-        {
-            "label": "Run Pre-commit Hooks",
-            "type": "shell",
-            "command": "pre-commit run --all-files",
-            "problemMatcher": [],
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            }
-        },
-        {
-            "label": "Build Documentation",
-            "type": "shell",
-            "command": "mkdocs build",
-            "problemMatcher": [],
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            }
-        },
-        {
-            "label": "Serve Documentation",
-            "type": "shell",
-            "command": "mkdocs serve",
-            "problemMatcher": [],
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            }
-        },
-        {
-            "label": "Check Conda Environment",
-            "type": "shell",
-            "command": "conda info",
-            "problemMatcher": [],
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            }
-        },
-        {
-            "label": "List Conda Environments",
-            "type": "shell",
-            "command": "conda env list",
-            "problemMatcher": [],
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            }
-        },
-        {
-            "label": "Check Mamba Installation",
-            "type": "shell",
-            "command": "mamba info",
-            "problemMatcher": [],
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            }
+            "id": "customImage",
+            "description": "Custom Docker image (e.g., ubuntu-latest=ghcr.io/catthehacker/ubuntu:act-latest)",
+            "default": "",
+            "type": "promptString"
         }
     ]
 }

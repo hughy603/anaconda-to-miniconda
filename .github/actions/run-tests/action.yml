@@ -1,0 +1,144 @@
+name: "Run Tests"
+description: "Runs tests with configurable options and proper error handling"
+inputs:
+  test-type:
+    description: "Type of tests to run (unit, integration, all)"
+    required: false
+    default: "all"
+  coverage:
+    description: "Whether to collect coverage information"
+    required: false
+    default: "true"
+  fail-fast:
+    description: "Whether to fail fast on first error"
+    required: false
+    default: "false"
+  parallel:
+    description: "Whether to run tests in parallel"
+    required: false
+    default: "true"
+  test-path:
+    description: "Path to test directory or specific test file"
+    required: false
+    default: "tests/"
+  markers:
+    description: "Pytest markers to filter tests"
+    required: false
+    default: ""
+  extra-args:
+    description: "Extra arguments to pass to pytest"
+    required: false
+    default: ""
+  debug:
+    description: "Enable debug mode for verbose output"
+    required: false
+    default: "false"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Prepare test environment
+      shell: bash
+      run: |
+        # Create test results directory
+        mkdir -p test-results
+
+        # Set environment variables for debugging
+        if [[ "${{ inputs.debug }}" == "true" ]]; then
+          echo "PYTEST_DEBUG=1" >> $GITHUB_ENV
+          echo "PYTHONVERBOSE=1" >> $GITHUB_ENV
+        fi
+
+        # Determine test command based on inputs
+        PYTEST_CMD="python -m pytest"
+
+        # Add coverage if requested
+        if [[ "${{ inputs.coverage }}" == "true" ]]; then
+          PYTEST_CMD="$PYTEST_CMD --cov=src --cov-report=term-missing --cov-report=xml"
+        fi
+
+        # Add parallel if requested
+        if [[ "${{ inputs.parallel }}" == "true" ]]; then
+          # Check if pytest-xdist is installed
+          if pip list | grep -q pytest-xdist; then
+            PYTEST_CMD="$PYTEST_CMD -n auto"
+          else
+            echo "Warning: pytest-xdist not installed, parallel execution not available"
+          fi
+        fi
+
+        # Add fail-fast if requested
+        if [[ "${{ inputs.fail-fast }}" == "true" ]]; then
+          PYTEST_CMD="$PYTEST_CMD -x"
+        fi
+
+        # Add verbose output
+        PYTEST_CMD="$PYTEST_CMD -v"
+
+        # Add JUnit XML report
+        PYTEST_CMD="$PYTEST_CMD --junitxml=test-results/junit.xml"
+
+        # Add markers if provided
+        if [[ -n "${{ inputs.markers }}" ]]; then
+          PYTEST_CMD="$PYTEST_CMD -m ${{ inputs.markers }}"
+        fi
+
+        # Add extra args if provided
+        if [[ -n "${{ inputs.extra-args }}" ]]; then
+          PYTEST_CMD="$PYTEST_CMD ${{ inputs.extra-args }}"
+        fi
+
+        # Determine test path based on test type
+        if [[ "${{ inputs.test-type }}" == "unit" ]]; then
+          PYTEST_CMD="$PYTEST_CMD ${{ inputs.test-path }} -m 'not integration'"
+        elif [[ "${{ inputs.test-type }}" == "integration" ]]; then
+          PYTEST_CMD="$PYTEST_CMD ${{ inputs.test-path }} -m integration"
+        else
+          PYTEST_CMD="$PYTEST_CMD ${{ inputs.test-path }}"
+        fi
+
+        # Save command to file for execution
+        echo "#!/bin/bash" > run_tests.sh
+        echo "set -e" >> run_tests.sh
+        echo "echo \"Running tests with command: $PYTEST_CMD\"" >> run_tests.sh
+        echo "$PYTEST_CMD" >> run_tests.sh
+        chmod +x run_tests.sh
+
+        echo "PYTEST_CMD=$PYTEST_CMD" >> $GITHUB_ENV
+
+    - name: Run tests
+      shell: bash
+      run: |
+        echo "Running tests with command: $PYTEST_CMD"
+
+        # Create a trap to handle test failures gracefully
+        handle_error() {
+          echo "::error::Tests failed with exit code $?"
+          echo "See test results for details"
+          exit 1
+        }
+        trap 'handle_error' ERR
+
+        # Run the tests with proper error handling
+        if [[ "${{ inputs.debug }}" == "true" ]]; then
+          set -x  # Echo commands for debugging
+        fi
+
+        # Run the tests
+        ./run_tests.sh
+
+        # Check if coverage file exists
+        if [[ "${{ inputs.coverage }}" == "true" && -f "coverage.xml" ]]; then
+          echo "Coverage report generated successfully"
+
+          # Extract coverage percentage
+          COVERAGE=$(grep -o 'line-rate="[0-9.]*"' coverage.xml | head -1 | grep -o '[0-9.]*')
+          COVERAGE_PCT=$(echo "$COVERAGE * 100" | bc)
+
+          echo "Overall coverage: ${COVERAGE_PCT}%"
+
+          # Set output for later steps
+          echo "COVERAGE_PCT=${COVERAGE_PCT}" >> $GITHUB_ENV
+        fi
+
+        echo "Tests completed successfully"

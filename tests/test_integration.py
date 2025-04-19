@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-
 from conda_forge_converter.core import (
     convert_environment,
     convert_multiple_environments,
@@ -74,8 +73,8 @@ def test_env_name() -> str:
     return f"test_env_{uuid.uuid4().hex[:8]}"
 
 
-@pytest.mark.integration
-class TestEnvironmentDetection:
+@pytest.mark.integration()
+class TestIntegration:
     """Integration tests for environment detection."""
 
     def test_anaconda_environments_detection(self, anaconda_path: str) -> None:
@@ -105,7 +104,7 @@ class TestEnvironmentDetection:
         assert Path(next(iter(envs.values()))).exists()  # At least one path should exist
 
 
-@pytest.mark.integration
+@pytest.mark.integration()
 class TestEnvironmentConversion:
     """Integration tests for environment conversion."""
 
@@ -296,9 +295,9 @@ class TestEnvironmentConversion:
             )
             assert target_env in envs, f"Target environment '{target_env}' not found"
             target_env_path = envs[target_env]
-            assert Path(target_env_path).exists(), (
-                f"Target environment path '{target_env_path}' does not exist"
-            )
+            assert Path(
+                target_env_path
+            ).exists(), f"Target environment path '{target_env_path}' does not exist"
 
             # Verify key packages are installed
             print(f"Verifying packages in target environment '{target_env}'...")

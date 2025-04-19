@@ -1,0 +1,35 @@
+# Pre-commit hooks for GitHub Actions workflows
+# Add this to your .pre-commit-config.yaml:
+#
+# - repo: local
+#   hooks:
+#     - id: workflow-validation
+#       name: Validate GitHub Actions workflows
+#       entry: .github/scripts/validate-workflows-hook.sh
+#       language: script
+#       files: ^\.github/workflows/.*\.ya?ml$
+#       pass_filenames: true
+
+repos:
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.6.26
+    hooks:
+      - id: actionlint
+        name: Validate GitHub Actions workflows with actionlint
+        files: ^\.github/workflows/.*\.ya?ml$
+
+  - repo: local
+    hooks:
+      - id: check-composite-actions
+        name: Validate composite actions
+        entry: .github/scripts/validate-composite-actions.sh
+        language: script
+        files: ^\.github/actions/.*/action\.ya?ml$
+        pass_filenames: true
+
+      - id: check-workflow-references
+        name: Check workflow references
+        entry: .github/scripts/check-workflow-references.sh
+        language: script
+        files: ^\.github/workflows/.*\.ya?ml$
+        pass_filenames: true

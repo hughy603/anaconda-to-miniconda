@@ -67,7 +67,7 @@ UV configuration is specified in `pyproject.toml`:
 ```toml
 # UV configuration for dependency management
 # Note: UV doesn't support scripts in pyproject.toml
-# Use Hatch for running tests: hatch run test:cov
+# Use Hatch for running tests: hatch run test
 ```
 
 ## Hatch
@@ -111,7 +111,7 @@ hatch build
 hatch run test:run
 
 # Run tests with coverage
-hatch run test:cov
+hatch run test
 
 # Create a new environment
 hatch env create

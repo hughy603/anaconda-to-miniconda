@@ -1,75 +1,30 @@
 # Contributing to conda-forge-converter
 
-Thank you for considering contributing to conda-forge-converter! This document provides a brief overview of the contribution process.
+Thank you for considering contributing to conda-forge-converter! This document provides a simplified overview of the contribution process.
 
-For comprehensive contribution guidelines, please refer to the following documentation:
-
-- [Developer Workflow Guide](docs/dev/workflow.md) - Complete development process
-- [Conventional Commits Guide](docs/dev/conventional-commits.md) - How to format commit messages
-- [Build Tools Guide](docs/dev/build-tools.md) - Information about our build and version management tools
-- [Pull Request Process](docs/dev/pr-process.md) - How to submit and review PRs
-- [Quick Reference](docs/dev/quick-reference.md) - Cheat sheet for common tasks
-
-## Quick Start
+## Quick Setup
 
 ```bash
 # Clone the repository
 git clone https://github.com/yourusername/conda-forge-converter.git
 cd conda-forge-converter
 
-# Install UV (recommended to use pipx for global installation)
+# Install tools and dependencies
 pipx install uv
-
-# Set up development environment
+pipx install pre-commit
 uv pip install -e ".[dev,test]"
 
-# Install pre-commit hooks
+# Set up Git hooks
 pre-commit install
-pre-commit install --hook-type commit-msg
 
-# Configure Git to use merge strategy for pulls (important for this project)
+# Configure Git (important for this project)
 git config pull.rebase false
 
 # Set up VSCode configuration (if using VSCode)
 ./scripts/setup_vscode.py
 ```
 
-### VSCode Setup
-
-If you're using VSCode, we provide pre-configured settings to help you get started quickly:
-
-1. Run the setup script to configure VSCode:
-
-   ```bash
-   ./scripts/setup_vscode.py
-   ```
-
-1. This will create a `.vscode` directory with:
-
-   - Debug configurations for conda/mamba integration
-   - Recommended settings for Python development
-   - Tasks for common development operations
-   - Recommended extensions
-
-1. For detailed information on debugging with VSCode, see the [VSCode Debugging Guide](docs/dev/vscode-debugging.md).
-
-## Git Configuration
-
-To prevent issues with divergent branches when working with this project, it's important to configure Git to use the merge strategy for pulls:
-
-```bash
-git config pull.rebase false
-```
-
-You can also set this globally for all repositories:
-
-```bash
-git config --global pull.rebase false
-```
-
-This ensures that when you pull changes that include automatic version bump commits, Git will automatically create a merge commit instead of failing with divergent branch errors.
-
-## Development Workflow Summary
+## Development Workflow
 
 1. **Create a feature branch**: `git checkout -b feature/your-feature-name`
 1. **Make your changes**: Implement your feature or bug fix
@@ -80,30 +35,48 @@ This ensures that when you pull changes that include automatic version bump comm
 1. **Push your changes**: `git push origin feature/your-feature-name`
 1. **Submit a pull request**: Create a PR from your branch to the develop branch
 
+## Branch Strategy
+
+- **master**: Production branch for releases
+- **develop**: Integration branch for features
+- **feature/\***: Feature branches (branch from `develop`)
+- **fix/\***: Bug fix branches (branch from `master` or `develop`)
+
 ## Conventional Commits
 
-We use the [Conventional Commits](https://www.conventionalcommits.org/) standard for commit messages. This is enforced by pre-commit hooks.
-
-Basic format:
+We use the [Conventional Commits](https://www.conventionalcommits.org/) standard for commit messages:
 
 ```
 type(scope): description
 ```
 
-Common types:
+Common types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`
 
-- `feat`: A new feature
-- `fix`: A bug fix
-- `docs`: Documentation changes
-- `refactor`: Code restructuring
-- `test`: Adding or updating tests
-- `chore`: Maintenance tasks
+Examples:
 
-For detailed examples and guidelines, see the [Conventional Commits Guide](docs/dev/conventional-commits.md).
+- `feat: add new feature`
+- `fix(core): resolve issue with parser`
 
-## Code Style
+## Code Style and Quality
 
-We use Ruff for linting and formatting, and Pyright for type checking. These tools are configured in `pyproject.toml` and run automatically via pre-commit hooks.
+We use these tools for code quality:
+
+- **Ruff**: Linting and formatting
+- **Pyright**: Type checking
+- **UV**: Dependency management
+- **Pre-commit**: Automated checks
+
+## Testing GitHub Actions Locally
+
+```bash
+# Validate workflow syntax
+actionlint .github/workflows/your-workflow.yml
+
+# Test workflow execution
+.github/local-testing/local-test.sh .github/workflows/your-workflow.yml
+```
+
+For more details, see the [GitHub Actions Guide](github-actions-guide.md).
 
 ## Code of Conduct
 
@@ -111,4 +84,4 @@ Please be respectful and considerate of others when contributing to this project
 
 ## Questions?
 
-Feel free to open an issue if you have any questions or need clarification on any aspect of the contribution process.
+Feel free to open an issue if you have any questions about the contribution process.

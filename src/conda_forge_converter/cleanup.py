@@ -38,7 +38,7 @@ class CleanupResult:
 class EnvironmentCleanup:
     """Manage cleanup of original environments."""
 
-    def __init__(self, options: CleanupOptions) -> None:
+    def __init__(self: "EnvironmentCleanup", options: CleanupOptions) -> None:
         """Initialize the environment cleanup manager.
 
         Args:
@@ -47,7 +47,9 @@ class EnvironmentCleanup:
         """
         self.options = options
 
-    def cleanup_environment(self, env_name: str, target_env: str | None = None) -> CleanupResult:
+    def cleanup_environment(
+        self: "EnvironmentCleanup", env_name: str, target_env: str | None = None
+    ) -> CleanupResult:
         """Clean up an environment.
 
         Args:
@@ -100,7 +102,7 @@ class EnvironmentCleanup:
             return result
 
     def cleanup_multiple_environments(
-        self, env_names: list[str], target_envs: dict[str, str] | None = None
+        self: "EnvironmentCleanup", env_names: list[str], target_envs: dict[str, str] | None = None
     ) -> dict[str, CleanupResult]:
         """Clean up multiple environments.
 
@@ -120,7 +122,7 @@ class EnvironmentCleanup:
 
         return results
 
-    def _environment_exists(self, env_name: str) -> bool:
+    def _environment_exists(self: "EnvironmentCleanup", env_name: str) -> bool:
         """Check if an environment exists."""
         try:
             result = run_command(["conda", "env", "list", "--json"], verbose=True)
@@ -134,7 +136,7 @@ class EnvironmentCleanup:
             logger.error(f"Error checking if environment exists: {e!s}")
             return False
 
-    def _create_backup(self, env_name: str) -> bool:
+    def _create_backup(self: "EnvironmentCleanup", env_name: str) -> bool:
         """Create a backup of an environment."""
         try:
             # Create backup directory
@@ -168,7 +170,7 @@ class EnvironmentCleanup:
             logger.error(f"Error creating backup: {e!s}")
             return False
 
-    def _get_env_path(self, env_name: str) -> Path | None:
+    def _get_env_path(self: "EnvironmentCleanup", env_name: str) -> Path | None:
         """Get the path of an environment."""
         try:
             result = run_command(["conda", "env", "list", "--json"], verbose=True)
@@ -187,7 +189,7 @@ class EnvironmentCleanup:
             logger.error(f"Error getting environment path: {e!s}")
             return None
 
-    def _remove_environment(self, env_name: str) -> bool:
+    def _remove_environment(self: "EnvironmentCleanup", env_name: str) -> bool:
         """Remove an environment.
 
         Args:
@@ -205,7 +207,7 @@ class EnvironmentCleanup:
             logger.error(f"Error removing environment: {e!s}")
             return False
 
-    def _restore_environment(self, source_env: str, target_env: str) -> bool:
+    def _restore_environment(self: "EnvironmentCleanup", source_env: str, target_env: str) -> bool:
         """Restore an environment from backup."""
         try:
             backup_dir_str = str(self.options.backup_dir)

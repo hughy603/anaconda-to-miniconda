@@ -1,0 +1,23 @@
+{
+  "changed_only": false,
+  "verbose": false,
+  "dry_run": false,
+  "skip_lint": false,
+  "default_event": "push",
+  "secrets_file": ".github/local-secrets.json",
+  "cache_path": "./.act-cache",
+  "custom_image": "",
+  "job_timeout": 300,
+  "validation_timeout": 1800,
+  "workflow_file": "",
+  "workflow_events": {
+    "ci.yml": "push",
+    "docs.yml": "push",
+    "release.yml": "push",
+    "benchmark.yml": "push",
+    "maintenance.yml": "schedule",
+    "security-scan.yml": "push",
+    "validate-workflows.yml": "pull_request",
+    "*": "push"
+  }
+}

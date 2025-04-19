@@ -10,7 +10,7 @@ from .utils import logger
 class PackageMetadataCache:
     """Cache for package metadata to speed up repeated operations."""
 
-    def __init__(self, cache_dir: Path | None = None):
+    def __init__(self: "PackageMetadataCache", cache_dir: Path | None = None) -> None:
         """Initialize the cache.
 
         Args:
@@ -24,7 +24,7 @@ class PackageMetadataCache:
         self.package_info_cache.mkdir(exist_ok=True)
         logger.debug(f"Initialized package metadata cache at {self.cache_dir}")
 
-    def get_repodata(self, channel: str) -> dict | None:
+    def get_repodata(self: "PackageMetadataCache", channel: str) -> dict | None:
         """Get cached repository data for a channel.
 
         Args:
@@ -45,7 +45,7 @@ class PackageMetadataCache:
                 return None
         return None
 
-    def set_repodata(self, channel: str, data: dict) -> None:
+    def set_repodata(self: "PackageMetadataCache", channel: str, data: dict) -> None:
         """Cache repository data for a channel.
 
         Args:
@@ -61,7 +61,9 @@ class PackageMetadataCache:
         except Exception as e:
             logger.warning(f"Error writing cache file {cache_file}: {e!s}")
 
-    def get_package_info(self, package_name: str, channel: str = "conda-forge") -> dict | None:
+    def get_package_info(
+        self: "PackageMetadataCache", package_name: str, channel: str = "conda-forge"
+    ) -> dict | None:
         """Get cached package information.
 
         Args:
@@ -83,7 +85,9 @@ class PackageMetadataCache:
                 return None
         return None
 
-    def set_package_info(self, package_name: str, data: dict, channel: str = "conda-forge") -> None:
+    def set_package_info(
+        self: "PackageMetadataCache", package_name: str, data: dict, channel: str = "conda-forge"
+    ) -> None:
         """Cache package information.
 
         Args:
@@ -100,7 +104,7 @@ class PackageMetadataCache:
         except Exception as e:
             logger.warning(f"Error writing cache file {cache_file}: {e!s}")
 
-    def clear_cache(self, older_than_hours: int | None = None) -> int:
+    def clear_cache(self: "PackageMetadataCache", older_than_hours: int | None = None) -> int:
         """Clear the cache.
 
         Args:
@@ -124,7 +128,9 @@ class PackageMetadataCache:
         logger.info(f"Cleared {count} cache files")
         return count
 
-    def _is_cache_valid(self, cache_file: Path, max_age_hours: int = 24) -> bool:
+    def _is_cache_valid(
+        self: "PackageMetadataCache", cache_file: Path, max_age_hours: int = 24
+    ) -> bool:
         """Check if cache is still valid based on age.
 
         Args:
@@ -142,7 +148,7 @@ class PackageMetadataCache:
         age = time.time() - mtime
         return age < (max_age_hours * 3600)
 
-    def _update_cache_timestamp(self, cache_file: Path) -> None:
+    def _update_cache_timestamp(self: "PackageMetadataCache", cache_file: Path) -> None:
         """Update the cache timestamp.
 
         Args:
