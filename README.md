@@ -238,3 +238,26 @@ conda-forge-converter/
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Local GitHub Actions Testing
+
+We provide a simple shell script for testing GitHub Actions workflows locally:
+
+```bash
+# Basic usage
+./github-actions-local.sh -w .github/workflows/ci.yml
+
+# Test a specific job
+./github-actions-local.sh -w .github/workflows/ci.yml -j build
+
+# Test with a different event type
+./github-actions-local.sh -w .github/workflows/ci.yml -e pull_request
+
+# Enable verbose output
+./github-actions-local.sh -w .github/workflows/ci.yml -v
+```
+
+For more detailed information about local testing, see:
+
+- [GITHUB_ACTIONS_VALIDATION.md](GITHUB_ACTIONS_VALIDATION.md)
+- [GITHUB_ACTIONS_LOCAL.md](GITHUB_ACTIONS_LOCAL.md)

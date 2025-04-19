@@ -143,3 +143,6 @@ test_output.txt
 # Example files
 *.example
 .act-cache
+
+# Act binary
+act.zip

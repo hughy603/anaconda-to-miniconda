@@ -4,7 +4,7 @@
         {
             "label": "Validate Workflow Syntax",
             "type": "shell",
-            "command": "pre-commit run actionlint --all-files",
+            "command": "./github-actions-local.sh --dry-run",
             "group": "test",
             "presentation": {
                 "reveal": "always",
@@ -14,10 +14,7 @@
         {
             "label": "Validate All Workflows (Local Execution)",
             "type": "shell",
-            "command": "./validate-all-workflows.sh",
-            "windows": {
-                "command": ".\\validate-all-workflows.ps1"
-            },
+            "command": "./github-actions-local.sh",
             "group": "test",
             "presentation": {
                 "reveal": "always",
@@ -27,23 +24,7 @@
         {
             "label": "Validate Changed Workflows Only",
             "type": "shell",
-            "command": "./validate-all-workflows.sh --changed-only",
-            "windows": {
-                "command": ".\\validate-all-workflows.ps1 -ChangedOnly"
-            },
-            "group": "test",
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            }
-        },
-        {
-            "label": "Validate Workflows in Parallel",
-            "type": "shell",
-            "command": "./validate-all-workflows.sh --parallel",
-            "windows": {
-                "command": ".\\validate-all-workflows.ps1 -Parallel"
-            },
+            "command": "./github-actions-local.sh --changed-only",
             "group": "test",
             "presentation": {
                 "reveal": "always",
@@ -54,15 +35,11 @@
             "label": "Validate Current Workflow (Local Execution)",
             "type": "shell",
             "command": "./github-actions-local.sh -w ${file}",
-            "windows": {
-                "command": ".\\github-actions-local.ps1 -WorkflowFile ${file}"
-            },
             "group": "test",
             "presentation": {
                 "reveal": "always",
                 "panel": "new"
-            },
-            "problemMatcher": []
+            }
         },
         {
             "label": "Validate Current Workflow File",

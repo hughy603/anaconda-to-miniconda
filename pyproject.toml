@@ -40,7 +40,6 @@ dependencies = [
     "pydantic>=2.0.0",           # Data validation and settings management
 ]
 [project.optional-dependencies]
-validation = ["actionlint>=1.6.0"]
 dev = [
     "ruff>=0.3.0",
     "pyright>=1.1.350",
@@ -116,7 +115,7 @@ regex = "__version__ = '(?P<version>[^']+)'"
 path = "src/github_actions_validator/_version.py"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/conda_forge_converter", "src/github_actions_validator"]
+packages = ["src/conda_forge_converter"]
 
 # Environment management is now handled by UV
 [tool.hatch.envs.default.scripts]
@@ -245,3 +244,9 @@ prerelease_token = "feature"
 
 [dependency-groups]
 dev = ["types-pyyaml>=6.0.12.20250402"]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = "-ra -q --cov=conda_forge_converter --cov-report=xml --cov-report=term-missing --cov-fail-under=80"
+testpaths = ["tests"]
+python_files = ["test_*.py"]

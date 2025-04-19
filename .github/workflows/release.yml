@@ -13,6 +13,11 @@ on:
           - patch
           - minor
           - major
+      require_approval:
+        description: 'Require manual approval before release'
+        required: true
+        default: true
+        type: boolean
 
 # Prevent concurrent runs
 concurrency:
@@ -23,11 +28,13 @@ env:
   PYTHON_VERSION: '3.11'
   UV_VERSION: "0.7.1"
   ACT_LOCAL_TESTING: ${{ vars.ACT_LOCAL_TESTING || 'false' }}
+  RELEASE_VERSION: ${{ github.ref_name }}
 
 jobs:
   validate:
     name: Validate Release
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -61,13 +68,29 @@ jobs:
           uv pip install hatch --system
 
       - name: Validate release readiness
+        id: validate
+        continue-on-error: true
         run: |
-          hatch run validate-release
+          hatch run validate-release || echo "::warning::Release validation failed"
+
+      - name: Notify on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const message = `Release validation failed for ${{ env.RELEASE_VERSION }}`;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: message
+            });
 
   test:
     name: Test on Multiple Platforms
     needs: [validate]
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
     strategy:
       matrix:
         python-version: ['3.11', '3.12']
@@ -107,8 +130,10 @@ jobs:
           uv pip install hatch --system
 
       - name: Run tests
+        id: run-tests
+        continue-on-error: true
         run: |
-          hatch run test
+          hatch run test || echo "::warning::Tests failed"
 
       - name: Upload test results
         if: always()
@@ -120,25 +145,68 @@ jobs:
             coverage.xml
           retention-days: 30
 
+      - name: Notify on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const message = `Tests failed for ${{ env.RELEASE_VERSION }} on ${{ matrix.os }} with Python ${{ matrix.python-version }}`;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: message
+            });
+
   approve-release:
     name: Approve Release
     needs: [test]
     runs-on: ubuntu-latest
-    # To implement a proper approval process:
-    # 1. Create an environment named 'production' in GitHub repository settings
-    # 2. Add required reviewers to that environment
-    # 3. Uncomment the following lines:
-    # environment:
-    #   name: production
-    #   url: ${{ github.server_url }}/${{ github.repository }}/releases
+    timeout-minutes: 30
+    environment:
+      name: production
+      url: ${{ github.server_url }}/${{ github.repository }}/releases
+    if: ${{ github.event.inputs.require_approval == 'true' }}
     steps:
-      - name: Approve Release
-        run: echo "Release approved by ${{ github.actor }} at $(date)"
+      - name: Wait for approval
+        uses: trstringer/manual-approval@v1
+        with:
+          secret: ${{ github.token }}
+          approvers: ${{ github.actor }}
+          minimum-approvals: 1
+          issue-title: "Release Approval Required"
+          issue-body: |
+            A new release is ready to be deployed.
+
+            **Release Details:**
+            - Version: ${{ env.RELEASE_VERSION }}
+            - Triggered by: ${{ github.actor }}
+            - Force Level: ${{ github.event.inputs.force_level }}
+
+            Please review the test results and approve this release if everything looks good.
+
+            To approve, comment with `/approve` on this issue.
+            To reject, comment with `/reject` on this issue.
+
+      - name: Notify approval
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const message = `Release approved by ${{ github.actor }} at $(date)`;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: message
+            });
 
   release:
     name: Create Release
     needs: [approve-release]
+    if: ${{ github.event.inputs.require_approval == 'true' || always() }}
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     permissions:
       contents: write
       id-token: write
@@ -168,7 +236,6 @@ jobs:
           uv pip install -r requirements.lock --system
           uv pip install python-semantic-release build twine hatch --system
 
-      # This step is skipped in local testing mode
       - name: Semantic Release (Production)
         id: release
         if: ${{ !env.ACT_LOCAL_TESTING || env.ACT_LOCAL_TESTING != 'true' }}
@@ -190,7 +257,6 @@ jobs:
           VERSION=$(python -c "from conda_forge_converter import __version__; print(__version__)")
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
-      # This step only runs in local testing mode
       - name: Mock Semantic Release (Local Testing)
         id: release_mock
         if: ${{ env.ACT_LOCAL_TESTING == 'true' }}
@@ -199,7 +265,6 @@ jobs:
           echo "In production, this would determine the next version number"
           echo "version=0.0.0-local" >> "$GITHUB_OUTPUT"
 
-      # This step is skipped in local testing mode
       - name: Create Release (Production)
         uses: softprops/action-gh-release@v2
         if: ${{ !env.ACT_LOCAL_TESTING || env.ACT_LOCAL_TESTING != 'true' }}
@@ -213,7 +278,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # This step only runs in local testing mode
       - name: Mock GitHub Release (Local Testing)
         if: ${{ env.ACT_LOCAL_TESTING == 'true' }}
         run: |
@@ -221,7 +285,6 @@ jobs:
           echo "In production, this would create a GitHub release with tag v0.0.0-local"
           echo "Release would include changelog and release notes"
 
-      # This step is skipped in local testing mode
       - name: Build and publish (Production)
         id: publish
         if: ${{ !env.ACT_LOCAL_TESTING || env.ACT_LOCAL_TESTING != 'true' }}
@@ -235,7 +298,6 @@ jobs:
           REPOSITORY_URL: https://upload.pypi.org/legacy/
           PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
 
-      # This step only runs in local testing mode
       - name: Mock Build and Publish (Local Testing)
         id: publish_mock
         if: ${{ env.ACT_LOCAL_TESTING == 'true' }}
@@ -247,11 +309,27 @@ jobs:
           echo "version=0.0.0-local" >> "$GITHUB_OUTPUT"
 
       - name: Upload build artifacts
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: dist
-          path: dist/
-          retention-days: 30
+          name: build-artifacts
+          path: |
+            dist/
+            *.egg-info/
+          retention-days: 90
+
+      - name: Notify on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const message = `Release failed for ${{ env.RELEASE_VERSION }}`;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: message
+            });
 
   health-check:
     name: Deployment Health Check

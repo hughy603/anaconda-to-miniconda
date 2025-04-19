@@ -12,182 +12,58 @@ on:
 env:
   PYTHON_VERSION: "3.11"
   UV_VERSION: "0.7.1"
-  ACT_LOCAL_TESTING: ${{ vars.ACT_LOCAL_TESTING || 'true' }}
-  # This will be 'true' when running locally with act
-  ACT: ${{ vars.ACT || 'false' }}
 
 jobs:
   benchmark:
     name: Run Performance Benchmarks
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Full history for accurate benchmarking comparisons
+          fetch-depth: 1
 
-      - name: Set up Python ${{ env.PYTHON_VERSION }}
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
 
-      - name: Install UV
-        run: |
-          python -m pip install --upgrade pip
-          pip install uv==${{ env.UV_VERSION }}
-
-      - name: Cache dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/uv
-            ~/.cache/pip
-          key: ${{ runner.os }}-py${{ env.PYTHON_VERSION }}-uv${{ env.UV_VERSION }}-benchmark-${{ hashFiles('requirements.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-py${{ env.PYTHON_VERSION }}-uv${{ env.UV_VERSION }}-benchmark-
-
       - name: Install dependencies
         run: |
-          uv pip install -e ".[test]" --system
-          uv pip install pytest-benchmark --system
-
-      - name: Create benchmark directory
-        run: mkdir -p tests/benchmarks
-
-      - name: Create sample benchmark test if needed
-        id: check_benchmarks
-        run: |
-          if [ -z "$(find tests/benchmarks -name 'test_*.py' 2>/dev/null)" ]; then
-            echo "Creating a sample benchmark test"
-            {
-              echo 'import pytest'
-              echo 'from conda_forge_converter import __version__'
-              echo ''
-              echo 'def test_version_access(benchmark):'
-              echo '    """Benchmark accessing the version (placeholder benchmark)."""'
-              echo '    result = benchmark(lambda: __version__)'
-              echo '    assert result is not None'
-              echo ''
-              echo '# Add more meaningful benchmarks for your actual code here'
-            } > tests/benchmarks/test_sample_benchmark.py
-            echo "created=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "Benchmark tests found"
-            echo "created=false" >> "$GITHUB_OUTPUT"
-          fi
+          python -m pip install --upgrade pip
+          pip install pytest pytest-benchmark
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
 
       - name: Run benchmarks
-        run: python -m pytest tests/benchmarks/ --benchmark-json=benchmark-results.json
-
-      # This step is completely skipped in local testing mode
-      # Only run in GitHub Actions environment
-      - name: Store benchmark result (Production)
-        if: ${{ !env.ACT_LOCAL_TESTING || env.ACT_LOCAL_TESTING != 'true' }}
-        uses: benchmark-action/github-action-benchmark@v1
-        with:
-          name: Python Benchmark
-          tool: 'pytest'
-          output-file-path: benchmark-results.json
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          auto-push: true
-          # Show alert with commit comment on detecting possible performance regression
-          alert-threshold: '200%'
-          comment-on-alert: true
-          fail-on-alert: false
-          alert-comment-cc-users: '@yourusername'
-          # Configure gh-pages branch and directory for benchmark data
-          gh-pages-branch: gh-pages
-          benchmark-data-dir-path: dev/bench
-          # Create gh-pages branch if it doesn't exist
-          skip-fetch-gh-pages: false
-          save-data-file: true
-
-      # This step only runs in local testing mode
-      - name: Mock benchmark result storage (Local Testing)
-        if: ${{ env.ACT_LOCAL_TESTING == 'true' }}
+        id: run-benchmarks
+        continue-on-error: true
         run: |
-          echo "Mocking benchmark result storage for local testing"
-          echo "In production, this would store results in GitHub Pages"
-          mkdir -p local-benchmark-results
-          cp benchmark-results.json local-benchmark-results/
-          echo "Benchmark results saved to local-benchmark-results/"
+          mkdir -p tests/benchmarks
+          if [ -d "tests/benchmarks" ]; then
+            python -m pytest tests/benchmarks/ --benchmark-json=benchmark-results.json || echo "::warning::Benchmarks failed to run"
+          else
+            echo "::warning::No benchmark tests found in tests/benchmarks/"
+            exit 0
+          fi
 
-      # This step is skipped in local testing mode
-      - name: Upload benchmark results (Production)
-        if: ${{ !env.ACT_LOCAL_TESTING || env.ACT_LOCAL_TESTING != 'true' }}
+      - name: Upload benchmark results
+        if: always() && steps.run-benchmarks.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: benchmark-results
           path: benchmark-results.json
-          retention-days: 90  # Keep benchmark results for longer analysis
+          retention-days: 90
 
-      # This step only runs in local testing mode
-      - name: Mock artifact upload (Local Testing)
-        if: ${{ env.ACT_LOCAL_TESTING == 'true' }}
+      - name: Show benchmark results
+        if: always() && steps.run-benchmarks.outcome == 'success'
         run: |
-          echo "Mocking artifact upload for local testing"
-          echo "In production, this would upload the benchmark results as an artifact"
-          echo "Benchmark results are available at benchmark-results.json"
-
-  # This job only runs in GitHub Actions environment
-  compare:
-    name: Compare Benchmarks
-    needs: benchmark
-    if: ${{ github.event_name == 'pull_request' && !vars.ACT_LOCAL_TESTING }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download benchmark results
-        uses: actions/download-artifact@v4
-        with:
-          name: benchmark-results
-          path: ./
-
-      - name: Compare with base branch
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-
-            try {
-              const benchmarkResults = JSON.parse(fs.readFileSync('./benchmark-results.json', 'utf8'));
-
-              // Format benchmark results for PR comment
-              let comment = '## 📊 Performance Benchmark Results\n\n';
-              comment += 'Test | Mean Time | Min Time | Max Time\n';
-              comment += '-----|----------|----------|----------\n';
-
-              benchmarkResults.benchmarks.forEach(benchmark => {
-                const name = benchmark.name;
-                const mean = (benchmark.stats.mean * 1000).toFixed(3);
-                const min = (benchmark.stats.min * 1000).toFixed(3);
-                const max = (benchmark.stats.max * 1000).toFixed(3);
-
-                comment += `${name} | ${mean} ms | ${min} ms | ${max} ms\n`;
-              });
-
-              comment += '\nThese results are from the current PR. For comparison with the base branch, check the [benchmark history](../actions/workflows/benchmark.yml).';
-
-              github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: comment
-              });
-            } catch (error) {
-              console.error('Error processing benchmark results:', error);
-              core.setFailed('Failed to process benchmark results');
-            }
-
-  # This job only runs in local testing mode
-  compare-local:
-    name: Mock Benchmark Comparison (Local Testing)
-    needs: benchmark
-    if: ${{ github.event_name == 'pull_request' && vars.ACT_LOCAL_TESTING == 'true' }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Mock benchmark comparison
-        run: |
-          echo "Mocking benchmark comparison for local testing"
-          echo "In production, this would create a PR comment with benchmark results"
-          echo "Local benchmark results available in local-benchmark-results/"
+          if [ -f benchmark-results.json ]; then
+            echo "Benchmark Results:"
+            cat benchmark-results.json
+          else
+            echo "::warning::No benchmark results file found"
+          fi

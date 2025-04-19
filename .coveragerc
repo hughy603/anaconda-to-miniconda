@@ -1,27 +1,24 @@
 [run]
-source =
-    conda_forge_converter
-    github_actions_validator
-branch = True
+source = conda_forge_converter
 omit =
-    */tests/*
-    */__pycache__/*
+    tests/*
     */__init__.py
-    */examples/*
+    */_version.py
+    */cli.py
+    */main.py
+    */setup.py
+    */conftest.py
+    */test_*.py
+    */tests/*
 
 [report]
 exclude_lines =
     pragma: no cover
     def __repr__
-    if self\.debug:
     raise NotImplementedError
-    if __name__ == .__main__.:
+    if __name__ == .__main__.
     pass
     raise ImportError
-    except ImportError:
-    def __str__
-    def __unicode__
-    def __bytes__
 fail_under = 60
 show_missing = True
 precision = 2

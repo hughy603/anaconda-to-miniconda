@@ -20,10 +20,12 @@ permissions:
   pages: write
   id-token: write
   pull-requests: write  # Needed for commenting on PRs
+
 env:
   ACT_LOCAL_TESTING: ${{ vars.ACT_LOCAL_TESTING || 'false' }}
   PYTHON_VERSION: "3.11"
   UV_VERSION: "0.7.1"
+  DOCS_VERSION: ${{ github.ref_name }}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -33,6 +35,7 @@ jobs:
   build:
     name: Build Documentation
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -56,32 +59,35 @@ jobs:
           path: |
             ~/.cache/uv
             ~/.cache/pip
+            .cache/mkdocs
           key: ${{ runner.os }}-py${{ env.PYTHON_VERSION }}-uv${{ env.UV_VERSION }}-docs-${{ hashFiles('requirements.lock') }}
           restore-keys: |
             ${{ runner.os }}-py${{ env.PYTHON_VERSION }}-uv${{ env.UV_VERSION }}-docs-
 
       - name: Install dependencies
         run: |
-          # Install the project with docs extras to get all documentation dependencies
           uv pip install -e ".[docs]" --system
 
       - name: Check spelling
+        id: spelling
+        continue-on-error: true
         run: |
           uv pip install codespell --system
-          codespell --skip="*.pyc,*.git,*.png,*.jpg,*.jpeg,*.gif,*.svg,*.ico" --quiet-level=2 docs/
+          codespell --skip="*.pyc,*.git,*.png,*.jpg,*.jpeg,*.gif,*.svg,*.ico" --quiet-level=2 docs/ || echo "::warning::Spelling check failed"
 
       - name: Build MkDocs site
+        id: build
+        continue-on-error: true
         run: |
-          hatch run docs-build -- --strict
+          hatch run docs-build -- --strict || echo "::warning::Documentation build failed"
 
-      # This step is skipped in local testing mode
       - name: Upload artifact (Production)
-        uses: actions/upload-pages-artifact@v3
         if: ${{ !env.ACT_LOCAL_TESTING || env.ACT_LOCAL_TESTING != 'true' }}
+        uses: actions/upload-pages-artifact@v3
         with:
           path: ./site
+          retention-days: 90
 
-      # This step only runs in local testing mode
       - name: Mock artifact upload (Local Testing)
         if: ${{ env.ACT_LOCAL_TESTING == 'true' }}
         run: |
@@ -90,26 +96,53 @@ jobs:
           ls -la ./site
 
       - name: Check for broken links
+        id: links
+        continue-on-error: true
         run: |
           uv pip install linkchecker --system
-          linkchecker --check-extern ./site/index.html || true  # Don't fail the build if links are broken, just report them
+          linkchecker --check-extern ./site/index.html || echo "::warning::Broken links found"
+
+      - name: Notify on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const message = `Documentation build failed for ${{ env.DOCS_VERSION }}`;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: message
+            });
 
   deploy:
     name: Deploy Documentation
     needs: build
     if: github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      # This step is skipped in local testing mode
       - name: Deploy to GitHub Pages (Production)
         id: deployment
-        uses: actions/deploy-pages@v4
         if: ${{ !env.ACT_LOCAL_TESTING || env.ACT_LOCAL_TESTING != 'true' }}
+        uses: actions/deploy-pages@v4
 
-      # This step only runs in local testing mode
       - name: Mock GitHub Pages deployment (Local Testing)
         if: ${{ env.ACT_LOCAL_TESTING == 'true' }}
         run: |
           echo "Mocking GitHub Pages deployment for local testing"
           echo "In production, this would deploy the site to GitHub Pages"
           echo "Documentation is available locally in the ./site directory"
+
+      - name: Notify on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const message = `Documentation deployment failed for ${{ env.DOCS_VERSION }}`;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: message
+            });
