@@ -23,11 +23,11 @@ For detailed installation instructions, see the [Installation Guide](user/gettin
 
 ## Project Status
 
-[![CI](https://github.com/anaconda/anaconda-to-miniconda/actions/workflows/ci.yml/badge.svg)](https://github.com/anaconda/anaconda-to-miniconda/actions/workflows/ci.yml)
-[![Coverage](https://codecov.io/gh/anaconda/anaconda-to-miniconda/branch/main/graph/badge.svg)](https://codecov.io/gh/anaconda/anaconda-to-miniconda)
-[![Documentation](https://github.com/anaconda/anaconda-to-miniconda/actions/workflows/docs.yml/badge.svg)](https://anaconda.github.io/anaconda-to-miniconda/)
+[![CI](https://github.com/ricea/anaconda-to-miniconda2/actions/workflows/ci.yml/badge.svg)](https://github.com/ricea/anaconda-to-miniconda2/actions/workflows/ci.yml)
+[![Coverage](https://codecov.io/gh/ricea/anaconda-to-miniconda2/branch/main/graph/badge.svg)](https://codecov.io/gh/ricea/anaconda-to-miniconda2)
+[![Documentation](https://github.com/ricea/anaconda-to-miniconda2/actions/workflows/docs.yml/badge.svg)](https://ricea.github.io/anaconda-to-miniconda2/)
 [![PyPI version](https://badge.fury.io/py/conda-forge-converter.svg)](https://badge.fury.io/py/conda-forge-converter)
-[![License](https://img.shields.io/github/license/anaconda/anaconda-to-miniconda)](https://github.com/anaconda/anaconda-to-miniconda/blob/main/LICENSE)
+[![License](https://img.shields.io/github/license/ricea/anaconda-to-miniconda2)](https://github.com/ricea/anaconda-to-miniconda2/blob/main/LICENSE)
 
 ## Architecture
 
@@ -61,14 +61,14 @@ We welcome contributions! Please see our [Contributing Guide](dev/contributing.m
 
 ### User Guide
 
-- [Getting Started](user/getting-started.md)
-- [CLI Reference](user/cli-reference.md)
-- [Common Workflows](user/workflows.md)
+- [Getting Started](user/faq.md)
+- [CLI Reference](user/faq.md#usage)
+- [Common Workflows](user/faq.md#common-workflows)
 - [Troubleshooting](user/troubleshooting.md)
 
 ### Developer Guide
 
-- [Architecture](dev/architecture.md)
+- [Architecture](architecture.md)
 - [Contributing](dev/contributing.md)
 - [Development Setup](dev/setup.md)
 - [Testing](dev/testing.md)

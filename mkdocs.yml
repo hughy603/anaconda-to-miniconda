@@ -1,11 +1,11 @@
 site_name: Anaconda to Miniconda Converter
 site_description: Tools for converting Anaconda environments to conda-forge and validating GitHub Actions workflows
-repo_url: https://github.com/anaconda/anaconda-to-miniconda
-repo_name: anaconda-to-miniconda
+repo_url: https://github.com/ricea/anaconda-to-miniconda2
+repo_name: anaconda-to-miniconda2
 edit_uri: edit/main/docs/
 
 # GitHub Pages configuration
-site_url: https://anaconda.github.io/anaconda-to-miniconda/
+site_url: https://ricea.github.io/anaconda-to-miniconda2/
 use_directory_urls: true
 
 theme:
@@ -95,7 +95,7 @@ plugins:
             show_signature_annotations: true
   - redirects:
       redirect_maps:
-        "changelog.md": "https://github.com/anaconda/anaconda-to-miniconda/blob/main/CHANGELOG.md"
+        "changelog.md": "https://github.com/ricea/anaconda-to-miniconda2/blob/main/CHANGELOG.md"
 
 nav:
   - Home: index.md
@@ -153,6 +153,6 @@ nav:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/anaconda/anaconda-to-miniconda
+      link: https://github.com/ricea/anaconda-to-miniconda2
   version:
     provider: mike

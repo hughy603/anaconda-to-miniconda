@@ -1,49 +1,51 @@
 {
-    "ref": "refs/heads/main",
+    "ref": "refs/heads/master",
     "before": "0000000000000000000000000000000000000000",
     "after": "1111111111111111111111111111111111111111",
     "repository": {
         "name": "anaconda-to-miniconda2",
-        "full_name": "user/anaconda-to-miniconda2",
+        "full_name": "ricea/anaconda-to-miniconda2",
         "private": false,
         "owner": {
-            "name": "user",
-            "email": "user@example.com"
+            "name": "ricea",
+            "email": "rice.adam@gmail.com"
         },
-        "html_url": "https://github.com/user/anaconda-to-miniconda2",
-        "description": "Anaconda to Miniconda2 migration tool",
+        "html_url": "https://github.com/ricea/anaconda-to-miniconda2",
+        "description": "Tools for converting Anaconda environments to conda-forge and validating GitHub Actions workflows",
         "fork": false,
-        "url": "https://github.com/user/anaconda-to-miniconda2",
-        "created_at": 1610000000,
-        "updated_at": 1610000000,
-        "pushed_at": 1610000000,
-        "git_url": "git://github.com/user/anaconda-to-miniconda2.git",
-        "ssh_url": "git@github.com:user/anaconda-to-miniconda2.git",
-        "clone_url": "https://github.com/user/anaconda-to-miniconda2.git",
-        "default_branch": "main"
+        "url": "https://github.com/ricea/anaconda-to-miniconda2",
+        "created_at": 0,
+        "updated_at": 0,
+        "pushed_at": 0,
+        "git_url": "git://github.com/ricea/anaconda-to-miniconda2.git",
+        "ssh_url": "git@github.com:ricea/anaconda-to-miniconda2.git",
+        "clone_url": "https://github.com/ricea/anaconda-to-miniconda2.git",
+        "default_branch": "master"
     },
     "pusher": {
-        "name": "user",
-        "email": "user@example.com"
+        "name": "ricea",
+        "email": "rice.adam@gmail.com"
     },
     "commits": [
         {
             "id": "1111111111111111111111111111111111111111",
-            "message": "Test commit",
-            "timestamp": "2025-04-19T00:00:00Z",
-            "url": "https://github.com/user/anaconda-to-miniconda2/commit/1111111111111111111111111111111111111111",
+            "message": "Update documentation",
+            "timestamp": "2024-04-19T00:00:00Z",
+            "url": "https://github.com/ricea/anaconda-to-miniconda2/commit/1111111111111111111111111111111111111111",
             "author": {
-                "name": "user",
-                "email": "user@example.com"
+                "name": "ricea",
+                "email": "rice.adam@gmail.com"
             },
             "committer": {
-                "name": "user",
-                "email": "user@example.com"
+                "name": "ricea",
+                "email": "rice.adam@gmail.com"
             },
-            "added": [],
+            "added": [
+                "docs/index.md"
+            ],
             "removed": [],
             "modified": [
-                ".github/workflows/validate-github-actions.yml"
+                "mkdocs.yml"
             ]
         }
     ]

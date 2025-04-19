@@ -12,8 +12,8 @@ For a complete guide to setting up your development environment and understandin
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/conda-forge-converter.git
-cd conda-forge-converter
+git clone https://github.com/ricea/anaconda-to-miniconda2.git
+cd anaconda-to-miniconda2
 
 # Install UV (recommended)
 pipx install uv
@@ -27,12 +27,12 @@ pre-commit install
 
 ## Development Process Overview
 
-1. **Set up your environment**: Follow the [Development Setup Guide](setup.md)
+1. **Set up your environment**: Follow the setup instructions above
 1. **Create a feature branch**: `git checkout -b feature/your-feature-name`
 1. **Make your changes**: Implement your feature or bug fix
 1. **Run tests and checks**: Use pre-commit hooks and pytest
-1. **Commit your changes**: Follow the [Conventional Commits Guide](conventional-commits.md)
-1. **Submit a pull request**: Follow the [Pull Request Process Guide](pr-process.md)
+1. **Commit your changes**: Use conventional commits format
+1. **Submit a pull request**: Create a PR against the main branch
 
 For detailed information about each step, please refer to the [Developer Workflow Guide](workflow.md).
 

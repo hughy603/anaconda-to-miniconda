@@ -7,6 +7,12 @@ param(
     [string]$EventType = "push"
 )
 
+# Set environment variables
+$env:ACT_LOCAL_TESTING = "true"
+$env:PYTHON_VERSION = "3.11"
+$env:UV_VERSION = "0.6.14"
+$env:DOCS_VERSION = "main"
+
 # Function to install act if not present
 function Install-Act {
     if (-not (Get-Command act -ErrorAction SilentlyContinue)) {
@@ -65,3 +71,19 @@ $ActCmd += " -P ubuntu-20.04=ghcr.io/catthehacker/ubuntu:act-20.04"
 # Print and run the command
 Write-Host "Running: $ActCmd"
 Invoke-Expression $ActCmd
+
+# Install dependencies if not already installed
+if (-not (Get-Command act -ErrorAction SilentlyContinue)) {
+    Write-Host "Installing act..."
+    winget install nektos.act
+}
+
+# Install Python dependencies
+Write-Host "Installing Python dependencies..."
+python -m pip install --upgrade pip
+pip install uv==$env:UV_VERSION
+uv pip install -e ".[docs]" --system
+
+# Run act with the specified parameters
+Write-Host "Running act with parameters: $args"
+act @args

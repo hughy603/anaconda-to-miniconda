@@ -33,8 +33,8 @@ For development, you'll want to install additional dependencies:
 
 ```bash
 # Clone the repository
-git clone https://github.com/anaconda/anaconda-to-miniconda
-cd anaconda-to-miniconda
+git clone https://github.com/ricea/anaconda-to-miniconda2
+cd anaconda-to-miniconda2
 
 # Install with development dependencies using UV
 uv pip install -e ".[dev,test]"
@@ -125,8 +125,8 @@ For detailed configuration options, see the [CLI Reference](cli-reference.md).
 ### Getting Help
 
 - Check our [FAQ](faq.md)
-- [Open an issue](https://github.com/anaconda/anaconda-to-miniconda/issues)
-- [Join our discussions](https://github.com/anaconda/anaconda-to-miniconda/discussions)
+- [Open an issue](https://github.com/ricea/anaconda-to-miniconda2/issues)
+- [Join our discussions](https://github.com/ricea/anaconda-to-miniconda2/discussions)
 
 ## Why Use conda-forge?
 
