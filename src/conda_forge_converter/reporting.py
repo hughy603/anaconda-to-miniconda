@@ -1,11 +1,39 @@
-"""Reporting module for environment conversions."""
+"""Reporting module for environment conversions.
+
+This module provides functionality for generating detailed reports about environment
+conversions, including information about packages, conversion success, and other metrics.
+These reports can be used to analyze the conversion process and identify any issues.
+
+The module is organized into the following functional areas:
+
+Report Generation:
+  - generate_conversion_report: Generate a detailed report about an environment conversion
+  - generate_summary_report: Generate a summary report for batch conversions
+  - print_report_summary: Print a summary of a conversion report to the console
+
+Report Data Structures:
+  - ReportData: Data structure for report serialization
+  - ConversionReport: Class representing a conversion report
+  - SummaryReport: Class representing a summary report
+
+Report Structure:
+  - Conversion Report: Includes metadata, package information, performance metrics, and issues
+  - Summary Report: Includes overall statistics, common issues, and performance metrics
+
+The reports can be saved in different formats (JSON, YAML) and can be used for:
+  - Analyzing conversion success and failure rates
+  - Identifying common issues across multiple conversions
+  - Tracking performance metrics for conversions
+  - Documenting the conversion process for audit purposes
+"""
 
 import json
 import logging
 import os
+from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, TypeAlias
+from typing import Any, Protocol, TypedDict, cast, runtime_checkable
 
 import yaml
 
@@ -14,9 +42,100 @@ from .utils import PathLike, is_command_output_str, run_command
 # Create a logger
 logger = logging.getLogger("conda_converter")
 
-# Type definitions
-ReportData: TypeAlias = dict[str, Any]
-ConversionReport: TypeAlias = dict[str, Any]
+
+class ReportData(TypedDict):
+    """Data structure for report serialization."""
+
+    source_env: str
+    target_env: str
+    start_time: str
+    end_time: str | None
+    success: bool
+    errors: list[str]
+    warnings: list[str]
+    packages: dict[str, list[dict[str, str]]]
+    metadata: dict[str, Any]
+
+
+@runtime_checkable
+class ReportProtocol(Protocol):
+    """Protocol defining the interface for report objects."""
+
+    def to_dict(self) -> ReportData:
+        """Convert the report to a dictionary format."""
+        ...
+
+    def __getitem__(self, key: str) -> str | bool | list | dict:
+        """Get a value from the report by key."""
+        ...
+
+    def get(
+        self, key: str, default: str | bool | list | dict | None = None
+    ) -> str | bool | list | dict | None:
+        """Get a value from the report by key with a default fallback."""
+        ...
+
+
+@dataclass
+class ConversionReport:
+    """Report for environment conversion operations."""
+
+    source_env: str
+    target_env: str
+    start_time: datetime
+    end_time: datetime | None
+    success: bool
+    errors: list[str]
+    warnings: list[str]
+    packages: dict[str, list[dict[str, str]]]
+    metadata: dict[str, Any]
+
+    @classmethod
+    def create(cls, source_env: str, target_env: str) -> "ConversionReport":
+        """Create a new conversion report."""
+        return cls(
+            source_env=source_env,
+            target_env=target_env,
+            start_time=datetime.now(),
+            end_time=None,
+            success=False,
+            errors=[],
+            warnings=[],
+            packages={"conda": [], "pip": []},
+            metadata={},
+        )
+
+    def add_error(self, error: str) -> None:
+        """Add an error to the report."""
+        self.errors.append(error)
+        logger.error(error)
+
+    def add_warning(self, warning: str) -> None:
+        """Add a warning to the report."""
+        self.warnings.append(warning)
+        logger.warning(warning)
+
+    def add_package(self, name: str, version: str, source: str = "conda") -> None:
+        """Add a package to the report."""
+        if source not in self.packages:
+            self.packages[source] = []
+        self.packages[source].append({"name": name, "version": version})
+
+    def add_metadata(self, key: str, value: str | float | bool | list | dict) -> None:
+        """Add metadata to the report."""
+        self.metadata[key] = value
+
+    def complete(self, success: bool = True) -> None:
+        """Mark the report as complete."""
+        self.end_time = datetime.now()
+        self.success = success
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert report to dictionary."""
+        data = asdict(self)
+        data["start_time"] = self.start_time.isoformat()
+        data["end_time"] = self.end_time.isoformat() if self.end_time else None
+        return data
 
 
 def generate_conversion_report(
@@ -27,65 +146,61 @@ def generate_conversion_report(
     output_file: PathLike | None = None,
     verbose: bool = False,
 ) -> ConversionReport:
-    """Generate a report about the conversion from source to target environment.
+    """Generate a detailed report of the environment conversion.
 
     Args:
         source_env: Name of the source environment
         target_env: Name of the target environment
         success: Whether the conversion was successful
         details: Additional details about the conversion
-        output_file: Path to write the report to (if specified)
+        output_file: Optional path to save the report
         verbose: Whether to log detailed information
 
     Returns:
-        Dictionary with report information
+        Conversion report containing details about the conversion
 
     """
     # Create a report structure
-    report: ConversionReport = {
-        "source_environment": source_env,
-        "target_environment": target_env,
-        "conversion_time": datetime.now().isoformat(),
-        "success": success,
-        "source_info": {},
-        "target_info": {},
-        "changes": {},
-    }
+    report = ConversionReport.create(source_env, target_env)
 
     # Add any additional details if provided
     if details:
-        report["details"] = details
+        report.metadata["details"] = details
 
     # Get source environment information
     source_info = _collect_environment_info(source_env, verbose)
     if source_info:
-        report["source_info"] = source_info
+        report.metadata["source_info"] = source_info
 
     # If conversion was successful, get target environment information
     if success:
         target_info = _collect_environment_info(target_env, verbose)
         if target_info:
-            report["target_info"] = target_info
+            report.metadata["target_info"] = target_info
 
             # Calculate changes between environments
-            report["changes"] = _calculate_changes(source_info, target_info)
+            report.metadata["changes"] = _calculate_changes(source_info, target_info)
+
+    # Set success status
+    report.success = success
+    report.complete(success)
 
     # Write report to file if requested
     if output_file:
-        _write_report(report, output_file, verbose)
+        _write_report(report, output_file)
 
     return report
 
 
 def _collect_environment_info(env_name: str, verbose: bool) -> dict[str, Any]:
-    """Collect information about a conda environment.
+    """Collect information about an environment.
 
     Args:
         env_name: Name of the environment
         verbose: Whether to log detailed information
 
     Returns:
-        Dictionary with environment information
+        Dictionary containing environment information
 
     """
     env_info: dict[str, Any] = {
@@ -98,7 +213,7 @@ def _collect_environment_info(env_name: str, verbose: bool) -> dict[str, Any]:
     }
 
     # Get environment path
-    env_path = _get_environment_path(env_name, verbose)
+    env_path = _find_environment_path(env_name)
     if env_path:
         env_info["path"] = env_path
 
@@ -151,39 +266,40 @@ def _collect_environment_info(env_name: str, verbose: bool) -> dict[str, Any]:
 
         return env_info
     except Exception as e:
-        logger.warning(f"Error collecting environment information: {str(e)}")
+        logger.warning(f"Error collecting environment information: {e!s}")
         return env_info
 
 
-def _get_environment_path(env_name: str, verbose: bool) -> str | None:
-    """Get the path to a conda environment.
+def _find_environment_path(env_name: str) -> str | None:
+    """Find the path of an environment.
 
     Args:
         env_name: Name of the environment
-        verbose: Whether to log detailed information
 
     Returns:
-        Path to the environment or None if not found
+        Path to the environment, or None if not found
 
     """
-    cmd = ["conda", "env", "list", "--json"]
-    output = run_command(cmd, verbose)
-
-    if not is_command_output_str(output):
-        return None
-
     try:
-        env_list = json.loads(output)
-        envs = env_list.get("envs", [])
+        result = run_command(["conda", "env", "list", "--json"], verbose=True)
+        if not isinstance(result, str):
+            return None
 
-        # Find the environment
+        envs_data = json.loads(result)
+        envs = envs_data.get("envs", [])
+
         for path in envs:
-            if os.path.basename(path) == env_name or path.endswith(f"envs/{env_name}"):
-                return path
-    except Exception:
-        pass
+            try:
+                if Path(path).name == env_name or path.endswith(f"envs/{env_name}"):
+                    return path
+            except Exception as e:
+                logger.debug(f"Error checking path {path}: {e!s}")
+                continue
 
-    return None
+        return None
+    except Exception as e:
+        logger.error(f"Error finding environment path: {e!s}")
+        return None
 
 
 def _calculate_changes(source_info: dict[str, Any], target_info: dict[str, Any]) -> dict[str, Any]:
@@ -194,7 +310,7 @@ def _calculate_changes(source_info: dict[str, Any], target_info: dict[str, Any])
         target_info: Information about the target environment
 
     Returns:
-        Dictionary with changes information
+        Dictionary containing the changes
 
     """
     changes: dict[str, Any] = {
@@ -281,13 +397,12 @@ def _calculate_changes(source_info: dict[str, Any], target_info: dict[str, Any])
     return changes
 
 
-def _write_report(report: ConversionReport, output_file: PathLike, verbose: bool) -> None:
+def _write_report(report: ConversionReport, output_file: PathLike) -> None:
     """Write a report to file.
 
     Args:
-        report: Report data
+        report: Report to write
         output_file: Path to write the report to
-        verbose: Whether to log detailed information
 
     """
     output_path = Path(output_file)
@@ -300,32 +415,32 @@ def _write_report(report: ConversionReport, output_file: PathLike, verbose: bool
 
     try:
         if ext == ".json":
-            with open(output_path, "w") as f:
-                json.dump(report, f, indent=2)
+            with Path(output_path).open("w") as f:
+                json.dump(report.to_dict(), f, indent=2)
         elif ext in (".yml", ".yaml"):
-            with open(output_path, "w") as f:
-                yaml.dump(report, f, sort_keys=False)
+            with Path(output_path).open("w") as f:
+                yaml.dump(report.to_dict(), f, sort_keys=False)
         else:
             # Default to JSON if format is not recognized
-            with open(output_path, "w") as f:
-                json.dump(report, f, indent=2)
+            with Path(output_path).open("w") as f:
+                json.dump(report.to_dict(), f, indent=2)
 
         logger.info(f"Report written to {output_path}")
     except Exception as e:
-        logger.error(f"Failed to write report: {str(e)}")
+        logger.error(f"Failed to write report: {e!s}")
 
 
 def generate_summary_report(
     conversion_results: dict[str, list], output_file: PathLike | None = None
 ) -> dict[str, Any]:
-    """Generate a summary report for multiple conversions.
+    """Generate a summary report of the conversion results.
 
     Args:
         conversion_results: Results of multiple conversions
-        output_file: Path to write the report to (if specified)
+        output_file: Optional path to save the report
 
     Returns:
-        Dictionary with summary information
+        Summary report containing key metrics and statistics
 
     """
     # Create a summary structure
@@ -346,29 +461,32 @@ def generate_summary_report(
 
     # Write report to file if requested
     if output_file:
-        _write_report(summary, output_file, False)
+        # Create a temporary ConversionReport to use the _write_report function
+        temp_report = ConversionReport.create("summary", "summary")
+        temp_report.metadata = summary
+        _write_report(temp_report, output_file)
 
     return summary
 
 
 def print_report_summary(report: ConversionReport) -> None:
-    """Print a human-readable summary of a conversion report.
+    """Print a summary of the conversion report.
 
     Args:
-        report: Report data to print
+        report: Report to summarize
 
     """
     print("\n=== Environment Conversion Report ===")
-    print(f"Source: {report['source_environment']}")
-    print(f"Target: {report['target_environment']}")
-    print(f"Status: {'SUCCESS' if report['success'] else 'FAILED'}")
+    print(f"Source: {report.source_env}")
+    print(f"Target: {report.target_env}")
+    print(f"Status: {'SUCCESS' if report.success else 'FAILED'}")
 
-    if not report["success"]:
+    if not report.success:
         print("\nConversion failed - no further details available")
         return
 
     # Python version
-    changes = report.get("changes", {})
+    changes = report.metadata.get("changes", {})
     py_changes = changes.get("python_version", {})
 
     if py_changes.get("changed"):
@@ -383,10 +501,10 @@ def print_report_summary(report: ConversionReport) -> None:
 
     print("\nPackage Counts:")
     print(
-        f"  Source: {source_counts.get('total')} total ({source_counts.get('conda')} conda, {source_counts.get('pip')} pip)"
+        f"  Source: {source_counts.get('total')} total ({source_counts.get('conda')} conda, {source_counts.get('pip')} pip)"  # noqa: E501
     )
     print(
-        f"  Target: {target_counts.get('total')} total ({target_counts.get('conda')} conda, {target_counts.get('pip')} pip)"
+        f"  Target: {target_counts.get('total')} total ({target_counts.get('conda')} conda, {target_counts.get('pip')} pip)"  # noqa: E501
     )
 
     # Package changes
@@ -413,8 +531,87 @@ def print_report_summary(report: ConversionReport) -> None:
     if target_conda_count > 0:
         conda_forge_percent = round(conda_forge_count / target_conda_count * 100, 1)
         print(
-            f"\nConda-forge packages: {conda_forge_count} ({conda_forge_percent}% of conda packages)"
+            f"\nConda-forge packages: {conda_forge_count} "
+            f"({conda_forge_percent}% of conda packages)"
         )
 
     print("\nDetails about these changes are available in the full report.")
     print("======================================")
+
+
+class ReportError(Exception):
+    """Exception raised for errors in report handling."""
+
+    INVALID_FORMAT = "Invalid report format: expected dictionary"
+    MISSING_FIELD = "Missing required field: {field}"
+    INVALID_TYPE = "Invalid type for field {field}: expected {expected}"
+    READ_ERROR = "Failed to read report"
+
+
+def _validate_report_data(data: dict) -> None:
+    """Validate report data structure.
+
+    Args:
+        data: Data to validate
+
+    Raises:
+        ReportError: If the data is invalid
+
+    """
+    if not isinstance(data, dict):
+        raise ReportError(ReportError.INVALID_FORMAT)
+
+    required_fields = {
+        "source_env": str,
+        "target_env": str,
+        "start_time": str,
+        "success": bool,
+        "errors": list,
+        "warnings": list,
+        "packages": dict,
+        "metadata": dict,
+    }
+
+    for field, field_type in required_fields.items():
+        if field not in data:
+            raise ReportError(ReportError.MISSING_FIELD.format(field=field))
+        if not isinstance(data[field], field_type):
+            raise ReportError(
+                ReportError.INVALID_TYPE.format(field=field, expected=field_type.__name__)
+            )
+
+
+def read_report(report_file: PathLike) -> ConversionReport:
+    """Read a report from file.
+
+    Args:
+        report_file: Path to the report file
+
+    Returns:
+        ConversionReport object
+
+    Raises:
+        ReportError: If the report file cannot be read or is invalid
+
+    """
+    try:
+        with Path(report_file).open("r", encoding="utf-8") as f:
+            data = json.load(f)
+            _validate_report_data(data)
+
+            return ConversionReport(
+                source_env=str(data["source_env"]),
+                target_env=str(data["target_env"]),
+                start_time=datetime.fromisoformat(str(data["start_time"])),
+                end_time=datetime.fromisoformat(str(data["end_time"]))
+                if data.get("end_time")
+                else None,
+                success=bool(data["success"]),
+                errors=list(map(str, data["errors"])),
+                warnings=list(map(str, data["warnings"])),
+                packages=cast(dict[str, list[dict[str, str]]], data["packages"]),
+                metadata=cast(dict[str, Any], data["metadata"]),
+            )
+    except Exception as e:
+        logger.error(f"Failed to read report from {report_file}: {e}")
+        raise ReportError(ReportError.READ_ERROR) from e

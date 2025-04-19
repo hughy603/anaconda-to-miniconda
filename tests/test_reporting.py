@@ -130,13 +130,14 @@ class TestReporting:
         report = generate_conversion_report("source_env", "target_env", True, verbose=False)
 
         # Verify
-        assert report["source_environment"] == "source_env"
-        assert report["target_environment"] == "target_env"
-        assert report["success"] is True
-        assert "conversion_time" in report
-        assert report["source_info"] == source_info
-        assert report["target_info"] == target_info
-        assert "changes" in report
+        assert report.source_env == "source_env"
+        assert report.target_env == "target_env"
+        assert report.success is True
+        assert report.start_time is not None
+        assert report.end_time is not None
+        assert report.metadata.get("source_info") == source_info
+        assert report.metadata.get("target_info") == target_info
+        assert "changes" in report.metadata
 
     def test_generate_summary_report(self) -> None:
         """Test generating a summary report."""

@@ -1,0 +1,30 @@
+[run]
+source = conda_forge_converter
+omit =
+    tests/*
+    */__init__.py
+    */_version.py
+    */cli.py
+    */main.py
+    */setup.py
+    */conftest.py
+    */test_*.py
+    */tests/*
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise NotImplementedError
+    if __name__ == .__main__.
+    pass
+    raise ImportError
+fail_under = 60
+show_missing = True
+precision = 2
+
+[html]
+directory = htmlcov
+
+[xml]
+output = coverage.xml

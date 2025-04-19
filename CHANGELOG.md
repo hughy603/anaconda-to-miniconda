@@ -1,76 +1,56 @@
-# Changelog
+# CHANGELOG
 
-All notable changes to the Conda-Forge Converter project will be documented in this file.
+## v0.0.1-dev.1 (2025-04-10)
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+### Bug Fixes
 
-## \[Unreleased\]
+- Fix GitHub Actions workflow by updating version format and adding missing imports
+  ([`commit_id`](https://github.com/hughy603/anaconda-to-miniconda/commit/commit_id))
 
-### Added
+- Ensure git pull.rebase is set to false to prevent divergent branches
+  ([`4a0a7c1`](https://github.com/hughy603/anaconda-to-miniconda/commit/4a0a7c175857f924b9cd528b3e6c5016677f40b3))
 
-- Initial project setup
-- Basic environment conversion functionality
-- Package resolution system
-- Health verification
+- Standardize PR templates for proper selection in GitHub and VSCode
+  ([`fc142a2`](https://github.com/hughy603/anaconda-to-miniconda/commit/fc142a2a59519d6efaedbec1f63bca57f6861c3d))
 
-### Changed
+- Update dependency installation to include development and documentation extras
+  ([`bbfcc2b`](https://github.com/hughy603/anaconda-to-miniconda/commit/bbfcc2b9cacfe5f0626d4aa423e71adb6821b319))
 
-- Improved documentation structure
-- Enhanced error handling
+- Update documentation build commands to use hatch and enhance dependency management in uv.lock
+  ([`b7790bc`](https://github.com/hughy603/anaconda-to-miniconda/commit/b7790bcba7716489f2ca88e1a3ebf8b63b1ea85d))
 
-### Fixed
+- **ci**: Add write permissions and fix git push in version-bump workflow
+  ([`03cdca0`](https://github.com/hughy603/anaconda-to-miniconda/commit/03cdca0315bd3a4725acf19d98b3177965de2929))
 
-- Fixed package version mapping issues
-- Resolved dependency conflicts
+### Chores
 
-## \[0.1.0\] - YYYY-MM-DD
+- Add test file for commit message validation
+  ([`e907b88`](https://github.com/hughy603/anaconda-to-miniconda/commit/e907b885aca193300fcf539bc068c5841a9c9be2))
 
-### Added
+- Bump development version \[skip ci\]
+  ([`90336c1`](https://github.com/hughy603/anaconda-to-miniconda/commit/90336c1b9b5489befdc4fe90eb585cbea01761eb))
 
-- Initial release
-- Basic environment conversion
-- Package resolution
-- Health verification
+- Bump development version \[skip ci\]
+  ([`17bcda6`](https://github.com/hughy603/anaconda-to-miniconda/commit/17bcda6eee415ae90fc9be30f66b6bb4d1b30db3))
 
-## Template for Future Releases
+- Bump development version \[skip ci\]
+  ([`16dcccd`](https://github.com/hughy603/anaconda-to-miniconda/commit/16dcccd86a2fbd68e11de1bbd548b3ddfd5e6bfd))
 
-### \[X.Y.Z\] - YYYY-MM-DD
+- Merge branch 'develop' of <https://github.com/hughy603/anaconda-to-miniconda> into develop
+  ([`83c1b4c`](https://github.com/hughy603/anaconda-to-miniconda/commit/83c1b4c479f88c5f9ab6c6921cedb1b3b5c82a3d))
 
-#### Added
+- Merge branch 'develop' of <https://github.com/hughy603/anaconda-to-miniconda> into develop
+  ([`5c23a71`](https://github.com/hughy603/anaconda-to-miniconda/commit/5c23a7102f7e3d234915619720eaca5ffb030c3f))
 
-- New features or capabilities
+- Remove test file
+  ([`6ab3e3b`](https://github.com/hughy603/anaconda-to-miniconda/commit/6ab3e3bfec371dcad04024ee0fba1341625efe05))
 
-#### Changed
+### Continuous Integration
 
-- Changes to existing functionality
+- Enable CI and docs workflows on develop branch
+  ([`b3ed73e`](https://github.com/hughy603/anaconda-to-miniconda/commit/b3ed73eecd59fbb8c5bd2a7392b1fe24782e671e))
 
-#### Deprecated
+### Documentation
 
-- Soon-to-be removed features
-
-#### Removed
-
-- Removed features
-
-#### Fixed
-
-- Bug fixes
-
-#### Security
-
-- Security improvements
-
-## How to Update This Changelog
-
-1. Add a new section for the release version at the top
-1. Use the following categories:
-   - Added: New features
-   - Changed: Changes to existing functionality
-   - Deprecated: Soon-to-be removed features
-   - Removed: Removed features
-   - Fixed: Bug fixes
-   - Security: Security improvements
-1. Add a date in YYYY-MM-DD format
-1. Link to the release in the GitHub repository
-1. Update the Unreleased section as needed
+- Standardize PR templates with Conventional Commit format
+  ([`7d30986`](https://github.com/hughy603/anaconda-to-miniconda/commit/7d309868e927c12c69965329e2d394830cadf13c))

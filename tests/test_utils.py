@@ -7,7 +7,6 @@ from typing import Any
 from unittest import mock
 
 import pytest
-
 from conda_forge_converter.utils import (
     check_disk_space,
     is_command_output_str,
@@ -19,7 +18,7 @@ from conda_forge_converter.utils import (
 )
 
 
-@pytest.fixture
+@pytest.fixture()
 def reset_logger() -> Generator[None, None, None]:
     """Reset the logger between tests."""
     for handler in logger.handlers[:]:
@@ -29,6 +28,7 @@ def reset_logger() -> Generator[None, None, None]:
         logger.removeHandler(handler)
 
 
+@pytest.mark.unit()
 class TestRunCommand:
     """Tests for the run_command function."""
 
@@ -91,6 +91,7 @@ class TestRunCommand:
         mock_debug.assert_called_once_with("Running: echo test")
 
 
+@pytest.mark.unit()
 class TestSetupLogging:
     """Tests for the setup_logging function."""
 
@@ -128,6 +129,7 @@ class TestSetupLogging:
         assert logger.handlers[1].baseFilename == str(log_file)
 
 
+@pytest.mark.unit()
 class TestCheckDiskSpace:
     """Tests for the check_disk_space function."""
 
@@ -163,6 +165,7 @@ class TestCheckDiskSpace:
         mock_warning.assert_called_once()
 
 
+@pytest.mark.unit()
 class TestIsCondaEnvironment:
     """Tests for the is_conda_environment function."""
 
@@ -192,6 +195,7 @@ class TestIsCondaEnvironment:
         assert result is True
 
 
+@pytest.mark.unit()
 class TestIsCommandOutputStr:
     """Tests for the is_command_output_str function."""
 
@@ -208,6 +212,7 @@ class TestIsCommandOutputStr:
         assert is_command_output_str(True) is False
 
 
+@pytest.mark.unit()
 class TestSetLogLevel:
     """Tests for the set_log_level function."""
 

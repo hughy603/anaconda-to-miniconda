@@ -20,12 +20,12 @@ Version numbers are in the format `X.Y.Z` where:
 
 Before releasing a new version, complete the following checklist:
 
-- [ ] All tests are passing in CI
-- [ ] Code coverage meets or exceeds target (80%)
-- [ ] Documentation is up-to-date
-- [ ] CHANGELOG.md is updated with new features and fixes
-- [ ] Version number is updated in relevant files
-- [ ] All PRs for the milestone are merged or deferred
+- \[ \] All tests are passing in CI
+- \[ \] Code coverage meets or exceeds target (80%)
+- \[ \] Documentation is up-to-date
+- \[ \] CHANGELOG.md is updated with new features and fixes
+- \[ \] Version number is updated in relevant files
+- \[ \] All PRs for the milestone are merged or deferred
 
 ## Release Process
 

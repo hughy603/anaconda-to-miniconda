@@ -1,0 +1,147 @@
+name: Maintenance
+
+on:
+  schedule:
+    - cron: "0 0 * * 0"  # Run weekly on Sunday
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+env:
+  PYTHON_VERSION: '3.11'
+  UV_VERSION: "0.7.1"
+  ACT_LOCAL_TESTING: ${{ vars.ACT_LOCAL_TESTING || 'false' }}
+
+jobs:
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install UV
+        run: |
+          python -m pip install --upgrade pip
+          pip install uv==${{ env.UV_VERSION }}
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/uv
+            ~/.cache/pip
+          key: ${{ runner.os }}-py${{ env.PYTHON_VERSION }}-uv${{ env.UV_VERSION }}-security-${{ hashFiles('requirements.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-py${{ env.PYTHON_VERSION }}-uv${{ env.UV_VERSION }}-security-
+
+      - name: Install dependencies
+        run: |
+          uv pip install -r requirements.lock --system
+          uv pip install pip-audit hatch --system
+
+      - name: Run security checks
+        id: security_check
+        run: |
+          hatch run security || echo "security_failed=true" >> "$GITHUB_OUTPUT"
+          pip-audit || echo "audit_failed=true" >> "$GITHUB_OUTPUT"
+
+      # This step is skipped in local testing mode
+      - name: Create issue if vulnerabilities found (Production)
+        if: ${{ (steps.security_check.outputs.security_failed == 'true' || steps.security_check.outputs.audit_failed == 'true') && (!env.ACT_LOCAL_TESTING || env.ACT_LOCAL_TESTING != 'true') }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = 'Security vulnerabilities detected in dependencies';
+            const body = `Security vulnerabilities were detected in the project dependencies during the weekly audit.
+
+            ## Details
+
+            Please check the [workflow run](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}) for details.
+
+            ## Next Steps
+
+            1. Review the security report in the workflow run
+            2. Update affected dependencies in pyproject.toml
+            3. Run \`uv run deps-update\` to update the lock file
+            4. Verify the fixes with \`uv run security\``;
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['security', 'dependencies']
+            });
+
+      # This step only runs in local testing mode
+      - name: Mock issue creation (Local Testing)
+        if: ${{ (steps.security_check.outputs.security_failed == 'true' || steps.security_check.outputs.audit_failed == 'true') && env.ACT_LOCAL_TESTING == 'true' }}
+        run: |
+          echo "Mocking GitHub issue creation for local testing"
+          echo "In production, this would create an issue with security vulnerability details"
+          echo "Security vulnerabilities were detected in the project dependencies during the weekly audit."
+          echo "Please check the security report for details."
+
+  code-quality:
+    name: Code Quality Metrics
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install UV
+        run: |
+          python -m pip install --upgrade pip
+          pip install uv==${{ env.UV_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          uv pip install -r requirements.lock --system
+          uv pip install radon xenon --system
+
+      - name: Run complexity analysis
+        run: |
+          radon cc src/ -a -s
+          xenon --max-absolute B --max-modules B --max-average A src/
+
+      - name: Run test coverage
+        run: |
+          hatch run test
+
+      # This step is skipped in local testing mode
+      - name: Upload coverage to Codecov (Production)
+        uses: codecov/codecov-action@v4
+        if: ${{ !env.ACT_LOCAL_TESTING || env.ACT_LOCAL_TESTING != 'true' }}
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: false
+
+      # This step only runs in local testing mode
+      - name: Mock coverage upload (Local Testing)
+        if: ${{ env.ACT_LOCAL_TESTING == 'true' }}
+        run: |
+          echo "Mocking Codecov upload for local testing"
+          echo "In production, this would upload coverage data to Codecov"
+          echo "Coverage report available at ./coverage.xml"

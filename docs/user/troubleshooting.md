@@ -51,5 +51,5 @@ conda-forge-converter -s myenv -t myenv_forge -v --log-file debug.log
 
 If you need additional help:
 
-1. Check the GitHub repository for similar issues
+1. Check the [GitHub repository](https://github.com/ricea/anaconda-to-miniconda2) for similar issues
 1. Include command used, error message, and output of `conda info`

@@ -1,0 +1,177 @@
+name: "Run Linting"
+description: "Runs linting and type checking with configurable options"
+inputs:
+  lint-tool:
+    description: "Linting tool to use (ruff, flake8, pylint, all)"
+    required: false
+    default: "ruff"
+  type-check:
+    description: "Whether to run type checking"
+    required: false
+    default: "true"
+  format-check:
+    description: "Whether to check formatting"
+    required: false
+    default: "true"
+  auto-fix:
+    description: "Whether to automatically fix issues"
+    required: false
+    default: "false"
+  fail-on-error:
+    description: "Whether to fail on linting errors"
+    required: false
+    default: "true"
+  paths:
+    description: "Paths to lint (comma-separated)"
+    required: false
+    default: "."
+  config-file:
+    description: "Path to custom config file"
+    required: false
+    default: ""
+
+runs:
+  using: "composite"
+  steps:
+    - name: Prepare linting environment
+      shell: bash
+      run: |
+        # Create linting results directory
+        mkdir -p lint-results
+
+        # Parse paths
+        IFS=',' read -ra LINT_PATHS <<< "${{ inputs.paths }}"
+        PATHS_STR="${LINT_PATHS[*]}"
+
+        # Set environment variables
+        echo "LINT_PATHS=$PATHS_STR" >> $GITHUB_ENV
+        echo "LINT_TOOL=${{ inputs.lint-tool }}" >> $GITHUB_ENV
+        echo "AUTO_FIX=${{ inputs.auto-fix }}" >> $GITHUB_ENV
+
+        # Check if tools are installed
+        if ! command -v ${{ inputs.lint-tool }} &> /dev/null && [[ "${{ inputs.lint-tool }}" != "all" ]]; then
+          echo "Warning: ${{ inputs.lint-tool }} not found, attempting to install"
+          pip install ${{ inputs.lint-tool }}
+        fi
+
+        if [[ "${{ inputs.type-check }}" == "true" ]] && ! command -v pyright &> /dev/null; then
+          echo "Warning: pyright not found, attempting to install"
+          pip install pyright
+        fi
+
+    - name: Run linting
+      shell: bash
+      run: |
+        echo "Running linting with $LINT_TOOL on paths: $LINT_PATHS"
+
+        # Create error handling function
+        handle_error() {
+          if [[ "${{ inputs.fail-on-error }}" == "true" ]]; then
+            echo "::error::Linting failed with exit code $?"
+            exit 1
+          else
+            echo "::warning::Linting found issues, but continuing due to fail-on-error=false"
+            return 0
+          fi
+        }
+
+        # Run the appropriate linting tool
+        if [[ "$LINT_TOOL" == "ruff" || "$LINT_TOOL" == "all" ]]; then
+          echo "Running Ruff linter..."
+
+          RUFF_CMD="ruff check $LINT_PATHS"
+
+          # Add config file if provided
+          if [[ -n "${{ inputs.config-file }}" ]]; then
+            RUFF_CMD="$RUFF_CMD --config ${{ inputs.config-file }}"
+          fi
+
+          # Add auto-fix if requested
+          if [[ "$AUTO_FIX" == "true" ]]; then
+            RUFF_CMD="$RUFF_CMD --fix"
+          fi
+
+          # Run ruff and handle errors
+          $RUFF_CMD > lint-results/ruff.txt || handle_error
+
+          # Run formatter if requested
+          if [[ "${{ inputs.format-check }}" == "true" ]]; then
+            echo "Running Ruff formatter..."
+
+            FORMAT_CMD="ruff format"
+
+            # Add check-only mode unless auto-fix is enabled
+            if [[ "$AUTO_FIX" != "true" ]]; then
+              FORMAT_CMD="$FORMAT_CMD --check"
+            fi
+
+            $FORMAT_CMD $LINT_PATHS > lint-results/ruff-format.txt || handle_error
+          fi
+        fi
+
+        if [[ "$LINT_TOOL" == "flake8" || "$LINT_TOOL" == "all" ]]; then
+          echo "Running Flake8 linter..."
+
+          FLAKE8_CMD="flake8 $LINT_PATHS"
+
+          # Add config file if provided
+          if [[ -n "${{ inputs.config-file }}" ]]; then
+            FLAKE8_CMD="$FLAKE8_CMD --config ${{ inputs.config-file }}"
+          fi
+
+          # Run flake8 and handle errors
+          $FLAKE8_CMD > lint-results/flake8.txt || handle_error
+        fi
+
+        if [[ "$LINT_TOOL" == "pylint" || "$LINT_TOOL" == "all" ]]; then
+          echo "Running Pylint linter..."
+
+          PYLINT_CMD="pylint $LINT_PATHS"
+
+          # Add config file if provided
+          if [[ -n "${{ inputs.config-file }}" ]]; then
+            PYLINT_CMD="$PYLINT_CMD --rcfile=${{ inputs.config-file }}"
+          fi
+
+          # Run pylint and handle errors
+          $PYLINT_CMD > lint-results/pylint.txt || handle_error
+        fi
+
+        # Run type checking if requested
+        if [[ "${{ inputs.type-check }}" == "true" ]]; then
+          echo "Running type checking with Pyright..."
+
+          PYRIGHT_CMD="pyright $LINT_PATHS"
+
+          # Add config file if provided
+          if [[ -n "${{ inputs.config-file }}" && "${{ inputs.config-file }}" == *"pyright"* ]]; then
+            PYRIGHT_CMD="$PYRIGHT_CMD --project ${{ inputs.config-file }}"
+          fi
+
+          # Run pyright and handle errors
+          $PYRIGHT_CMD > lint-results/pyright.txt || handle_error
+        fi
+
+        echo "Linting completed"
+
+        # Summarize results
+        echo "Linting summary:"
+        if [[ -f lint-results/ruff.txt ]]; then
+          RUFF_ISSUES=$(grep -c "^[A-Z]" lint-results/ruff.txt || echo "0")
+          echo "- Ruff: $RUFF_ISSUES issues found"
+        fi
+
+        if [[ -f lint-results/flake8.txt ]]; then
+          FLAKE8_ISSUES=$(wc -l < lint-results/flake8.txt || echo "0")
+          echo "- Flake8: $FLAKE8_ISSUES issues found"
+        fi
+
+        if [[ -f lint-results/pylint.txt ]]; then
+          PYLINT_ISSUES=$(grep -c "^[A-Z]" lint-results/pylint.txt || echo "0")
+          echo "- Pylint: $PYLINT_ISSUES issues found"
+        fi
+
+        if [[ -f lint-results/pyright.txt ]]; then
+          PYRIGHT_ISSUES=$(grep -c "error" lint-results/pyright.txt || echo "0")
+          echo "- Pyright: $PYRIGHT_ISSUES issues found"
+        fi

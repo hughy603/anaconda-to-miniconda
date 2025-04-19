@@ -1,78 +1,158 @@
-site_name: Conda-Forge Converter
-site_description: A tool to convert Anaconda environments to conda-forge environments
-site_author: Your Name
-repo_url: https://github.com/yourusername/conda-forge-converter
-repo_name: yourusername/conda-forge-converter
+site_name: Anaconda to Miniconda Converter
+site_description: Tools for converting Anaconda environments to conda-forge and validating GitHub Actions workflows
+repo_url: https://github.com/ricea/anaconda-to-miniconda2
+repo_name: anaconda-to-miniconda2
 edit_uri: edit/main/docs/
+
+# GitHub Pages configuration
+site_url: https://ricea.github.io/anaconda-to-miniconda2/
+use_directory_urls: true
 
 theme:
   name: material
-  palette:
-    primary: blue
-    accent: blue
   features:
     - navigation.instant
     - navigation.tracking
+    - navigation.sections
     - navigation.expand
     - navigation.indexes
-    - navigation.top
-    - toc.follow
+    - toc.integrate
+    - search.suggest
+    - search.highlight
     - content.code.copy
+    - content.code.annotate
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
 
 markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - meta
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
   - pymdownx.highlight:
       anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.magiclink
+  - pymdownx.mark
+  - pymdownx.smartsymbols
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid
           class: mermaid
-  - pymdownx.inlinehilite
-  - pymdownx.snippets
+          format: pymdownx.superfences.fence_code_format
   - pymdownx.tabbed:
       alternate_style: true
-  - admonition
-  - tables
-  - toc:
-      permalink: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+plugins:
+  - search
+  - minify:
+      minify_html: true
+      minify_js: true
+      minify_css: true
+      htmlmin_opts:
+        remove_comments: true
+  - git-revision-date-localized:
+      type: timeago
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+          options:
+            docstring_style: google
+            show_source: true
+            show_root_heading: true
+            show_category_heading: true
+            show_signature_annotations: true
+  - redirects:
+      redirect_maps:
+        "changelog.md": "https://github.com/ricea/anaconda-to-miniconda2/blob/main/CHANGELOG.md"
 
 nav:
   - Home: index.md
   - User Guide:
-    - Getting Started: user/getting-started.md
-    - CLI Reference: user/cli-reference.md
-    - Common Workflows: user/workflows.md
-    - Troubleshooting: user/troubleshooting.md
-  - Developer Guide:
-    - Architecture: dev/architecture.md
-    - Contributing: dev/contributing.md
-    - Testing: dev/testing.md
-    - Releasing: dev/releasing.md
-    - Documentation: dev/documentation.md
+      - Getting Started: user/getting-started.md
+      - CLI Reference: user/cli-reference.md
+      - CLI Quick Reference: user/cli-quick-reference.md
+      - CLI Cheatsheet: user/cli-cheatsheet.md
+      - CLI Admin Guide: user/cli-admin-guide.md
+      - Root User Guide: user/root-user-guide.md
+      - Workflows: user/workflows.md
+      - Validation: user/validation.md
+      - Troubleshooting: user/troubleshooting.md
+      - FAQ: user/faq.md
+      - Glossary: user/glossary.md
   - API Reference:
-    - Overview: api/index.md
-    - Core Module: api/core.md
-  - Design Docs:
-    - Design Overview: design/overview.md
-    - Planned Improvements: design/improvements.md
+      - Overview: api/index.md
+      - CLI: api/cli.md
+      - Core: api/core.md
+      - Health: api/health.md
+      - Incremental: api/incremental.md
+      - Reporting: api/reporting.md
+      - Utils: api/utils.md
+  - Architecture:
+      - Overview: architecture.md
+      - System Design: design/system-design.md
+      - Error Handling: design/error-handling.md
+      - Package Resolution: design/package-resolution.md
+  - Development:
+      - Overview: dev/README.md
+      - Setup: dev/setup.md
+      - Development Guide: dev/development-guide.md
+      - Architecture: dev/architecture.md
+      - Testing: dev/testing.md
+      - Benchmarks: dev/benchmarks.md
+      - Build Tools: dev/build-tools.md
+      - Documentation:
+          - Contributing: dev/contributing.md
+          - Documentation Guide: dev/documentation.md
+          - Documentation Contribution: dev/doc-contributing.md
+          - CLI Documentation Guide: dev/cli-documentation-guide.md
+          - Docstring Guide: dev/docstring-documentation-guide.md
+          - Improvements: dev/documentation-improvements.md
+      - Workflow: dev/workflow.md
+      - PR Process: dev/pr-process.md
+      - Releasing: dev/releasing.md
+      - Quick Reference: dev/quick-reference.md
+      - VS Code Debugging: dev/vscode-debugging.md
+      - Conventional Commits: dev/conventional-commits.md
   - About:
-    - License: about/license.md
-    - Changelog: about/changelog.md
-  - Project Management:
-    - Documentation TODO: TODO.md
-
-plugins:
-  - search
-  - mkdocstrings:
-      handlers:
-        python:
-          selection:
-            docstring_style: google
-          rendering:
-            show_source: true
-            show_root_heading: true
-            show_category_heading: true
+      - License: about/license.md
+      - Changelog: about/changelog.md
+  - 404: 404.md
 
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/yourusername/conda-forge-converter
+      link: https://github.com/ricea/anaconda-to-miniconda2
+  version:
+    provider: mike

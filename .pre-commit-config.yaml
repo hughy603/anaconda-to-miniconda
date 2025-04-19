@@ -1,103 +1,157 @@
+# Pre-commit configuration
 repos:
--   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
-    hooks:
-    -   id: trailing-whitespace
-    -   id: end-of-file-fixer
-    -   id: check-yaml
-    -   id: check-added-large-files
-    -   id: check-merge-conflict
-    -   id: check-case-conflict
-    -   id: check-toml
-    -   id: mixed-line-ending
-        args: [--fix=lf]
-
--   repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.11.4
-    hooks:
-    -   id: ruff
-        args: [--fix, --config=pyproject.toml, --exit-zero]
-    -   id: ruff-format
-        args: [--config=pyproject.toml]
-
--   repo: https://github.com/RobertCraigie/pyright-python
-    rev: v1.1.398
-    hooks:
-    -   id: pyright
-        additional_dependencies:
-        - types-PyYAML
-        - pyyaml>=6.0
-        - typing_extensions>=4.7.0
-        - pytest>=7.0.0
-
--   repo: https://github.com/commitizen-tools/commitizen
+  - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.5.0
     hooks:
-    -   id: commitizen
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+        exclude: \.ps1$ # Exclude PowerShell files from end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+      - id: check-case-conflict
+      - id: check-ast
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-symlinks
+      - id: detect-private-key
+      - id: mixed-line-ending
+        args: [--fix=lf]
+        exclude: \.ps1$ # Exclude PowerShell files from line ending fixer
+      - id: check-case-conflict
+      - id: check-toml
+      - id: requirements-txt-fixer
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.3.0
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.7
+    hooks:
+      - id: bandit
+        args:
+          ["-c", "pyproject.toml", "--exclude", "tests", "--skip", "B101,B404"]
+        additional_dependencies: ["bandit[toml]"]
+
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v3.15.0
+    hooks:
+      - id: commitizen
         stages: [commit-msg]
 
-# Requirements locking hooks
--   repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.6.12
+  - repo: https://github.com/executablebooks/mdformat
+    rev: 0.7.16
     hooks:
-    -   id: pip-compile
-        name: Lock dependencies with uv
-        args: [
-            "pyproject.toml",
-            "--output-file=requirements/requirements.txt",
-            "--extra=dev",
-            "--extra=test",
-            "--resolution=highest"
-        ]
-        language_version: python3
+      - id: mdformat
+        additional_dependencies: [mdformat-black]
+  - repo: https://github.com/RobertCraigie/pyright-python
+    rev: v1.1.399
+    hooks:
+      - id: pyright
+        args: ["--project=./pyrightconfig.json"]
+        stages: [pre-commit, pre-push]
 
--   repo: local
+  # Commit message format validation
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v3.1.0
     hooks:
-    -   id: hatch-lock
-        name: Lock hatch dependencies
-        entry: hatch dep lock
+      - id: conventional-pre-commit
+        stages: [commit-msg]
+        args:
+          [
+            feat,
+            fix,
+            docs,
+            style,
+            refactor,
+            perf,
+            test,
+            build,
+            ci,
+            chore,
+            revert,
+          ]
+
+  # GitHub workflow validation
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.6.26
+    hooks:
+      - id: actionlint
+        name: Validate GitHub Actions workflows
+        files: ^\.github/workflows/.*\.ya?ml$
+
+  # Dependency management and local hooks
+  - repo: local
+    hooks:
+      # Dependency management
+      - id: deps-lock
+        name: Lock dependencies with UV
+        entry: uv pip compile pyproject.toml --output-file=requirements.lock --extra=dev --extra=test
         language: system
+        files: ^(pyproject\.toml|requirements\.lock)$
         pass_filenames: false
-        always_run: true
-        types: [python]
-        stages: [push]
-
-# Documentation quality hooks
--   repo: https://github.com/pycqa/pydocstyle
-    rev: 6.3.0
-    hooks:
-    -   id: pydocstyle
-        additional_dependencies: [toml]
-        args: ["--config=pyproject.toml"]
-
--   repo: https://github.com/executablebooks/mdformat
-    rev: 0.7.17
-    hooks:
-    -   id: mdformat
-        additional_dependencies:
-        - mdformat-gfm
-        - mdformat-black
-        - mdformat-myst
-
--   repo: https://github.com/jackdewinter/pymarkdown
-    rev: v0.9.15
-    hooks:
-    -   id: pymarkdown
-        args: ["--config=.pymarkdown.json", "scan"]
-
--   repo: https://github.com/mgedmin/check-manifest
-    rev: "0.49"
-    hooks:
-    -   id: check-manifest
-        stages: [manual]
-
--   repo: local
-    hooks:
-    -   id: pytest
-        name: pytest
-        entry: pytest
-        language: system
-        pass_filenames: false
-        always_run: true
         stages: [pre-commit]
+
+      - id: uv-lock
+        name: Update UV lockfile
+        entry: uv pip compile pyproject.toml --output-file=requirements.lock --extra=dev --extra=test
+        language: system
+        files: ^(pyproject\.toml|uv\.lock)$
+        pass_filenames: false
+        stages: [pre-commit]
+
+      # Run tests
+      - id: pytest-check
+        name: Run fast tests (excludes slow and integration tests)
+        entry: hatch run pytest -k "not slow and not integration"
+        language: python
         types: [python]
+        pass_filenames: false
+        stages: [pre-commit]
+
+      # PowerShell validation and formatting
+      - id: powershell-script-analyzer
+        name: PowerShell Script Analyzer
+        entry: pwsh -NoProfile -ExecutionPolicy Bypass -Command "if (-not (Get-Module -ListAvailable -Name PSScriptAnalyzer)) { Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser -SkipPublisherCheck }; $files = @(git ls-files '*.ps1'); if ($files.Count -gt 0) { $results = $files | ForEach-Object { Invoke-ScriptAnalyzer -Path $_ -Settings .vscode/PSScriptAnalyzerSettings.psd1 }; if ($results) { $results | Format-Table -AutoSize; exit 1 } else { exit 0 } } else { exit 0 }"
+        language: system
+        pass_filenames: false
+        types: [powershell]
+        stages: [pre-commit]
+
+      - id: powershell-formatter
+        name: PowerShell Formatter
+        entry: pwsh -NoProfile -ExecutionPolicy Bypass -Command "if (-not (Get-Module -ListAvailable -Name PSScriptAnalyzer)) { Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser -SkipPublisherCheck }; $files = @(git ls-files '*.ps1'); if ($files.Count -gt 0) { foreach ($file in $files) { $content = Get-Content -Path $file -Raw; $formatted = Invoke-Formatter -ScriptDefinition $content -Settings .vscode/PSScriptAnalyzerSettings.psd1; if ($formatted -ne $content) { Set-Content -Path $file -Value $formatted -NoNewline -Encoding UTF8; Write-Output \"Formatted $file\" } } }"
+        language: system
+        pass_filenames: false
+        types: [powershell]
+        stages: [pre-commit]
+
+      - id: powershell-encoding-fixer
+        name: PowerShell Encoding Fixer
+        entry: pwsh -NoProfile -ExecutionPolicy Bypass -Command "$files = @(git ls-files '*.ps1'); if ($files.Count -gt 0) { foreach ($file in $files) { $content = Get-Content -Path $file -Raw; $utf8BomEncoding = New-Object System.Text.UTF8Encoding $true; [System.IO.File]::WriteAllText($file, $content, $utf8BomEncoding); Write-Output \"Fixed encoding for $file\" } }"
+        language: system
+        pass_filenames: false
+        types: [powershell]
+        stages: [pre-commit]
+
+      - id: mkdocs-strict-build
+        name: Validate MkDocs strict build
+        entry: hatch run docs-build -- --strict
+        language: system
+        pass_filenames: false
+        types: [markdown, yaml]
+        files: ^(docs/.*\.md|mkdocs\.yml)$
+        stages: [pre-commit]
+
+  # Shell script validation
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.9.0.6
+    hooks:
+      - id: shellcheck
+        name: Validate shell scripts
+        description: Checks shell scripts for syntax errors and potential issues
+        types: [shell]
+        args: ["--severity=warning", "--enable=all", "--shell=bash"]

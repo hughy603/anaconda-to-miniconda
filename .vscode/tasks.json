@@ -1,0 +1,129 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Validate Workflow Syntax",
+            "type": "shell",
+            "command": "./github-actions-local.sh --dry-run",
+            "group": "test",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Validate All Workflows (Local Execution)",
+            "type": "shell",
+            "command": "./github-actions-local.sh",
+            "group": "test",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Validate Changed Workflows Only",
+            "type": "shell",
+            "command": "./github-actions-local.sh --changed-only",
+            "group": "test",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Validate Current Workflow (Local Execution)",
+            "type": "shell",
+            "command": "./github-actions-local.sh -w ${file}",
+            "group": "test",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Validate Current Workflow File",
+            "type": "shell",
+            "command": ".vscode/scripts/validate-workflows.sh ${file}",
+            "windows": {
+                "command": "powershell -ExecutionPolicy Bypass -File .vscode/scripts/validate-workflows.ps1 -FilePath \"${file}\""
+            },
+            "problemMatcher": {
+                "owner": "actionlint",
+                "pattern": {
+                    "regexp": "^(.+):(\\d+):(\\d+): \\[(.+)\\] (.+)$",
+                    "file": 1,
+                    "line": 2,
+                    "column": 3,
+                    "severity": 4,
+                    "message": 5
+                }
+            },
+            "presentation": {
+                "reveal": "silent",
+                "panel": "shared",
+                "clear": true
+            },
+            "group": "test"
+        },
+        {
+            "label": "Validate Workflows with Custom Settings",
+            "type": "shell",
+            "command": "./validate-all-workflows.sh",
+            "windows": {
+                "command": ".\\validate-all-workflows.ps1"
+            },
+            "args": [
+                {
+                    "value": "--secrets-file",
+                    "quoting": "escape"
+                },
+                {
+                    "value": "${input:secretsFile}",
+                    "quoting": "escape"
+                },
+                {
+                    "value": "--cache-path",
+                    "quoting": "escape"
+                },
+                {
+                    "value": "${input:cachePath}",
+                    "quoting": "escape"
+                },
+                {
+                    "value": "--custom-image",
+                    "quoting": "escape"
+                },
+                {
+                    "value": "${input:customImage}",
+                    "quoting": "escape"
+                }
+            ],
+            "group": "test",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        }
+    ],
+    "inputs": [
+        {
+            "id": "secretsFile",
+            "description": "Path to secrets file",
+            "default": ".github/local-secrets.json",
+            "type": "promptString"
+        },
+        {
+            "id": "cachePath",
+            "description": "Path to cache directory",
+            "default": "./.act-cache",
+            "type": "promptString"
+        },
+        {
+            "id": "customImage",
+            "description": "Custom Docker image (e.g., ubuntu-latest=ghcr.io/catthehacker/ubuntu:act-latest)",
+            "default": "",
+            "type": "promptString"
+        }
+    ]
+}

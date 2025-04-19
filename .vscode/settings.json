@@ -1,18 +1,106 @@
 {
     "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
     "python.analysis.typeCheckingMode": "basic",
+    "python.linting.enabled": true,
+    "python.linting.lintOnSave": true,
+    "python.formatting.provider": "none",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": "explicit",
+        "source.fixAll": "explicit"
+    },
+    "[python]": {
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": "explicit",
+            "source.fixAll": "explicit"
+        }
+    },
+    "terminal.integrated.env.linux": {
+        "PYTHONPATH": "${workspaceFolder}"
+    },
+    "terminal.integrated.env.osx": {
+        "PYTHONPATH": "${workspaceFolder}"
+    },
+    "terminal.integrated.env.windows": {
+        "PYTHONPATH": "${workspaceFolder}"
+    },
+    "python.testing.pytestEnabled": true,
+    "python.testing.unittestEnabled": false,
+    "python.testing.nosetestsEnabled": false,
+    "python.testing.pytestArgs": [
+        "tests"
+    ],
+    "python.envFile": "${workspaceFolder}/.env",
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}/src"
+    ],
     "python.analysis.diagnosticMode": "workspace",
     "python.analysis.autoImportCompletions": true,
     "python.analysis.indexing": true,
-    "python.analysis.extraPaths": ["${workspaceFolder}/src"],
     "python.analysis.packageIndexDepths": [
         {
             "name": "conda_forge_converter",
             "depth": 5
+        },
+        {
+            "name": "github_actions_validator",
+            "depth": 5
         }
     ],
-    "python.analysis.inlayHints.variableTypes": true,
-    "python.analysis.inlayHints.functionReturnTypes": true,
-    "python.analysis.importFormat": "relative",
-    "python.languageServer": "Pylance"
+    "files.exclude": {
+        "**/__pycache__": true,
+        "**/.pytest_cache": true,
+        "**/.mypy_cache": true,
+        "**/.ruff_cache": true
+    },
+    "search.exclude": {
+        "**/__pycache__": true,
+        "**/.pytest_cache": true,
+        "**/.mypy_cache": true,
+        "**/.ruff_cache": true
+    },
+    "yaml.schemas": {
+        "https://json.schemastore.org/github-workflow.json": [
+            ".github/workflows/*.yml",
+            ".github/workflows/*.yaml"
+        ],
+        "https://json.schemastore.org/github-action.json": [
+            ".github/actions/*/action.yml",
+            ".github/actions/*/action.yaml"
+        ]
+    },
+    "yaml.customTags": [
+        "!include_dir_named",
+        "!include_dir_list",
+        "!include_dir_merge_named",
+        "!include_dir_merge_list",
+        "!secret"
+    ],
+    "yaml.format.enable": true,
+    "yaml.validate": true,
+    "yaml.hover": true,
+    "yaml.completion": true,
+    "[yaml]": {
+        "editor.defaultFormatter": "redhat.vscode-yaml",
+        "editor.formatOnSave": true,
+        "editor.autoIndent": "advanced",
+        "editor.quickSuggestions": {
+            "other": true,
+            "comments": false,
+            "strings": true
+        }
+    },
+    "problems.decorations.enabled": true,
+    "problems.showCurrentInStatus": true,
+    "filewatcher.commands": [
+        {
+            "match": "\\.github/(workflows|actions)/.*\\.ya?ml$",
+            "isRegex": true,
+            "cmd": "${workspaceRoot}/.vscode/scripts/validate-workflows.sh ${file}",
+            "cmdWindows": "${workspaceRoot}/.vscode/scripts/validate-workflows.sh ${file}",
+            "event": "onSave"
+        }
+    ]
 }

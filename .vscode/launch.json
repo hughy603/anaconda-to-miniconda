@@ -1,0 +1,85 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug CLI",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/conda_forge_converter/cli.py",
+            "args": ["--source-env", "myenv", "--target-env", "myenv_forge", "--verbose"],
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Debug Conda Integration",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/conda_forge_converter/cli.py",
+            "args": ["--source-env", "myenv", "--target-env", "myenv_forge", "--verbose"],
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}",
+                "CONDA_DEBUG": "1"
+            }
+        },
+        {
+            "name": "Debug Mamba Integration",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/conda_forge_converter/cli.py",
+            "args": ["--source-env", "myenv", "--target-env", "myenv_forge", "--verbose"],
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}",
+                "MAMBA_DEBUG": "1"
+            }
+        },
+        {
+            "name": "Debug Tests",
+            "type": "python",
+            "request": "launch",
+            "module": "pytest",
+            "args": ["tests/test_core.py", "-v"],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "Debug All Tests",
+            "type": "python",
+            "request": "launch",
+            "module": "pytest",
+            "args": ["-v"],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "Debug Batch Conversion",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/conda_forge_converter/cli.py",
+            "args": ["--batch", "--pattern", "data*", "--verbose"],
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Debug Health Check",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/conda_forge_converter/cli.py",
+            "args": ["health", "myenv", "--verbose"],
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        }
+    ]
+}

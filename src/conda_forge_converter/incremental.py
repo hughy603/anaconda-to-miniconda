@@ -1,4 +1,37 @@
-"""Incremental update functionality for conda-forge environments."""
+"""Incremental update functionality for conda-forge environments.
+
+This module provides functionality for updating existing conda-forge environments
+and detecting drift between environments. It allows for incremental updates to
+environments rather than full conversions, which can be more efficient for
+maintaining environments over time.
+
+The module is organized into the following functional areas:
+
+Environment Analysis:
+  - get_environment_packages: Get packages from a conda environment
+  - find_source_environment: Find the source environment for a conda-forge environment
+  - compare_environments: Compare packages between two environments
+
+Drift Detection:
+  - detect_drift: Detect drift between a conda-forge environment and its source
+  - calculate_environment_similarity: Calculate similarity percentage between environments
+
+Environment Updates:
+  - update_conda_forge_environment: Update an existing conda-forge environment
+  - update_packages: Update specific packages in an environment
+  - add_missing_packages: Add packages that exist in source but not in target
+
+The update process typically includes:
+1. Environment Analysis: Analyzing the target environment and its source
+2. Package Selection: Determining which packages to update based on options
+3. Package Updates: Updating selected packages to their latest versions
+4. Missing Package Addition: Adding packages that exist in source but not in target
+5. Verification: Verifying that the environment still functions correctly
+
+Type Definitions:
+  - PackageSet: Dictionary mapping package names to versions
+  - UpdateResult: Dictionary containing update results
+"""
 
 import json
 import logging
@@ -45,7 +78,7 @@ def get_environment_packages(env_name: str, verbose: bool = False) -> PackageSet
             if name and version and pkg.get("channel") != "pypi":  # Exclude pip packages
                 packages[name] = version
     except Exception as e:
-        logger.error(f"Error parsing package list: {str(e)}")
+        logger.error(f"Error parsing package list: {e!s}")
 
     return packages
 
@@ -117,7 +150,7 @@ def check_for_updates(env_name: str, verbose: bool = False) -> tuple[list[dict],
     return outdated_packages, source_only
 
 
-def update_conda_forge_environment(
+def update_conda_forge_environment(  # noqa: C901
     env_name: str,
     update_all: bool = False,
     add_missing: bool = False,
