@@ -106,8 +106,8 @@ repos:
       # Run tests
       - id: pytest-check
         name: Run fast tests (excludes slow and integration tests)
-        entry: pytest -v -m "not slow and not integration and not benchmark" --no-cov
-        language: system
+        entry: hatch run pytest -k "not slow and not integration"
+        language: python
         types: [python]
         pass_filenames: false
         stages: [pre-commit]

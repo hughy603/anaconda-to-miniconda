@@ -68,11 +68,12 @@ docs = [
     "mkdocs-git-revision-date-localized-plugin>=1.4.5",
 ]
 all = [
-    "actionlint>=1.6.0", # validation
-    { ref = "dev" },
-    { ref = "test" },
-    { ref = "docs" },
+    #"actionlint>=1.6.0",  # validation
+    "conda-forge-converter[dev]",
+    "conda-forge-converter[test]",
+    "conda-forge-converter[docs]",
 ]
+
 [project.scripts]
 anaconda-to-miniconda = "conda_forge_converter.cli:main"
 validate-github-workflows = "github_actions_validator.cli:main"
@@ -97,6 +98,7 @@ source = "regex"
 regex = "__version__ = '(?P<version>[^']+)'"
 path = "src/github_actions_validator/_version.py"
 
+# Package discovery configuration
 [tool.hatch.build.targets.wheel]
 packages = ["src/conda_forge_converter"]
 
@@ -245,6 +247,7 @@ prerelease_token = "feature"
 [dependency-groups]
 dev = ["types-pyyaml>=6.0.12.20250402"]
 
+# Test configuration
 [tool.pytest.ini_options]
 minversion = "8.0"
 addopts = "-v --strict-markers"
@@ -256,6 +259,7 @@ markers = [
     "slow: Tests that take a long time to run",
     "benchmark: Performance benchmark tests"
 ]
+pythonpath = ["src"]
 
 [tool.coverage.run]
 source = ["conda_forge_converter"]
