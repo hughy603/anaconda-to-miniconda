@@ -174,11 +174,11 @@ test(cli): add tests for new verbose option
 
 ### Before Creating PR
 
-- [ ] All tests pass locally
-- [ ] Pre-commit checks pass
-- [ ] Documentation is updated
-- [ ] Code follows project style guidelines
-- [ ] Commits follow conventional commit format
+- \[ \] All tests pass locally
+- \[ \] Pre-commit checks pass
+- \[ \] Documentation is updated
+- \[ \] Code follows project style guidelines
+- \[ \] Commits follow conventional commit format
 
 ### PR Template Sections
 

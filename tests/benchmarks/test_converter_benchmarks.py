@@ -43,7 +43,7 @@ def generate_environment_file(env_data, output_path):
     return output_path
 
 
-@pytest.fixture
+@pytest.fixture()
 def sample_environment_file():
     """Create a sample environment.yml file for benchmarking."""
     with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".yml") as f:

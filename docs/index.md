@@ -1,35 +1,52 @@
 # Conda-Forge Converter
 
-A tool to convert Anaconda environments to conda-forge environments while preserving package versions.
+A tool for converting Anaconda environments to conda-forge and validating GitHub Actions workflows.
+
+## Features
+
+- Convert Anaconda environments to conda-forge
+- Validate GitHub Actions workflows
+- Comprehensive test coverage
+- Modern Python tooling and best practices
+
+## Quick Start
+
+```bash
+# Install with pip
+pip install conda-forge-converter
+
+# Or install with uv (recommended)
+uv pip install conda-forge-converter
+```
+
+For detailed installation instructions, see the [Installation Guide](user/getting-started.md).
+
+## Project Status
+
+[![CI](https://github.com/anaconda/anaconda-to-miniconda/actions/workflows/ci.yml/badge.svg)](https://github.com/anaconda/anaconda-to-miniconda/actions/workflows/ci.yml)
+[![Coverage](https://codecov.io/gh/anaconda/anaconda-to-miniconda/branch/main/graph/badge.svg)](https://codecov.io/gh/anaconda/anaconda-to-miniconda)
+[![Documentation](https://github.com/anaconda/anaconda-to-miniconda/actions/workflows/docs.yml/badge.svg)](https://anaconda.github.io/anaconda-to-miniconda/)
+[![PyPI version](https://badge.fury.io/py/conda-forge-converter.svg)](https://badge.fury.io/py/conda-forge-converter)
+[![License](https://img.shields.io/github/license/anaconda/anaconda-to-miniconda)](https://github.com/anaconda/anaconda-to-miniconda/blob/main/LICENSE)
 
 ## Architecture
 
 ```mermaid
 graph TD
-    A[Anaconda Environment] -->|Input| B[Environment Detection]
-    B -->|Package List| C[Package Analysis]
-    C -->|Version Mapping| D[conda-forge Resolution]
-    D -->|Environment Spec| E[New Environment Creation]
-    E -->|Verification| F[Health Check]
-
-    subgraph "Core Components"
-        B
-        C
-        D
-        E
-        F
-    end
-
-    subgraph "Supporting Features"
-        G[Batch Processing]
-        H[Pattern Matching]
-        I[Health Monitoring]
-    end
-
-    G --> B
-    H --> B
-    F --> I
+    A[User Input] --> B[CLI Interface]
+    B --> C[Environment Parser]
+    C --> D[Package Resolver]
+    D --> E[Conda-Forge Converter]
+    E --> F[Output Environment]
+    B --> G[GitHub Actions Validator]
+    G --> H[Workflow Parser]
+    H --> I[Validation Rules]
+    I --> J[Validation Report]
 ```
+
+## Contributing
+
+We welcome contributions! Please see our [Contributing Guide](dev/contributing.md) for details.
 
 ## Key Features
 
@@ -39,19 +56,6 @@ graph TD
 - 🚀 Batch processing with pattern matching
 - ✅ Environment health verification
 - 🔧 Support for both conda and pip packages
-
-## Quick Start
-
-```bash
-# Install the package
-pip install conda-forge-converter
-
-# Convert a single environment
-conda-forge-converter -s myenv -t myenv_forge
-
-# Batch convert environments
-conda-forge-converter --batch --pattern "data*"
-```
 
 ## Documentation Sections
 
@@ -65,7 +69,7 @@ conda-forge-converter --batch --pattern "data*"
 ### Developer Guide
 
 - [Architecture](dev/architecture.md)
-- [Contributing](CONTRIBUTING.md)
+- [Contributing](dev/contributing.md)
 - [Development Setup](dev/setup.md)
 - [Testing](dev/testing.md)
 
@@ -82,7 +86,5 @@ conda-forge-converter --batch --pattern "data*"
 - 🧩 Better dependency resolution
 - 📚 Broader package selection
 - 🛠️ Active maintenance and support
-
-## Project Status
 
 See our [TODO list](TODO.md) for current development status and planned features.

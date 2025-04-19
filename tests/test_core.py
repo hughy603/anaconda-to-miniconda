@@ -7,7 +7,6 @@ from unittest import mock
 
 import pytest
 import yaml
-
 from conda_forge_converter.core import (
     CondaPackage,
     ConversionError,
@@ -27,7 +26,7 @@ from conda_forge_converter.core import (
 )
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_conda_environments() -> dict[str, str]:
     """Fixture providing test conda environments."""
     return {
@@ -37,7 +36,7 @@ def mock_conda_environments() -> dict[str, str]:
     }
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_conda_packages() -> list[CondaPackage]:
     """Fixture providing test conda packages."""
     return [
@@ -47,7 +46,7 @@ def mock_conda_packages() -> list[CondaPackage]:
     ]
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_from_history_env_yaml() -> dict[str, Any]:
     """Fixture providing test environment.yml from --from-history export."""
     return {
@@ -67,7 +66,7 @@ def mock_from_history_env_yaml() -> dict[str, Any]:
     }
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_full_env_yaml() -> dict[str, Any]:
     """Fixture providing test environment.yml from regular export."""
     return {
@@ -108,6 +107,7 @@ def mock_full_env_yaml() -> dict[str, Any]:
     }
 
 
+@pytest.mark.unit()
 class TestEnvironmentInfo:
     """Tests for the EnvironmentInfo class."""
 
@@ -168,6 +168,7 @@ class TestEnvironmentInfo:
         assert info is None
 
 
+@pytest.mark.unit()
 class TestFindEnvironmentsInPath:
     """Tests for find_environments_in_path function."""
 
@@ -233,6 +234,7 @@ class TestFindEnvironmentsInPath:
         assert envs == {}
 
 
+@pytest.mark.unit()
 class TestListAllCondaEnvironments:
     """Tests for list_all_conda_environments function."""
 
@@ -302,6 +304,7 @@ class TestListAllCondaEnvironments:
         assert "env4" in envs
 
 
+@pytest.mark.unit()
 class TestGetPythonVersion:
     """Tests for get_python_version function."""
 
@@ -344,6 +347,7 @@ class TestGetPythonVersion:
         assert version == "3.11.3"
 
 
+@pytest.mark.unit()
 class TestGetEnvironmentPackages:
     """Tests for get_environment_packages function."""
 
@@ -389,6 +393,7 @@ class TestGetEnvironmentPackages:
         assert len(dependencies) > 4  # Should include all dependencies
 
 
+@pytest.mark.unit()
 class TestExtractPackageSpecs:
     """Tests for extract_package_specs function."""
 
@@ -443,6 +448,7 @@ class TestExtractPackageSpecs:
         assert pip_packages[2]["version"] is None
 
 
+@pytest.mark.unit()
 class TestEnvironmentExists:
     """Tests for environment_exists function."""
 
@@ -460,6 +466,7 @@ class TestEnvironmentExists:
         assert environment_exists("nonexistent_env") is False
 
 
+@pytest.mark.unit()
 class TestGetEnvironmentSize:
     """Tests for get_environment_size function."""
 
@@ -492,6 +499,7 @@ class TestGetEnvironmentSize:
         assert size_mb == expected_size
 
 
+@pytest.mark.unit()
 class TestCreateCondaForgeEnvironment:
     """Tests for create_conda_forge_environment function."""
 
@@ -725,6 +733,7 @@ class TestCreateCondaForgeEnvironment:
         assert len(install_calls) > 0, "No install calls were made"
 
 
+@pytest.mark.unit()
 class TestConvertEnvironment:
     """Tests for convert_environment function."""
 
@@ -838,10 +847,11 @@ class TestConvertEnvironment:
         mock_from_env.assert_called_once_with("source_env", "", False)
 
 
+@pytest.mark.unit()
 class TestConvertMultipleEnvironments:
     """Tests for convert_multiple_environments function."""
 
-    @pytest.fixture
+    @pytest.fixture()
     def mock_conda_environments(self) -> dict[str, str]:
         """Fixture providing test conda environments."""
         return {

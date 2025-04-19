@@ -39,7 +39,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import (
     Annotated,
-    Self,
     TypeAlias,
     TypedDict,
     cast,
@@ -126,7 +125,9 @@ class EnvironmentInfo:
     pip_packages: list[PipPackage] = field(default_factory=list)
 
     @classmethod
-    def from_environment(cls, name: str, path: str, verbose: bool = False) -> Self | None:
+    def from_environment(
+        cls: type["EnvironmentInfo"], name: str, path: str, verbose: bool = False
+    ) -> "EnvironmentInfo | None":
         """Create an EnvironmentInfo from an existing environment.
 
         Args:

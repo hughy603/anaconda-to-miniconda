@@ -388,57 +388,61 @@ def verify_environment(
 
 
 def _test_imports(env_name: str, verbose: bool) -> bool:
-    """Test importing key packages in the environment."""
-    # Get a list of installed packages
+    """Test importing common packages in the environment.
+
+    Args:
+        env_name: Name of the environment to test
+        verbose: Whether to log detailed information
+
+    Returns:
+        True if all imports succeed, False otherwise
+    """
+    # Get list of installed packages
     cmd = ["conda", "list", "--name", env_name, "--json"]
     output = run_command(cmd, verbose)
 
     if not is_command_output_str(output):
-        logger.error("Could not list packages in environment")
         return False
 
     try:
         packages = json.loads(output)
+        test_packages = [
+            pkg["name"]
+            for pkg in packages
+            if pkg["name"] in ["numpy", "pandas", "scipy", "matplotlib", "scikit-learn"]
+        ]
 
-        # Select common packages to test importing
-        test_packages = ["numpy", "pandas", "matplotlib", "scikit-learn", "tensorflow", "torch"]
-        installed_test_packages = [pkg["name"] for pkg in packages if pkg["name"] in test_packages]
+        if not test_packages:
+            return True  # No common packages to test
 
-        if not installed_test_packages:
-            logger.info("No common packages found to test imports")
-            return True
+        # Create a temporary script to test imports
+        script_content = "try:\n"
+        for package in test_packages:
+            script_content += f"    import {package}\n"
+        script_content += '    print("SUCCESS: All imports successful")\n'
+        script_content += "except ImportError as e:\n"
+        script_content += '    print(f"FAILURE: Import error - {e}")\n'
 
-        # Create a Python script to test imports
-        import_statements = "\n".join([f"import {pkg}" for pkg in installed_test_packages])
-        test_script = f"""
-try:
-    {import_statements}
-    print("SUCCESS: All imports successful")
-    exit(0)
-except Exception as e:
-    print(f"FAILURE: Import error - {{str(e)}}")
-    exit(1)
-"""
+        # Write the script to a temporary file
+        script_path = Path("temp_import_test.py")
+        script_path.write_text(script_content)
 
-        # Write to temporary file
-        temp_script = Path("/tmp/test_imports_{env_name}.py")
-        with Path(temp_script).open("w") as f:
-            f.write(test_script)
+        try:
+            # Run the script in the environment
+            cmd = ["conda", "run", "--name", env_name, "python", str(script_path)]
+            output = run_command(cmd, verbose)
 
-        # Run the test script in the environment
-        test_cmd = ["conda", "run", "--name", env_name, "python", str(temp_script)]
-        test_result = run_command(test_cmd, verbose, capture=True)
+            if not is_command_output_str(output):
+                return False
 
-        # Clean up
-        temp_script.unlink()
+            return "SUCCESS" in output
+        finally:
+            # Clean up the temporary file
+            script_path.unlink()
 
-        if is_command_output_str(test_result) and "SUCCESS" in test_result:
-            logger.info(f"Import test passed for environment '{env_name}'")
-            return True
-        logger.error(f"Import test failed for environment '{env_name}'")
-        return False
-    except Exception as e:
-        logger.error(f"Error testing imports: {e!s}")
+    except (json.JSONDecodeError, Exception) as e:
+        if verbose:
+            logger.error(f"Error testing imports: {e!s}")
         return False
 
 

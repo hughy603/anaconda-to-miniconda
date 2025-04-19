@@ -5,7 +5,6 @@ from typing import cast
 from unittest import mock
 
 import pytest
-
 from conda_forge_converter.core import (
     CondaPackage,
     PipPackage,
@@ -15,6 +14,7 @@ from conda_forge_converter.core import (
 )
 
 
+@pytest.mark.unit()
 class TestBatchInstallation:
     """Tests for batch installation functionality."""
 
@@ -113,6 +113,7 @@ class TestBatchInstallation:
         assert "package9==1.0.9" in first_call_args
 
 
+@pytest.mark.unit()
 class TestFastSolverIntegration:
     """Tests for fast solver integration."""
 
@@ -190,6 +191,7 @@ class TestFastSolverIntegration:
         # We're mocking _create_base_environment, so we don't need to check the command
 
 
+@pytest.mark.benchmark()
 class TestPerformanceBenchmarks:
     """Performance benchmarks for the improvements.
 
@@ -197,7 +199,7 @@ class TestPerformanceBenchmarks:
     Run with pytest -m slow to include them.
     """
 
-    @pytest.mark.slow
+    @pytest.mark.slow()
     @mock.patch("conda_forge_converter.core.run_command")
     def test_batch_vs_individual_performance(self, mock_run_command):
         """Compare performance of batch vs individual installation."""

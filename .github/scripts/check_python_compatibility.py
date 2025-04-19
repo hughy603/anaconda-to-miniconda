@@ -11,112 +11,151 @@ import sys
 from pathlib import Path
 
 
-def check_python_version(version):
-    """Run tests with the specified Python version."""
-    print(f"Testing with Python {version}...")
+def get_python_path(version: str) -> str:
+    """Get the absolute path to the Python executable for a given version."""
+    if sys.platform == "win32":
+        return f"C:\\Python{version}\\python.exe"
+    else:
+        return f"/usr/bin/python{version}"
+
+
+def get_hatch_path() -> str:
+    """Get the absolute path to the hatch executable."""
+    if sys.platform == "win32":
+        return "C:\\Program Files\\Hatch\\hatch.exe"
+    else:
+        return "/usr/local/bin/hatch"
+
+
+def get_poetry_path() -> str:
+    """Get the absolute path to the poetry executable."""
+    if sys.platform == "win32":
+        return "C:\\Program Files\\Poetry\\poetry.exe"
+    else:
+        return "/usr/local/bin/poetry"
+
+
+def check_python_version(version: str) -> bool:
+    """Check if a specific Python version is available."""
+    python_path = get_python_path(version)
     try:
-        # Check if the Python version is available
+        subprocess.run(
+            [python_path, "--version"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        return True
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return False
+
+
+def check_hatch() -> bool:
+    """Check if hatch is available."""
+    hatch_path = get_hatch_path()
+    try:
+        subprocess.run(
+            [hatch_path, "--version"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        return True
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return False
+
+
+def check_poetry() -> bool:
+    """Check if poetry is available."""
+    poetry_path = get_poetry_path()
+    try:
+        subprocess.run(
+            [poetry_path, "--version"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        return True
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return False
+
+
+def run_tests(version: str) -> bool:
+    """Run tests with the specified Python version."""
+    python_path = get_python_path(version)
+    hatch_path = get_hatch_path()
+    poetry_path = get_poetry_path()
+
+    hatch_installed = check_hatch()
+    poetry_installed = check_poetry()
+
+    if hatch_installed:
+        print("Using hatch to run tests...")
         try:
-            subprocess.run(
-                [f"python{version}", "--version"],
-                check=True,
-                capture_output=True,
-            )
-        except (subprocess.CalledProcessError, FileNotFoundError):
-            print(f"Python {version} not found, skipping compatibility check")
-            return True
-
-        # Check if we have hatch or poetry
-        hatch_installed = False
-        poetry_installed = False
-
-        try:
-            subprocess.run(
-                ["hatch", "--version"],
-                check=True,
-                capture_output=True,
-            )
-            hatch_installed = True
-        except (subprocess.CalledProcessError, FileNotFoundError):
-            pass
-
-        try:
-            subprocess.run(
-                ["poetry", "--version"],
-                check=True,
-                capture_output=True,
-            )
-            poetry_installed = True
-        except (subprocess.CalledProcessError, FileNotFoundError):
-            pass
-
-        # Run tests with the appropriate tool
-        if hatch_installed:
-            print("Using hatch to run tests...")
             result = subprocess.run(
-                ["hatch", "env", "create", f"python{version}"],
+                [hatch_path, "env", "create", f"python{version}"],
                 capture_output=True,
                 text=True,
             )
             if result.returncode != 0:
-                print(f"Failed to create hatch environment with Python {version}:")
-                print(result.stdout)
-                print(result.stderr)
+                print(f"Error creating hatch environment: {result.stderr}")
                 return False
 
             result = subprocess.run(
-                ["hatch", "run", "test:run", "tests/test_basic.py"],
+                [hatch_path, "run", "test:run", "tests/test_basic.py"],
                 capture_output=True,
                 text=True,
             )
-        elif poetry_installed:
-            print("Using poetry to run tests...")
+        except subprocess.CalledProcessError as e:
+            print(f"Error running tests with hatch: {e!s}")
+            return False
+    elif poetry_installed:
+        print("Using poetry to run tests...")
+        try:
             result = subprocess.run(
-                ["poetry", "env", "use", version],
+                [poetry_path, "env", "use", version],
                 capture_output=True,
                 text=True,
             )
             if result.returncode != 0:
-                print(f"Failed to set poetry environment to Python {version}:")
-                print(result.stdout)
-                print(result.stderr)
+                print(f"Error setting poetry environment: {result.stderr}")
                 return False
 
             result = subprocess.run(
-                ["poetry", "install"],
+                [poetry_path, "install"],
                 capture_output=True,
                 text=True,
             )
             if result.returncode != 0:
-                print("Failed to install dependencies:")
-                print(result.stdout)
-                print(result.stderr)
+                print(f"Error installing dependencies: {result.stderr}")
                 return False
 
             result = subprocess.run(
-                ["poetry", "run", "pytest", "-xvs", "tests/test_basic.py"],
+                [poetry_path, "run", "pytest", "-xvs", "tests/test_basic.py"],
                 capture_output=True,
                 text=True,
             )
-        else:
-            print("Neither hatch nor poetry found. Using system Python...")
+        except subprocess.CalledProcessError as e:
+            print(f"Error running tests with poetry: {e!s}")
+            return False
+    else:
+        print("Neither hatch nor poetry found. Using system Python...")
+        try:
             result = subprocess.run(
-                [f"python{version}", "-m", "pytest", "-xvs", "tests/test_basic.py"],
+                [python_path, "-m", "pytest", "-xvs", "tests/test_basic.py"],
                 capture_output=True,
                 text=True,
             )
-
-        if result.returncode != 0:
-            print(f"Tests failed with Python {version}:")
-            print(result.stdout)
-            print(result.stderr)
+        except subprocess.CalledProcessError as e:
+            print(f"Error running tests with system Python: {e!s}")
             return False
 
-        print(f"✅ Compatible with Python {version}")
-        return True
-    except Exception as e:
-        print(f"Error testing with Python {version}: {e}")
+    if result.returncode != 0:
+        print(f"Tests failed: {result.stderr}")
         return False
+
+    print("Tests passed!")
+    return True
 
 
 def ensure_basic_test_exists():
@@ -138,8 +177,9 @@ def test_placeholder():
 
 
 def main():
-    """Check compatibility with Python 3.11 and 3.12."""
-    success = True
+    """Main entry point."""
+    versions = ["3.8", "3.9", "3.10", "3.11", "3.12"]
+    failed_versions = []
 
     # Check if we're in a CI environment
     if os.environ.get("CI") == "true":
@@ -149,19 +189,22 @@ def main():
     # Ensure a basic test file exists
     ensure_basic_test_exists()
 
-    # Check compatibility with Python 3.11 and 3.12
-    python_versions = ["3.11", "3.12"]
-    for version in python_versions:
+    for version in versions:
+        print(f"\nChecking Python {version}...")
         if not check_python_version(version):
-            success = False
+            print(f"Python {version} not found")
+            continue
 
-    if success:
-        print("\n✅ Code is compatible with Python 3.11 and 3.12")
+        if not run_tests(version):
+            failed_versions.append(version)
+
+    if failed_versions:
+        print(f"\nFailed versions: {failed_versions}")
+        sys.exit(1)
     else:
-        print("\n❌ Code is not compatible with all Python versions")
-
-    return 0 if success else 1
+        print("\nAll tests passed!")
+        sys.exit(0)
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

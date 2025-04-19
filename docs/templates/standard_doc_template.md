@@ -2,19 +2,19 @@
 
 <!-- Overview: 1-2 paragraphs introducing the topic -->
 
-This document provides information about [topic]. It covers [brief description of what's included].
+This document provides information about \[topic\]. It covers \[brief description of what's included\].
 
 ## Overview
 
 <!-- Provide a more detailed introduction to the topic -->
 
-[Topic] is [explanation]. It is used for [purpose/use case].
+\[Topic\] is \[explanation\]. It is used for \[purpose/use case\].
 
 ## Prerequisites
 
 <!-- List any prerequisites or requirements -->
 
-Before using [topic], ensure you have:
+Before using \[topic\], ensure you have:
 
 - Prerequisite 1
 - Prerequisite 2
@@ -65,7 +65,7 @@ command argument --another-option value
 
 <!-- Provide best practices and recommendations -->
 
-When working with [topic], consider the following best practices:
+When working with \[topic\], consider the following best practices:
 
 1. Best practice 1
 1. Best practice 2
@@ -99,14 +99,14 @@ When working with [topic], consider the following best practices:
 
 <!-- Provide complete examples -->
 
-### Example 1: [Brief Description]
+### Example 1: \[Brief Description\]
 
 ```bash
 # Complete example 1
 command argument1 --option1 value1
 ```
 
-### Example 2: [Brief Description]
+### Example 2: \[Brief Description\]
 
 ```bash
 # Complete example 2

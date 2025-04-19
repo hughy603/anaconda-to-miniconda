@@ -5,21 +5,20 @@ import time
 from unittest import mock
 
 import pytest
-
 from conda_forge_converter.caching import PackageMetadataCache
 
 
 class TestPackageMetadataCache:
     """Tests for the PackageMetadataCache class."""
 
-    @pytest.fixture
+    @pytest.fixture()
     def temp_cache_dir(self, tmp_path):
         """Create a temporary cache directory."""
         cache_dir = tmp_path / "cache"
         cache_dir.mkdir()
         return cache_dir
 
-    @pytest.fixture
+    @pytest.fixture()
     def cache(self, temp_cache_dir):
         """Create a PackageMetadataCache instance with a temporary cache directory."""
         return PackageMetadataCache(cache_dir=temp_cache_dir)
