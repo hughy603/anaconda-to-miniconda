@@ -120,6 +120,7 @@ bin/act  # Large binary file
 !.github/events/templates/
 .github/local-testing/
 .github/templates/
+.github/local-secrets.json
 
 # Test output
 test_output.txt
@@ -146,3 +147,4 @@ test_output.txt
 
 # Act binary
 act.zip
+local-secrets.json
