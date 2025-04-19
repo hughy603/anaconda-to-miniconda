@@ -86,7 +86,7 @@ repos:
 
       # Run tests
       - id: pytest-check
-        name: Run pytest
+        name: Run fast tests (excludes slow and integration tests)
         entry: pytest -v -k "not slow and not integration"
         language: system
         types: [python]

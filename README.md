@@ -146,19 +146,28 @@ uv pip install -r requirements.lock
 
 ```bash
 # Run all tests
-hatch run test
+pytest
+
+# Run fast tests only (skips slow and integration tests)
+pytest -k "not slow and not integration"
 
 # Run with coverage
-hatch run test-cov
+pytest --cov=src
 
-# Run linting
-hatch run lint
+# Run specific test categories
+pytest -m unit
+pytest -m integration
+pytest -m slow
 
-# Run type checking
-hatch run type-check
+# Run tests for a specific file
+pytest tests/test_specific_file.py
+```
 
-# Run security checks
-hatch run security
+Note: Pre-commit hooks only run fast tests. To run all tests before committing, use:
+
+```bash
+# Run all tests with coverage
+pytest --cov=src
 ```
 
 ## GitHub Actions

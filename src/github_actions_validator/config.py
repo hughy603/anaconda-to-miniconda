@@ -39,11 +39,10 @@ class ValidationConfig(BaseModel):
         description="Mapping of workflow files to event types",
     )
 
-    class Config:
-        """Pydantic configuration for ValidationConfig."""
-
-        env_prefix = "GITHUB_ACTIONS_VALIDATOR_"
-        extra = "ignore"
+    # Pydantic configuration for ValidationConfig
+    model_config = {
+        "extra": "ignore",
+    }
 
     @classmethod
     def from_file(cls, path: str | None = None) -> Self:
@@ -118,7 +117,7 @@ class ValidationConfig(BaseModel):
             workflow_file="",
         )
 
-        for field in env_config.model_fields:
+        for field in ValidationConfig.model_fields:
             env_value = getattr(env_config, field)
             default_value = getattr(default_instance, field)
             if env_value != default_value:
