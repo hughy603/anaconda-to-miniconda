@@ -1,0 +1,30 @@
+# GitHub Actions Validator Configuration
+
+# General settings
+changed_only = false
+verbose = true
+dry_run = false
+skip_lint = false
+default_event = "push"
+
+# Paths
+secrets_file = ".github/local-secrets.json"
+cache_path = "./.act-cache"
+
+# Timeouts
+job_timeout = 300
+validation_timeout = 1800
+
+# Docker settings
+custom_image = ""
+
+# Workflow events
+[workflow_events]
+"ci.yml" = "push"
+"docs.yml" = "push"
+"release.yml" = "push"
+"benchmark.yml" = "push"
+"maintenance.yml" = "schedule"
+"security-scan.yml" = "push"
+"validate-workflows.yml" = "pull_request"
+"*" = "push"                              # Default for any other workflow

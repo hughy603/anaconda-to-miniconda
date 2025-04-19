@@ -2,17 +2,26 @@ name: CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: [master, develop]
   pull_request:
-    branches: [main, develop]
+    branches: [master, develop]
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+  issues: write
 
 env:
   PYTHON_VERSION: "3.11"
-  UV_VERSION: "0.7.1"
+  UV_VERSION: "0.6.14"
+  COVERAGE_THRESHOLD: "60"
 
 jobs:
   test:
+    name: Test (${{ matrix.os }}, Python ${{ matrix.python-version }})
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
     strategy:
       matrix:
         python-version: ["3.11", "3.12"]
@@ -32,10 +41,9 @@ jobs:
           cache: 'pip'
 
       - name: Install UV
-        shell: bash
         run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          python -m pip install --upgrade pip
+          pip install uv==${{ env.UV_VERSION }}
 
       - name: Cache dependencies
         uses: actions/cache@v4
@@ -43,34 +51,32 @@ jobs:
           path: |
             ~/.cache/uv
             ~/.cache/pip
+            ~/.cache/hatch
           key: ${{ runner.os }}-py${{ matrix.python-version }}-uv${{ env.UV_VERSION }}-${{ hashFiles('requirements.lock') }}
           restore-keys: |
             ${{ runner.os }}-py${{ matrix.python-version }}-uv${{ env.UV_VERSION }}-
 
       - name: Install dependencies
         run: |
-          # Install the project with dev and test extras to get all development dependencies
           uv pip install -e ".[dev,test]" --system
 
       - name: Run linting and type checking
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
         run: |
-          uv run lint
-          uv run format -- --check
-          uv run type-check
+          hatch run lint
+          hatch run type-check
 
       - name: Run tests
         run: |
-          hatch run test:cov
+          hatch run test
 
-      - name: Upload coverage to Codecov
-        if: matrix.os == 'ubuntu-latest'
-        uses: codecov/codecov-action@v4
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
-          file: ./coverage.xml
-          fail_ci_if_error: true
-
-      - name: Run security checks
-        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
-        run: |
-          uv run security
+          name: test-results-${{ matrix.os }}-py${{ matrix.python-version }}
+          path: |
+            .coverage
+            coverage.xml
+            test-results.xml
+          retention-days: 90

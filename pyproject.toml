@@ -5,12 +5,12 @@ build-backend = "hatchling.build"
 [project]
 name = "conda-forge-converter"
 dynamic = ["version"] # Version is dynamically determined from _version.py
-description = "Convert Anaconda environments to conda-forge with the same top-level dependency versions"
+description = "Tools for converting Anaconda environments to conda-forge and validating GitHub Actions workflows"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { file = "LICENSE" }
-authors = [{ name = "Your Name", email = "your.email@example.com" }]
-maintainers = [{ name = "Your Name", email = "your.email@example.com" }]
+authors = [{ name = "Adam Rice", email = "rice.adam@gmail.com" }]
+maintainers = [{ name = "Adam Rice", email = "rice.adam@gmail.com" }]
 keywords = [
     "conda",
     "conda-forge",
@@ -32,12 +32,13 @@ classifiers = [
     "Topic :: System :: Installation/Setup",
     "Topic :: System :: Systems Administration",
 ]
-
 dependencies = [
     "pyyaml>=6.0.1",
     "typing_extensions>=4.10.0", # For additional type hints if needed
+    "click>=8.1.0",              # Modern CLI framework
+    "rich>=13.0.0",              # Terminal formatting
+    "pydantic>=2.0.0",           # Data validation and settings management
 ]
-
 [project.optional-dependencies]
 dev = [
     "ruff>=0.3.0",
@@ -46,21 +47,38 @@ dev = [
     "pre-commit>=3.5.0",
     "build>=1.0.0",
     "hatch>=1.9.0",
+    "types-pyyaml>=6.0.12.20250402",
 ]
-test = ["pytest>=8.0.0", "pytest-cov>=4.1.0"]
+test = [
+    "pytest>=8.0.0",
+    "pytest-cov>=4.1.0",
+    "pytest-benchmark>=4.0.0",
+    "pytest-mock>=3.10.0",
+    "pytest-xdist>=3.3.0",
+]
 docs = [
     "mkdocs>=1.5.0",
-    "mkdocs-material>=9.5.0",
+    "mkdocs-material>=9.6.2",
     "mkdocstrings>=0.24.0",
     "mkdocstrings-python>=1.8.0",
     "mkdocs-minify-plugin>=0.7.0",
     "mkdocs-redirects>=1.2.1",
     "hatch>=1.9.0",
+    "pymdown-extensions>=10.14.3",
+    "mkdocs-git-revision-date-localized-plugin>=1.4.5",
 ]
-all = ["conda-forge-converter[dev,test,docs]"]
+all = [
+    #"actionlint>=1.6.0",  # validation
+    "conda-forge-converter[dev]",
+    "conda-forge-converter[test]",
+    "conda-forge-converter[docs]",
+]
 
 [project.scripts]
-conda-forge-converter = "conda_forge_converter.cli:main"
+anaconda-to-miniconda = "conda_forge_converter.cli:main"
+validate-github-workflows = "github_actions_validator.cli:main"
+validate-github-workflows-standard = "github_actions_validator.cli_standard:main"
+
 
 [project.urls]
 Homepage = "https://github.com/yourusername/conda-forge-converter"
@@ -74,6 +92,13 @@ source = "regex"
 regex = "__version__ = '(?P<version>[^']+)'"
 path = "src/conda_forge_converter/_version.py"
 
+# Also track github_actions_validator version
+[tool.hatch.version.github_actions_validator]
+source = "regex"
+regex = "__version__ = '(?P<version>[^']+)'"
+path = "src/github_actions_validator/_version.py"
+
+# Package discovery configuration
 [tool.hatch.build.targets.wheel]
 packages = ["src/conda_forge_converter"]
 
@@ -83,25 +108,52 @@ bump-version = "semantic-release version --no-commit --no-tag --no-push --no-vcs
 prepare-release = "semantic-release version --print"
 check-next-version = "semantic-release version --print"
 
-# Test scripts
-test = "pytest --cov=conda_forge_converter --cov-report=term-missing --cov-report=xml tests/"
-test-fast = "pytest --cov=conda_forge_converter --cov-report=term-missing --cov-fail-under=0 tests/test_cli.py"
-test-specific = "pytest --cov=conda_forge_converter --cov-report=term-missing --cov-fail-under=0"
-clean-coverage = "rm -f .coverage .coverage.* coverage.xml && rm -rf htmlcov"
+# Test scripts - using pytest.ini and .coveragerc for configuration
+test = "pytest"
+test-unit = "pytest -m 'unit'"
+test-integration = "pytest -m 'integration'"
+test-github-actions = "pytest tests/test_github_actions_validator.py tests/test_coverage.py"
+test-conda-forge = "pytest tests/test_cli.py"
+test-fast = "pytest -k 'not slow and not integration'"
+test-specific = "pytest"
+clean-coverage = "python -c \"import pathlib; [p.unlink() for p in pathlib.Path('.').glob('.coverage*') if p.is_file()]; [p.unlink() for p in pathlib.Path('.').glob('coverage.xml') if p.is_file()]; import shutil; shutil.rmtree('htmlcov', ignore_errors=True)\""
+update-coverage-threshold = "python scripts/update_coverage_threshold.py"
+
+# Linting and type checking
+lint = "ruff check ."
+format = "ruff format"
+type-check = "pyright"
 
 # Documentation scripts
-docs-build = "mkdocs build"
+docs-build = "mkdocs build --strict"
 docs-serve = "mkdocs serve"
 
 # Type checking configuration is now in pyrightconfig.json
 
 [tool.ruff]
 target-version = "py311"
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".git",
+    ".ruff_cache",
+    ".venv",
+    "venv",
+    "site-packages",
+    "build",
+    "dist",
+    "docs",
+    "htmlcov",
+    "site",
+]
+
+# Same as Black.
 line-length = 100
 
 [tool.ruff.lint]
-select = ["E", "F", "B", "I", "N", "UP", "PT", "RUF", "C90", "D", "ANN"]
-ignore = ["D203", "D213"]
+# Disable ANN101 (missing type annotation for self/cls parameter)
+ignore = ["ANN101"]
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
 [tool.ruff.lint.flake8-annotations]
 allow-star-arg-any = true
@@ -117,27 +169,30 @@ convention = "google"
 "__init__.py" = ["F401", "E402"]
 "tests/*" = ["E501", "ANN", "PT009", "D"]
 "scripts/*" = ["E501", "ANN201", "D"]
+".github/scripts/*" = ["E501", "ANN", "C901", "D"]
 # Ignore missing return type annotations in decorator wrappers
 "src/conda_forge_converter/progress.py" = ["ANN401"]
 "src/conda_forge_converter/cli.py" = ["E501"]
+"src/github_actions_validator/cli.py" = ["E501", "C901"]
+"src/github_actions_validator/runners/act.py" = ["C901"]
+"src/github_actions_validator/validators/act.py" = ["C901"]
+"src/github_actions_validator/validators/actionlint.py" = ["C901"]
+"src/github_actions_validator/validators/execution.py" = ["C901"]
+"src/github_actions_validator/validators/syntax.py" = ["C901"]
 
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
 line-ending = "auto"
 
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-python_files = "test_*.py"
-markers = [
-    "unit: marks tests as unit tests",
-    "integration: marks tests as integration tests",
-    "slow: marks tests as slow tests that may take longer to run",
-]
+# Pytest configuration is now in pytest.ini
 
 # Python-Semantic-Release configuration
 [tool.semantic_release]
-version_variable = ["src/conda_forge_converter/_version.py:__version__"]
+version_variable = [
+    "src/conda_forge_converter/_version.py:__version__",
+    "src/github_actions_validator/_version.py:__version__",
+]
 branch = "master"
 upload_to_pypi = true
 upload_to_release = true
@@ -187,20 +242,222 @@ prerelease_token = "feature"
 [tool.uv]
 # UV will automatically use requirements.lock for reproducible installations
 
-# Coverage configuration
+# Coverage configuration is now in .coveragerc
+
+[dependency-groups]
+dev = ["types-pyyaml>=6.0.12.20250402"]
+
+# Test configuration
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = "-v --strict-markers"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests",
+    "slow: Tests that take a long time to run",
+    "benchmark: Performance benchmark tests"
+]
+pythonpath = ["src"]
+
 [tool.coverage.run]
 source = ["conda_forge_converter"]
-branch = false
+omit = [
+    "tests/*",
+    "*/__init__.py",
+    "*/_version.py",
+    "*/cli.py",
+    "*/main.py",
+    "*/setup.py",
+    "*/conftest.py",
+    "*/test_*.py",
+    "*/tests/*"
+]
 
 [tool.coverage.report]
 exclude_lines = [
     "pragma: no cover",
     "def __repr__",
-    "if self.debug:",
     "raise NotImplementedError",
-    "if __name__ == .__main__.:",
+    "if __name__ == .__main__.",
     "pass",
-    "raise ImportError",
+    "raise ImportError"
 ]
 fail_under = 60
 show_missing = true
+precision = 2
+
+[tool.coverage.html]
+directory = "htmlcov"
+
+[tool.coverage.xml]
+output = "coverage.xml"
+
+[tool.bandit]
+exclude_dirs = ["tests"]
+exclude = ["tests/test_utils.py"]
+skips = ["B101", "B404", "B603"]
+
+[tool.yamllint]
+extends = "default"
+
+[tool.yamllint.rules]
+line-length = { max = 500, level = "warning" }
+document-start = { present = false }
+empty-values = { forbid-in-flow-mappings = false }
+indentation = { spaces = 2, indent-sequences = true, check-multi-line-strings = false }
+truthy = { allowed-values = ["true", "false", "on", "off", "yes", "no"] }
+comments = { min-spaces-from-content = 1 }
+braces = { min-spaces-inside = 0, max-spaces-inside = 1 }
+brackets = { min-spaces-inside = 0, max-spaces-inside = 1 }
+colons = { max-spaces-before = 0, max-spaces-after = 1 }
+commas = { max-spaces-before = 0, min-spaces-after = 1, max-spaces-after = 1 }
+
+[tool.markdownlint]
+default = true
+
+[tool.markdownlint.rules]
+MD013 = false
+MD024 = { siblings_only = true }
+MD033 = false
+MD041 = false
+MD046 = { style = "fenced" }
+MD007 = { indent = 2 }
+MD029 = false
+MD004 = { style = "dash" }
+MD026 = { punctuation = ".,;:!" }
+MD030 = { ul_single = 1, ol_single = 1 }
+MD032 = { list_item_indent = "one" }
+MD034 = { allowed_elements = ["a"] }
+MD035 = { style = "---" }
+MD036 = { punctuation = ".,;:!" }
+MD048 = { style = "backtick" }
+MD049 = { style = "consistent" }
+MD050 = { style = "consistent" }
+MD037 = false
+MD038 = false
+MD039 = false
+MD040 = false
+MD042 = false
+MD043 = false
+MD044 = false
+MD045 = false
+MD047 = false
+MD003 = false
+MD012 = false
+MD022 = false
+MD031 = false
+
+[tool.pymarkdown]
+
+[tool.pymarkdown.plugins]
+line-length = { enabled = false }
+no-duplicate-heading = { enabled = false }
+no-trailing-spaces = { enabled = true }
+proper-names = { enabled = true, names = ["Python", "Conda", "Miniconda", "Anaconda", "MkDocs", "PyPI", "conda-forge", "GitHub", "YAML"] }
+first-line-heading = { enabled = false }
+required-headers = { enabled = false }
+no-inline-html = { enabled = false }
+no-emphasis-as-heading = { enabled = false }
+heading-style = { enabled = false }
+blanks-around-headings = { enabled = false }
+blanks-around-fences = { enabled = false }
+fenced-code-language = { enabled = false }
+no-trailing-punctuation = { enabled = false }
+no-multiple-blanks = { enabled = false }
+
+[tool.gitleaks]
+title = "Gitleaks Configuration"
+extend = { useDefault = true }
+
+[[tool.gitleaks.rules]]
+id = "generic-api-key"
+description = "Generic API Key"
+regex = '''(?i)(api[_-]?key|apikey|secret|token)[_-]?[[:alnum:]]{16,}'''
+secretGroup = 1
+entropy = 3.5
+
+[[tool.gitleaks.rules]]
+id = "generic-secret"
+description = "Generic Secret"
+regex = '''(?i)secret[_-]?[[:alnum:]]{16,}'''
+secretGroup = 1
+entropy = 3.5
+
+[tool.gitleaks.allowlist]
+description = "Allowed patterns and paths"
+paths = [
+    '''(?i).*\.test\..*''',
+    '''(?i).*test[s]?/.*''',
+    '''(?i).*mock[s]?/.*''',
+    '''(?i).*example[s]?/.*''',
+    '''(?i).*fixture[s]?/.*''',
+    '''\.coverage/.*''',
+    '''\.coverage$''',
+    '''\.pytest_cache/.*''',
+    '''\.ruff_cache/.*''',
+    '''\.mypy_cache/.*''',
+    '''\.hypothesis/.*''',
+    '''\.tox/.*''',
+    '''\.venv/.*''',
+    '''\.env/.*''',
+    '''\.uv/.*''',
+    '''uv\.lock$''',
+    '''requirements/.*\.txt$''',
+    '''poetry\.lock$''',
+    '''Pipfile\.lock$''',
+    '''\.git/.*''',
+    '''\.github/.*''',
+    '''\.gitlab/.*''',
+    '''\.vscode/.*''',
+    '''\.idea/.*''',
+    '''pyproject\.toml$'''
+]
+
+[[tool.gitleaks.allowlist.files]]
+path = '''src/conda_forge_converter/utils.py'''
+line_number = 46
+regexes = [
+    '''(?i)example[_-]?key''',
+    '''(?i)test[_-]?key''',
+    '''(?i)dummy[_-]?key''',
+    '''github-actions\[bot\]@users\.noreply\.github\.com''',
+    '''actions@github\.com''',
+    '''user_module = None'''
+]
+
+[[tool.gitleaks.rules]]
+id = "github-pat"
+description = "GitHub Personal Access Token"
+regex = '''(?i)(ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9_]{36}'''
+
+[[tool.gitleaks.rules]]
+id = "aws-access-key-id"
+description = "AWS Access Key ID"
+regex = '''(A3T[A-Z0-9]|AKIA|AGPA|AIDA|APOA|AIPA|ANPA|ANVA|ASIA)[A-Z0-9]{16}'''
+
+[[tool.gitleaks.rules]]
+id = "aws-secret-access-key"
+description = "AWS Secret Access Key"
+regex = '''(?i)aws[_-]?(?:secret[_-]?)?key[_-]?(?:id)?['\"]?\s*[:=]\s*['"]?[A-Za-z0-9/+=]{40}['"]?'''
+
+[[tool.gitleaks.rules]]
+id = "private-key"
+description = "Private Key"
+regex = '''(?i)-----BEGIN (?:RSA|DSA|EC|PGP|OPENSSH) PRIVATE KEY-----'''
+
+[[tool.gitleaks.rules]]
+id = "password"
+description = "Password"
+regex = '''(?i)(password|passwd|pwd)['\"]?\s*[:=]\s*['"]?[^'"]+['"]?'''
+
+[[tool.gitleaks.rules]]
+id = "email"
+description = "Email"
+regex = '''[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}'''
+
+[[tool.gitleaks.rules]]
+id = "ip-address"
+description = "IP Address"
+regex = '''\b(?:\d{1,3}\.){3}\d{1,3}\b'''

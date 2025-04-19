@@ -1,0 +1,130 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Test with Python 3.11",
+      "type": "shell",
+      "command": "poetry env use 3.11 && poetry install && poetry run pytest",
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "Test with Python 3.12",
+      "type": "shell",
+      "command": "poetry env use 3.12 && poetry install && poetry run pytest",
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "Test with Both Python Versions",
+      "type": "shell",
+      "command": "tox -e py311,py312",
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "Validate GitHub Workflow",
+      "type": "shell",
+      "command": ".github/scripts/validate-workflow.sh ${input:workflowFile}",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "Test GitHub Workflow",
+      "type": "shell",
+      "command": ".github/scripts/github-actions-test.sh --workflow ${input:workflowFile} --event ${input:eventType} --job ${input:jobFilter} --python ${input:pythonVersion}",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "Test GitHub Workflow (No Docker)",
+      "type": "shell",
+      "command": ".github/scripts/github-actions-test.sh --workflow ${input:workflowFile} --python ${input:pythonVersion} --skip-docker",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "Run Linting",
+      "type": "shell",
+      "command": "poetry run ruff check .",
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "Run Type Checking",
+      "type": "shell",
+      "command": "poetry run pyright",
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "Format Code",
+      "type": "shell",
+      "command": "poetry run ruff format .",
+      "group": "none",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "Check Python Compatibility",
+      "type": "shell",
+      "command": "python .github/scripts/check_python_compatibility.py",
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    }
+  ],
+  "inputs": [
+    {
+      "id": "workflowFile",
+      "description": "Workflow file path:",
+      "default": ".github/workflows/ci.yml",
+      "type": "promptString"
+    },
+    {
+      "id": "eventType",
+      "description": "Event type:",
+      "default": "push",
+      "type": "pickString",
+      "options": ["push", "pull_request", "workflow_dispatch"]
+    },
+    {
+      "id": "jobFilter",
+      "description": "Job to run (leave empty for all):",
+      "default": "",
+      "type": "promptString"
+    },
+    {
+      "id": "pythonVersion",
+      "description": "Python version:",
+      "default": "3.11",
+      "type": "pickString",
+      "options": ["3.11", "3.12"]
+    }
+  ]
+}

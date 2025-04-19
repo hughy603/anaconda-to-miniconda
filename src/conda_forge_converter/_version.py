@@ -6,7 +6,7 @@ Do not edit manually.
 
 __all__ = ["__version__", "__version_tuple__"]
 
-__version__ = "1.0.0-alpha.1"
+__version__ = "0.0.1-dev.1"
 
 
 # Parse version into tuple for easy access

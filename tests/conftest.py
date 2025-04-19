@@ -3,11 +3,11 @@
 import json
 import os
 import subprocess
+import tempfile
 from pathlib import Path
 from typing import Any
 
 import pytest
-
 from conda_forge_converter.utils import logger
 
 
@@ -17,6 +17,8 @@ def pytest_configure(config: pytest.Config) -> None:
         "markers",
         "integration: mark test as an integration test that requires real conda installations",
     )
+    # Ensure tests don't modify files in the workspace
+    config.addinivalue_line("markers", "no_file_modifications: mark test as not modifying files")
 
 
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
@@ -71,6 +73,18 @@ def find_conda_installation() -> Path | None:
         pass
 
     return None
+
+
+@pytest.fixture(autouse=True)
+def no_file_modifications():
+    """Prevent file modifications during tests."""
+    # Create a temporary directory for test files
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # Set environment variables to use temporary directory
+        os.environ["TEMP_DIR"] = temp_dir
+        os.environ["TMPDIR"] = temp_dir
+        yield
+        # Cleanup is handled by the context manager
 
 
 @pytest.fixture(scope="session")
