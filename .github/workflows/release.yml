@@ -1,18 +1,11 @@
 name: Release
 
 on:
+  push:
+    tags:
+      - 'v*'
   workflow_dispatch:
     inputs:
-      force_level:
-        description: 'Force specific version bump (optional)'
-        required: false
-        default: 'auto'
-        type: choice
-        options:
-          - auto
-          - patch
-          - minor
-          - major
       require_approval:
         description: 'Require manual approval before release'
         required: true
@@ -25,60 +18,85 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  PYTHON_VERSION: '3.11'
-  UV_VERSION: "0.7.1"
+  PYTHON_VERSION: ${{ vars.PYTHON_VERSION || '3.11' }}
+  UV_VERSION: ${{ vars.UV_VERSION || '0.6.14' }}
   ACT_LOCAL_TESTING: ${{ vars.ACT_LOCAL_TESTING || 'false' }}
-  RELEASE_VERSION: ${{ github.ref_name }}
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
 
 jobs:
   validate:
     name: Validate Release
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: ${{ fromJSON(vars.TEST_TIMEOUT_MINUTES) || 30 }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Set up Python ${{ env.PYTHON_VERSION }}
-        uses: actions/setup-python@v5
+      - uses: ./.github/actions/setup-python
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-          cache: 'pip'
-
-      - name: Install UV
-        run: |
-          python -m pip install --upgrade pip
-          pip install uv==${{ env.UV_VERSION }}
-
-      - name: Cache dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/uv
-            ~/.cache/pip
-          key: ${{ runner.os }}-py${{ env.PYTHON_VERSION }}-uv${{ env.UV_VERSION }}-release-${{ hashFiles('requirements.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-py${{ env.PYTHON_VERSION }}-uv${{ env.UV_VERSION }}-release-
+          uv-version: ${{ env.UV_VERSION }}
+          cache-key: release-validate
+          extra-cache-paths: |
+            dist/
+            *.egg-info/
 
       - name: Install dependencies
         run: |
           uv pip install -r requirements.lock --system
-          uv pip install hatch --system
+          uv pip install hatch python-semantic-release --system
+
+      - name: Build package
+        run: |
+          uv pip install -e .
+          python -m build
+          ls -la dist/
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: |
+            dist/
+            *.egg-info/
+          retention-days: 30
 
       - name: Validate release readiness
         id: validate
         continue-on-error: true
         run: |
-          hatch run validate-release || echo "::warning::Release validation failed"
+          # Check if build artifacts exist
+          if [ ! -d "dist" ]; then
+            echo "::error::Build artifacts not found in dist/"
+            exit 1
+          fi
+
+          # Check if version file exists
+          if [ ! -f "src/conda_forge_converter/_version.py" ]; then
+            echo "::error::Version file not found"
+            exit 1
+          fi
+
+          # Check if changelog exists
+          if [ ! -f "CHANGELOG.md" ]; then
+            echo "::error::CHANGELOG.md not found"
+            exit 1
+          fi
+
+          # Get current version
+          CURRENT_VERSION=$(python -c "from conda_forge_converter import __version__; print(__version__)")
+          echo "current_version=$CURRENT_VERSION" >> "$GITHUB_OUTPUT"
+
+          echo "::notice::Release validation passed"
 
       - name: Notify on failure
         if: failure()
         uses: actions/github-script@v7
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const message = `Release validation failed for ${{ env.RELEASE_VERSION }}`;
+            const message = `Release validation failed for ${{ steps.validate.outputs.current_version }}`;
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
@@ -90,7 +108,7 @@ jobs:
     name: Test on Multiple Platforms
     needs: [validate]
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 60
+    timeout-minutes: ${{ fromJSON(vars.TEST_TIMEOUT_MINUTES) || 30 }}
     strategy:
       matrix:
         python-version: ['3.11', '3.12']
@@ -98,31 +116,14 @@ jobs:
       fail-fast: false
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+      - uses: ./.github/actions/setup-python
         with:
           python-version: ${{ matrix.python-version }}
-          cache: 'pip'
-
-      - name: Install UV
-        run: |
-          python -m pip install --upgrade pip
-          pip install uv==${{ env.UV_VERSION }}
-
-      - name: Cache dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/uv
-            ~/.cache/pip
-          key: ${{ runner.os }}-py${{ matrix.python-version }}-uv${{ env.UV_VERSION }}-${{ hashFiles('requirements.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-py${{ matrix.python-version }}-uv${{ env.UV_VERSION }}-
+          uv-version: ${{ env.UV_VERSION }}
+          cache-key: release-test
+          extra-cache-paths: |
+            .coverage
+            coverage.xml
 
       - name: Install dependencies
         run: |
@@ -149,8 +150,9 @@ jobs:
         if: failure()
         uses: actions/github-script@v7
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const message = `Tests failed for ${{ env.RELEASE_VERSION }} on ${{ matrix.os }} with Python ${{ matrix.python-version }}`;
+            const message = `Tests failed for ${{ steps.run-tests.outputs.current_version }} on ${{ matrix.os }} with Python ${{ matrix.python-version }}`;
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
@@ -162,7 +164,7 @@ jobs:
     name: Approve Release
     needs: [test]
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: ${{ fromJSON(vars.TEST_TIMEOUT_MINUTES) || 30 }}
     environment:
       name: production
       url: ${{ github.server_url }}/${{ github.repository }}/releases
@@ -181,7 +183,6 @@ jobs:
             **Release Details:**
             - Version: ${{ env.RELEASE_VERSION }}
             - Triggered by: ${{ github.actor }}
-            - Force Level: ${{ github.event.inputs.force_level }}
 
             Please review the test results and approve this release if everything looks good.
 
@@ -192,6 +193,7 @@ jobs:
         if: success()
         uses: actions/github-script@v7
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const message = `Release approved by ${{ github.actor }} at $(date)`;
             github.rest.issues.createComment({
@@ -206,7 +208,7 @@ jobs:
     needs: [approve-release]
     if: ${{ github.event.inputs.require_approval == 'true' || always() }}
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: ${{ fromJSON(vars.RELEASE_TIMEOUT_MINUTES) || 90 }}
     permissions:
       contents: write
       id-token: write
@@ -215,44 +217,32 @@ jobs:
       version: ${{ steps.publish.outputs.version }}
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Set up Python ${{ env.PYTHON_VERSION }}
-        uses: actions/setup-python@v5
+      - uses: ./.github/actions/setup-python
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-          cache: 'pip'
-
-      - name: Install UV
-        run: |
-          python -m pip install --upgrade pip
-          pip install uv==${{ env.UV_VERSION }}
+          uv-version: ${{ env.UV_VERSION }}
+          cache-key: release
+          extra-cache-paths: |
+            dist/
+            *.egg-info/
 
       - name: Install dependencies
         run: |
           uv pip install -r requirements.lock --system
           uv pip install python-semantic-release build twine hatch --system
 
-      - name: Semantic Release (Production)
+      - name: Build package
+        run: |
+          uv pip install -e .
+          python -m build
+
+      - name: Semantic Release
         id: release
         if: ${{ !env.ACT_LOCAL_TESTING || env.ACT_LOCAL_TESTING != 'true' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if [ "${{ github.event.inputs.force_level }}" != "auto" ]; then
-            if [ "${{ github.event.inputs.force_level }}" == "major" ]; then
-              semantic-release version --major --no-commit --no-tag --no-push --no-vcs-release
-            elif [ "${{ github.event.inputs.force_level }}" == "minor" ]; then
-              semantic-release version --minor --no-commit --no-tag --no-push --no-vcs-release
-            elif [ "${{ github.event.inputs.force_level }}" == "patch" ]; then
-              semantic-release version --patch --no-commit --no-tag --no-push --no-vcs-release
-            fi
-          else
-            semantic-release version --no-commit --no-tag --no-push --no-vcs-release
-          fi
+          semantic-release version --no-commit --no-tag --no-push --no-vcs-release
           # Extract version from _version.py
           VERSION=$(python -c "from conda_forge_converter import __version__; print(__version__)")
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
@@ -265,27 +255,17 @@ jobs:
           echo "In production, this would determine the next version number"
           echo "version=0.0.0-local" >> "$GITHUB_OUTPUT"
 
-      - name: Create Release (Production)
-        uses: softprops/action-gh-release@v2
-        if: ${{ !env.ACT_LOCAL_TESTING || env.ACT_LOCAL_TESTING != 'true' }}
+      - name: Create Release
+        uses: ./.github/actions/mock-service
         with:
-          tag_name: v${{ steps.release.outputs.version }}
-          name: Release v${{ steps.release.outputs.version }}
-          body_path: CHANGELOG.md
-          draft: false
-          prerelease: false
-          generate_release_notes: true
+          service-name: GitHub Release
+          mock-script: |
+            echo "Creating GitHub release with tag v0.0.0-local"
+            echo "Release would include changelog and release notes"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Mock GitHub Release (Local Testing)
-        if: ${{ env.ACT_LOCAL_TESTING == 'true' }}
-        run: |
-          echo "Mocking GitHub release creation for local testing"
-          echo "In production, this would create a GitHub release with tag v0.0.0-local"
-          echo "Release would include changelog and release notes"
-
-      - name: Build and publish (Production)
+      - name: Build and publish
         id: publish
         if: ${{ !env.ACT_LOCAL_TESTING || env.ACT_LOCAL_TESTING != 'true' }}
         run: |
@@ -297,16 +277,6 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPOSITORY_URL: https://upload.pypi.org/legacy/
           PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
-
-      - name: Mock Build and Publish (Local Testing)
-        id: publish_mock
-        if: ${{ env.ACT_LOCAL_TESTING == 'true' }}
-        run: |
-          echo "Mocking package build and publish for local testing"
-          echo "In production, this would build and publish the package to PyPI"
-          python -m build
-          echo "Package built successfully to dist/ directory"
-          echo "version=0.0.0-local" >> "$GITHUB_OUTPUT"
 
       - name: Upload build artifacts
         if: always()
@@ -322,8 +292,9 @@ jobs:
         if: failure()
         uses: actions/github-script@v7
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const message = `Release failed for ${{ env.RELEASE_VERSION }}`;
+            const message = `Release failed for ${{ steps.release.outputs.version }}`;
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
@@ -336,15 +307,12 @@ jobs:
     needs: [release]
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python ${{ env.PYTHON_VERSION }}
-        uses: actions/setup-python@v5
+      - uses: ./.github/actions/setup-python
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+          uv-version: ${{ env.UV_VERSION }}
+          cache-key: health-check
 
-      # This step is skipped in local testing mode
       - name: Install released package (Production)
         id: install
         if: ${{ !env.ACT_LOCAL_TESTING || env.ACT_LOCAL_TESTING != 'true' }}
@@ -358,7 +326,6 @@ jobs:
             exit 1
           fi
 
-      # This step only runs in local testing mode
       - name: Mock package installation (Local Testing)
         id: install_mock
         if: ${{ env.ACT_LOCAL_TESTING == 'true' }}
@@ -367,7 +334,6 @@ jobs:
           echo "In production, this would install the package from PyPI"
           echo "status=success" >> "$GITHUB_OUTPUT"
 
-      # This step is skipped in local testing mode
       - name: Basic functionality test (Production)
         id: test
         if: ${{ steps.install.outputs.status == 'success' && (!env.ACT_LOCAL_TESTING || env.ACT_LOCAL_TESTING != 'true') }}
@@ -377,7 +343,6 @@ jobs:
           # Add more comprehensive tests as needed
           echo "status=success" >> "$GITHUB_OUTPUT"
 
-      # This step only runs in local testing mode
       - name: Mock functionality test (Local Testing)
         id: test_mock
         if: ${{ env.ACT_LOCAL_TESTING == 'true' }}
@@ -392,15 +357,11 @@ jobs:
     if: failure() && needs.release.result == 'success'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Set up Python ${{ env.PYTHON_VERSION }}
-        uses: actions/setup-python@v5
+      - uses: ./.github/actions/setup-python
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+          uv-version: ${{ env.UV_VERSION }}
+          cache-key: rollback
 
       - name: Install dependencies
         run: |
@@ -413,33 +374,12 @@ jobs:
           PREV_VERSION=$(git describe --abbrev=0 --tags "$(git rev-list --tags --skip=1 --max-count=1)")
           echo "version=${PREV_VERSION#v}" >> "$GITHUB_OUTPUT"
 
-      # This step is skipped in local testing mode
-      - name: Create rollback PR (Production)
-        uses: peter-evans/create-pull-request@v6
-        if: ${{ !env.ACT_LOCAL_TESTING || env.ACT_LOCAL_TESTING != 'true' }}
+      - name: Create rollback PR
+        uses: ./.github/actions/mock-service
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "chore: rollback to version ${{ steps.prev_version.outputs.version }} due to failed health check"
-          title: "Emergency Rollback to ${{ steps.prev_version.outputs.version }}"
-          body: |
-            ## Emergency Rollback
-
-            The release of version ${{ needs.release.outputs.version }} failed health checks.
-            This PR rolls back to the previous stable version ${{ steps.prev_version.outputs.version }}.
-
-            ### Failure Details
-
-            - Release workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-
-            Please investigate the cause of the failure before attempting another release.
-          branch: rollback-${{ steps.prev_version.outputs.version }}
-          base: master
-          labels: rollback,emergency
-
-      # This step only runs in local testing mode
-      - name: Mock rollback PR (Local Testing)
-        if: ${{ env.ACT_LOCAL_TESTING == 'true' }}
-        run: |
-          echo "Mocking rollback PR creation for local testing"
-          echo "In production, this would create a PR to roll back to the previous version"
-          echo "This would happen if the health check failed after release"
+          service-name: Rollback PR
+          mock-script: |
+            echo "Creating rollback PR to version ${{ steps.prev_version.outputs.version }}"
+            echo "In production, this would create a PR to roll back to the previous version"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

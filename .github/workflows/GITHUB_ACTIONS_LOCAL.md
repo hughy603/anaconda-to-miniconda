@@ -8,6 +8,20 @@ This document describes how to test GitHub Actions workflows locally using [act]
 - [act](https://github.com/nektos/act#installation) installed
 - PowerShell (for Windows users)
 
+## Environment Configuration
+
+The project uses a shared environment file (`.github/workflows/.env`) for common variables:
+
+```bash
+PYTHON_VERSION=3.11
+UV_VERSION=0.6.14
+ACT_LOCAL_TESTING=${ACT_LOCAL_TESTING:-false}
+COVERAGE_THRESHOLD=60
+TEST_TIMEOUT_MINUTES=30
+BUILD_TIMEOUT_MINUTES=60
+RELEASE_TIMEOUT_MINUTES=90
+```
+
 ## Testing Workflows
 
 ### Using the PowerShell Script
@@ -40,6 +54,20 @@ act -W .github/workflows/validate-github-actions.yml -e pull_request
 act -W .github/workflows/validate-github-actions.yml -e push -j validate
 ```
 
+## Composite Actions
+
+The project uses several composite actions to simplify workflow configuration:
+
+1. **Setup Python Environment** (`.github/actions/setup-python/action.yml`)
+
+   - Handles Python setup, UV installation, and dependency caching
+   - Used in all workflows requiring Python
+
+1. **Mock External Service** (`.github/actions/mock-service/action.yml`)
+
+   - Provides consistent mocking of external services during local testing
+   - Used for services like Codecov, SonarQube, etc.
+
 ## Environment Variables
 
 The following environment variables are set by default:
@@ -69,3 +97,31 @@ The following environment variables are set by default:
 
    - Check the job name in your workflow file
    - Make sure the job is not skipped due to conditions
+
+1. **Composite action not found**
+
+   - Verify the action path is correct
+   - Check that the action file exists in the specified location
+
+## Best Practices
+
+1. **Use Environment Variables**
+
+   - Always use variables from `.github/workflows/.env`
+   - Override variables using `-e` flag with act
+
+1. **Mock External Services**
+
+   - Use the mock-service composite action
+   - Provide meaningful mock output
+
+1. **Cache Management**
+
+   - Use the setup-python composite action for consistent caching
+   - Clear caches when testing dependency changes
+
+1. **Testing Strategy**
+
+   - Test individual jobs first
+   - Test full workflows after individual jobs work
+   - Use different event types to verify triggers
