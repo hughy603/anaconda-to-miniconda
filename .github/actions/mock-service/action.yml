@@ -17,8 +17,8 @@ runs:
       if: ${{ env.ACT_LOCAL_TESTING == 'true' }}
       shell: bash
       env:
-        SERVICE_NAME: ${{ inputs.service-name }}
-        MOCK_SCRIPT: ${{ inputs.mock-script }}
+        SERVICE_NAME: ${{ github.event.inputs.service-name }}
+        MOCK_SCRIPT: ${{ github.event.inputs.mock-script }}
       run: |
         echo "::notice::Mocking $SERVICE_NAME service for local testing"
         $MOCK_SCRIPT
@@ -28,7 +28,7 @@ runs:
       if: ${{ env.ACT_LOCAL_TESTING != 'true' }}
       shell: bash
       env:
-        SERVICE_NAME: ${{ inputs.service-name }}
+        SERVICE_NAME: ${{ github.event.inputs.service-name }}
       run: |
         echo "::notice::Running $SERVICE_NAME service in production mode"
         # Production service execution would go here
