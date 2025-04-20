@@ -8,7 +8,7 @@ inputs:
   mock-script:
     description: "Script to run for mocking the service"
     required: false
-    default: 'echo "Mocking ${{ inputs.service-name }} service for local testing"'
+    default: 'echo "Mocking service for local testing"'
 
 runs:
   using: "composite"
