@@ -16,14 +16,19 @@ runs:
     - name: Mock Service
       if: ${{ env.ACT_LOCAL_TESTING == 'true' }}
       shell: bash
+      env:
+        SERVICE_NAME: ${{ inputs.service-name }}
+        MOCK_SCRIPT: ${{ inputs.mock-script }}
       run: |
-        echo "::notice::Mocking ${{ inputs.service-name }} service for local testing"
-        ${{ inputs.mock-script }}
+        echo "::notice::Mocking $SERVICE_NAME service for local testing"
+        $MOCK_SCRIPT
         echo "::notice::Mock service execution completed"
 
     - name: Run Service (Production)
       if: ${{ env.ACT_LOCAL_TESTING != 'true' }}
       shell: bash
+      env:
+        SERVICE_NAME: ${{ inputs.service-name }}
       run: |
-        echo "::notice::Running ${{ inputs.service-name }} service in production mode"
+        echo "::notice::Running $SERVICE_NAME service in production mode"
         # Production service execution would go here
