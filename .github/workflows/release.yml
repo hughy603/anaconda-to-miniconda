@@ -31,7 +31,7 @@ jobs:
   validate:
     name: Validate Release
     runs-on: ubuntu-latest
-    timeout-minutes: ${{ fromJSON(vars.TEST_TIMEOUT_MINUTES) || 30 }}
+    timeout-minutes: ${{ vars.TEST_TIMEOUT_MINUTES && fromJSON(vars.TEST_TIMEOUT_MINUTES) || 30 }}
     steps:
       - uses: ./.github/actions/setup-python
         with:
@@ -108,7 +108,7 @@ jobs:
     name: Test on Multiple Platforms
     needs: [validate]
     runs-on: ${{ matrix.os }}
-    timeout-minutes: ${{ fromJSON(vars.TEST_TIMEOUT_MINUTES) || 30 }}
+    timeout-minutes: ${{ vars.TEST_TIMEOUT_MINUTES && fromJSON(vars.TEST_TIMEOUT_MINUTES) || 30 }}
     strategy:
       matrix:
         python-version: ['3.11', '3.12']
@@ -164,7 +164,7 @@ jobs:
     name: Approve Release
     needs: [test]
     runs-on: ubuntu-latest
-    timeout-minutes: ${{ fromJSON(vars.TEST_TIMEOUT_MINUTES) || 30 }}
+    timeout-minutes: ${{ vars.TEST_TIMEOUT_MINUTES && fromJSON(vars.TEST_TIMEOUT_MINUTES) || 30 }}
     environment:
       name: production
       url: ${{ github.server_url }}/${{ github.repository }}/releases
@@ -208,7 +208,7 @@ jobs:
     needs: [approve-release]
     if: ${{ github.event.inputs.require_approval == 'true' || always() }}
     runs-on: ubuntu-latest
-    timeout-minutes: ${{ fromJSON(vars.RELEASE_TIMEOUT_MINUTES) || 90 }}
+    timeout-minutes: ${{ vars.RELEASE_TIMEOUT_MINUTES && fromJSON(vars.RELEASE_TIMEOUT_MINUTES) || 90 }}
     permissions:
       contents: write
       id-token: write

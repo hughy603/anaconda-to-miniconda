@@ -13,6 +13,7 @@ permissions:
   issues: write
 
 env:
+  # Load default values from variables file
   PYTHON_VERSION: ${{ vars.PYTHON_VERSION || '3.11' }}
   UV_VERSION: ${{ vars.UV_VERSION || '0.6.14' }}
   ACT_LOCAL_TESTING: ${{ vars.ACT_LOCAL_TESTING || 'false' }}

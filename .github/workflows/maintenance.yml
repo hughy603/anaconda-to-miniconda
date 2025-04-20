@@ -14,7 +14,7 @@ jobs:
   audit:
     name: Security Audit
     runs-on: ubuntu-latest
-    timeout-minutes: ${{ fromJSON(vars.TEST_TIMEOUT_MINUTES) || 30 }}
+    timeout-minutes: ${{ vars.TEST_TIMEOUT_MINUTES && fromJSON(vars.TEST_TIMEOUT_MINUTES) || 30 }}
     steps:
       - uses: ./.github/actions/setup-python
         with:

@@ -17,7 +17,7 @@ jobs:
   sonarqube:
     name: SonarQube Analysis
     runs-on: ubuntu-latest
-    timeout-minutes: ${{ fromJSON(vars.TEST_TIMEOUT_MINUTES) || 30 }}
+    timeout-minutes: ${{ vars.TEST_TIMEOUT_MINUTES && fromJSON(vars.TEST_TIMEOUT_MINUTES) || 30 }}
     steps:
       - uses: ./.github/actions/setup-python
         with:
@@ -53,7 +53,7 @@ jobs:
   secret-scanning:
     name: Secret Scanning Notification
     runs-on: ubuntu-latest
-    timeout-minutes: ${{ fromJSON(vars.TEST_TIMEOUT_MINUTES) || 30 }}
+    timeout-minutes: ${{ vars.TEST_TIMEOUT_MINUTES && fromJSON(vars.TEST_TIMEOUT_MINUTES) || 30 }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

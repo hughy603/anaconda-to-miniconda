@@ -35,7 +35,7 @@ jobs:
   build:
     name: Build Documentation
     runs-on: ubuntu-latest
-    timeout-minutes: ${{ fromJSON(vars.BUILD_TIMEOUT_MINUTES) || 60 }}
+    timeout-minutes: ${{ vars.BUILD_TIMEOUT_MINUTES && fromJSON(vars.BUILD_TIMEOUT_MINUTES) || 60 }}
     steps:
       - uses: ./.github/actions/setup-python
         with:
@@ -104,7 +104,7 @@ jobs:
     needs: build
     if: github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    timeout-minutes: ${{ fromJSON(vars.TEST_TIMEOUT_MINUTES) || 30 }}
+    timeout-minutes: ${{ vars.TEST_TIMEOUT_MINUTES && fromJSON(vars.TEST_TIMEOUT_MINUTES) || 30 }}
     steps:
       - name: Deploy to GitHub Pages
         uses: ./.github/actions/mock-service
