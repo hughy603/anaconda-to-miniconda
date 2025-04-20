@@ -87,19 +87,27 @@ repos:
   - repo: local
     hooks:
       # Dependency management
-      - id: deps-lock
-        name: Lock dependencies with UV
-        entry: uv pip compile pyproject.toml --output-file=requirements.lock --extra=dev --extra=test
+      - id: uv-lock
+        name: Lock UV dependencies
+        entry: uv lock
         language: system
-        files: ^(pyproject\.toml|requirements\.lock)$
+        files: ^pyproject\.toml$
         pass_filenames: false
         stages: [pre-commit]
 
-      - id: uv-lock
-        name: Update UV lockfile
-        entry: uv pip compile pyproject.toml --output-file=requirements.lock --extra=dev --extra=test
+      - id: requirements-lock
+        name: Lock requirements with UV
+        entry: uv pip compile pyproject.toml --output-file=requirements.lock --extra=all --preview
         language: system
-        files: ^(pyproject\.toml|uv\.lock)$
+        files: ^pyproject\.toml$
+        pass_filenames: false
+        stages: [pre-commit]
+
+      - id: prod-requirements-lock
+        name: Lock production requirements with UV
+        entry: uv pip compile pyproject.toml --output-file=requirements-prod.lock --preview
+        language: system
+        files: ^pyproject\.toml$
         pass_filenames: false
         stages: [pre-commit]
 

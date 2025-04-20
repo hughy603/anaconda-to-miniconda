@@ -33,12 +33,13 @@ classifiers = [
     "Topic :: System :: Systems Administration",
 ]
 dependencies = [
-    "pyyaml>=6.0.1",  # Downgraded from 6.0.1 to test Dependabot
-    "typing_extensions>=4.10.0", # For additional type hints if needed
-    "click>=8.1.0",              # Modern CLI framework
-    "rich>=13.0.0",              # Terminal formatting
-    "pydantic>=2.0.0",           # Data validation and settings management
+    "pyyaml>=6.0.1",
+    "typing_extensions>=4.10.0",
+    "click>=8.1.0",
+    "rich>=13.0.0",
+    "pydantic>=2.0.0",
 ]
+
 [project.optional-dependencies]
 dev = [
     "ruff>=0.3.0",
@@ -68,7 +69,6 @@ docs = [
     "mkdocs-git-revision-date-localized-plugin>=1.4.5",
 ]
 all = [
-    #"actionlint>=1.6.0",  # validation
     "conda-forge-converter[dev]",
     "conda-forge-converter[test]",
     "conda-forge-converter[docs]",
@@ -238,7 +238,8 @@ prerelease_token = "feature"
 
 # UV configuration for dependency management
 [tool.uv]
-# UV will automatically use requirements.lock for reproducible installations
+native-tls = true
+preview = true
 
 # Coverage configuration is now in .coveragerc
 

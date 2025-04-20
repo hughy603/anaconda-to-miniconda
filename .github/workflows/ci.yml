@@ -46,7 +46,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv pip install -e ".[dev,test]" --system
+          uv pip install -e ".[dev,test]" --system --no-deps
+          uv pip install -r requirements.lock
 
       - name: Run linting and type checking
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
