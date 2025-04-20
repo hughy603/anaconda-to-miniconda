@@ -9,53 +9,27 @@ on:
     - cron: '0 0 * * 1'  # Run weekly on Monday
 
 env:
-  PYTHON_VERSION: "3.11"
-  UV_VERSION: "0.6.14"
+  PYTHON_VERSION: ${{ vars.PYTHON_VERSION || '3.11' }}
+  UV_VERSION: ${{ vars.UV_VERSION || '0.6.14' }}
   ACT_LOCAL_TESTING: ${{ vars.ACT_LOCAL_TESTING || 'false' }}
 
 jobs:
   sonarqube:
     name: SonarQube Analysis
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: ${{ vars.TEST_TIMEOUT_MINUTES && fromJSON(vars.TEST_TIMEOUT_MINUTES) || 30 }}
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # Shallow clones should be disabled for better relevancy of analysis
 
-      # - name: Validate SonarQube Configuration
-      #   if: ${{ !env.ACT_LOCAL_TESTING || env.ACT_LOCAL_TESTING != 'true' }}
-      #   run: |
-      #     if [ -z "${{ secrets.SONAR_TOKEN }}" ]; then
-      #       echo "::error::SONAR_TOKEN is not set. Please add it to your repository secrets."
-      #       exit 1
-      #     fi
-      #     if [ -z "${{ secrets.SONAR_HOST_URL }}" ]; then
-      #       echo "::error::SONAR_HOST_URL is not set. Please add it to your repository secrets."
-      #       exit 1
-      #     fi
-
-      - name: Set up Python ${{ env.PYTHON_VERSION }}
-        uses: actions/setup-python@v5
+      - uses: ./.github/actions/setup-python
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-          cache: 'pip'
-
-      - name: Install UV
-        run: |
-          python -m pip install --upgrade pip
-          pip install uv==${{ env.UV_VERSION }}
-
-      - name: Cache dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/uv
-            ~/.cache/pip
-          key: ${{ runner.os }}-py${{ env.PYTHON_VERSION }}-uv${{ env.UV_VERSION }}-security-${{ hashFiles('requirements.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-py${{ env.PYTHON_VERSION }}-uv${{ env.UV_VERSION }}-security-
+          uv-version: ${{ env.UV_VERSION }}
+          cache-key: security
+          extra-cache-paths: |
+            .coverage
+            coverage.xml
 
       - name: Install dependencies
         run: |
@@ -66,35 +40,23 @@ jobs:
         run: |
           hatch run test
 
-      # This step is skipped in local testing mode
-      # - name: SonarQube Scan (Production)
-      #   uses: SonarSource/sonarqube-scan-action@v1
-      #   if: ${{ !env.ACT_LOCAL_TESTING || env.ACT_LOCAL_TESTING != 'true' }}
-      #   env:
-      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      #     SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-      #   with:
-      #     args: >
-      #       -Dsonar.projectKey=conda-forge-converter
-      #       -Dsonar.python.coverage.reportPaths=coverage.xml
-      #       -Dsonar.sources=src
-      #       -Dsonar.tests=tests
-      #       -Dsonar.python.xunit.reportPath=pytest.xml
-      #       -Dsonar.qualitygate.wait=true
-
-      # This step only runs in local testing mode
-      - name: Mock SonarQube Scan (Local Testing)
-        if: ${{ env.ACT_LOCAL_TESTING == 'true' }}
-        run: |
-          echo "Mocking SonarQube scan for local testing"
-          echo "In production, this would analyze code quality and security issues"
-          echo "Coverage report generated at coverage.xml"
-          echo "You can run local static analysis with: hatch run lint"
+      - name: SonarQube Scan
+        uses: ./.github/actions/mock-service
+        with:
+          service-name: SonarQube
+          mock-script: |
+            echo "Mocking SonarQube scan for local testing"
+            echo "In production, this would analyze code quality and security issues"
+            echo "Coverage report generated at coverage.xml"
+            echo "You can run local static analysis with: hatch run lint"
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
   secret-scanning:
     name: Secret Scanning Notification
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: ${{ vars.TEST_TIMEOUT_MINUTES && fromJSON(vars.TEST_TIMEOUT_MINUTES) || 30 }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

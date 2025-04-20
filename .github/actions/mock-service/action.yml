@@ -1,0 +1,34 @@
+name: "Mock External Service"
+description: "Mocks external service calls during local testing"
+
+inputs:
+  service-name:
+    description: "Name of the service being mocked"
+    required: true
+  mock-script:
+    description: "Script to run for mocking the service"
+    required: false
+    default: 'echo "Mocking service for local testing"'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Mock Service
+      if: ${{ env.ACT_LOCAL_TESTING == 'true' }}
+      shell: bash
+      env:
+        SERVICE_NAME: ${{ github.event.inputs.service-name }}
+        MOCK_SCRIPT: ${{ github.event.inputs.mock-script }}
+      run: |
+        echo "::notice::Mocking $SERVICE_NAME service for local testing"
+        $MOCK_SCRIPT
+        echo "::notice::Mock service execution completed"
+
+    - name: Run Service (Production)
+      if: ${{ env.ACT_LOCAL_TESTING != 'true' }}
+      shell: bash
+      env:
+        SERVICE_NAME: ${{ github.event.inputs.service-name }}
+      run: |
+        echo "::notice::Running $SERVICE_NAME service in production mode"
+        # Production service execution would go here
