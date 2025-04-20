@@ -45,10 +45,19 @@ jobs:
             dist/
             *.egg-info/
 
+      - name: Create virtual environment
+        run: |
+          uv venv .venv
+          source .venv/bin/activate
+
       - name: Install dependencies
         run: |
-          uv pip install -r requirements.lock --system
-          uv pip install hatch python-semantic-release --system
+          uv pip install -r uv.lock
+          uv pip install hatch python-semantic-release
+
+      - name: Run pre-commit checks
+        run: |
+          pre-commit run --all-files
 
       - name: Build package
         run: |
@@ -125,19 +134,30 @@ jobs:
           uv-version: ${{ env.UV_VERSION }}
           cache-key: release-test
           extra-cache-paths: |
+            ~/.cache/hatch
             .coverage
             coverage.xml
 
+      - name: Create virtual environment
+        run: |
+          uv venv .venv
+          source .venv/bin/activate
+
       - name: Install dependencies
         run: |
-          uv pip install -r requirements.lock --system
-          uv pip install hatch --system
+          uv pip install -r uv.lock
+          uv pip install hatch
+
+      - name: Run linting and type checking
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
+        run: |
+          hatch run lint
+          hatch run type-check
 
       - name: Run tests
         id: run-tests
-        continue-on-error: true
         run: |
-          hatch run test || echo "::warning::Tests failed"
+          hatch run test
 
       - name: Upload test results
         if: always()
@@ -148,6 +168,14 @@ jobs:
             .coverage
             coverage.xml
           retention-days: 30
+
+      - name: Upload coverage to Codecov
+        uses: ./.github/actions/mock-service
+        with:
+          service-name: Codecov
+          mock-script: |
+            echo "Coverage report available at coverage.xml"
+            echo "In production, this would upload to Codecov"
 
       - name: Notify on failure
         if: failure()
@@ -229,10 +257,15 @@ jobs:
             dist/
             *.egg-info/
 
+      - name: Create virtual environment
+        run: |
+          uv venv .venv
+          source .venv/bin/activate
+
       - name: Install dependencies
         run: |
-          uv pip install -r requirements.lock --system
-          uv pip install python-semantic-release build twine hatch --system
+          uv pip install -r uv.lock
+          uv pip install python-semantic-release build twine hatch
 
       - name: Build package
         run: |
@@ -246,24 +279,20 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           semantic-release version --no-commit --no-tag --no-push --no-vcs-release
-          # Extract version from _version.py
           VERSION=$(python -c "from conda_forge_converter import __version__; print(__version__)")
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
-      - name: Mock Semantic Release (Local Testing)
-        id: release_mock
-        if: ${{ env.ACT_LOCAL_TESTING == 'true' }}
+      - name: Generate changelog
         run: |
-          echo "Mocking semantic release for local testing"
-          echo "In production, this would determine the next version number"
-          echo "version=0.0.0-local" >> "$GITHUB_OUTPUT"
+          semantic-release changelog --unreleased
+          cat CHANGELOG.md
 
       - name: Create Release
         uses: ./.github/actions/mock-service
         with:
           service-name: GitHub Release
           mock-script: |
-            echo "Creating GitHub release with tag v0.0.0-local"
+            echo "Creating GitHub release with tag v${{ steps.release.outputs.version }}"
             echo "Release would include changelog and release notes"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -273,7 +302,6 @@ jobs:
         if: ${{ !env.ACT_LOCAL_TESTING || env.ACT_LOCAL_TESTING != 'true' }}
         run: |
           semantic-release publish
-          # Extract version from _version.py again to ensure we have the latest
           VERSION=$(python -c "from conda_forge_converter import __version__; print(__version__)")
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
         env:
@@ -316,11 +344,16 @@ jobs:
           uv-version: ${{ env.UV_VERSION }}
           cache-key: health-check
 
+      - name: Create virtual environment
+        run: |
+          uv venv .venv
+          source .venv/bin/activate
+
       - name: Install released package (Production)
         id: install
         if: ${{ !env.ACT_LOCAL_TESTING || env.ACT_LOCAL_TESTING != 'true' }}
         run: |
-          pip install conda-forge-converter==${{ needs.release.outputs.version }} --no-cache-dir
+          uv pip install conda-forge-converter==${{ needs.release.outputs.version }} --no-cache-dir
           # Verify installation
           if conda-forge-converter --version | grep -q "${{ needs.release.outputs.version }}"; then
             echo "status=success" >> "$GITHUB_OUTPUT"
@@ -329,30 +362,11 @@ jobs:
             exit 1
           fi
 
-      - name: Mock package installation (Local Testing)
-        id: install_mock
-        if: ${{ env.ACT_LOCAL_TESTING == 'true' }}
+      - name: Run smoke tests
+        if: steps.install.outputs.status == 'success'
         run: |
-          echo "Mocking package installation for local testing"
-          echo "In production, this would install the package from PyPI"
-          echo "status=success" >> "$GITHUB_OUTPUT"
-
-      - name: Basic functionality test (Production)
-        id: test
-        if: ${{ steps.install.outputs.status == 'success' && (!env.ACT_LOCAL_TESTING || env.ACT_LOCAL_TESTING != 'true') }}
-        run: |
-          # Run a basic test to ensure the package works
           conda-forge-converter --help
-          # Add more comprehensive tests as needed
-          echo "status=success" >> "$GITHUB_OUTPUT"
-
-      - name: Mock functionality test (Local Testing)
-        id: test_mock
-        if: ${{ env.ACT_LOCAL_TESTING == 'true' }}
-        run: |
-          echo "Mocking package functionality test for local testing"
-          echo "In production, this would verify the package works correctly"
-          echo "status=success" >> "$GITHUB_OUTPUT"
+          # Add more comprehensive smoke tests as needed
 
   rollback:
     name: Rollback Release
@@ -366,14 +380,18 @@ jobs:
           uv-version: ${{ env.UV_VERSION }}
           cache-key: rollback
 
+      - name: Create virtual environment
+        run: |
+          uv venv .venv
+          source .venv/bin/activate
+
       - name: Install dependencies
         run: |
-          pip install python-semantic-release twine
+          uv pip install python-semantic-release twine
 
       - name: Get previous version
         id: prev_version
         run: |
-          # Get the previous version tag
           PREV_VERSION=$(git describe --abbrev=0 --tags "$(git rev-list --tags --skip=1 --max-count=1)")
           echo "version=${PREV_VERSION#v}" >> "$GITHUB_OUTPUT"
 
