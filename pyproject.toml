@@ -33,7 +33,7 @@ classifiers = [
     "Topic :: System :: Systems Administration",
 ]
 dependencies = [
-    "pyyaml>=6.0.1",
+    "pyyaml>=6.0.0",  # Downgraded from 6.0.1 to test Dependabot
     "typing_extensions>=4.10.0", # For additional type hints if needed
     "click>=8.1.0",              # Modern CLI framework
     "rich>=13.0.0",              # Terminal formatting
