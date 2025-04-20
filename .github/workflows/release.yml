@@ -36,6 +36,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Debug Environment
+        run: |
+          echo "::group::Environment Variables"
+          echo "PYTHON_VERSION: ${{ env.PYTHON_VERSION }}"
+          echo "UV_VERSION: ${{ env.UV_VERSION }}"
+          echo "ACT_LOCAL_TESTING: ${{ env.ACT_LOCAL_TESTING }}"
+          echo "::endgroup::"
+
       - uses: ./.github/actions/setup-python
         with:
           python-version: ${{ env.PYTHON_VERSION }}
@@ -47,23 +55,31 @@ jobs:
 
       - name: Create virtual environment
         run: |
+          echo "::group::Creating Virtual Environment"
           uv venv .venv
           source .venv/bin/activate
+          echo "::endgroup::"
 
       - name: Install dependencies
         run: |
+          echo "::group::Installing Dependencies"
           uv pip install -r requirements.lock
           uv pip install hatch python-semantic-release pre-commit --system
+          echo "::endgroup::"
 
       - name: Run pre-commit checks
         run: |
+          echo "::group::Running Pre-commit Checks"
           uv run pre-commit run --all-files
+          echo "::endgroup::"
 
       - name: Build package
         run: |
+          echo "::group::Building Package"
           uv pip install -e .
           python -m build
           ls -la dist/
+          echo "::endgroup::"
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -78,6 +94,7 @@ jobs:
         id: validate
         continue-on-error: true
         run: |
+          echo "::group::Validating Release"
           # Check if build artifacts exist
           if [ ! -d "dist" ]; then
             echo "::error::Build artifacts not found in dist/"
@@ -99,25 +116,18 @@ jobs:
           # Get current version
           CURRENT_VERSION=$(python -c "from conda_forge_converter import __version__; print(__version__)")
           echo "current_version=$CURRENT_VERSION" >> "$GITHUB_OUTPUT"
-
           echo "::notice::Release validation passed"
+          echo "::endgroup::"
 
       - name: Notify on failure
         if: failure()
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const validateContext = github.context;
-            const message = `Release validation failed for ${{ steps.validate.outputs.current_version }}`;
-
-            // Create a new issue since we don't have an issue context
-            github.rest.issues.create({
-              owner: validateContext.repo.owner,
-              repo: validateContext.repo.repo,
-              title: `Release Validation Failed - ${validateContext.sha.substring(0, 7)}`,
-              body: message
-            });
+        run: |
+          echo "::error::Release validation failed for ${{ steps.validate.outputs.current_version }}"
+          echo "::error::See workflow logs for details: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          echo "::group::Debug Information"
+          echo "Current Version: ${{ steps.validate.outputs.current_version }}"
+          echo "Workflow Run ID: ${{ github.run_id }}"
+          echo "::endgroup::"
 
   test:
     name: Test (${{ matrix.os }}, Python ${{ matrix.python-version }})
@@ -134,6 +144,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Debug Environment
+        run: |
+          echo "::group::Environment Variables"
+          echo "PYTHON_VERSION: ${{ env.PYTHON_VERSION }}"
+          echo "UV_VERSION: ${{ env.UV_VERSION }}"
+          echo "ACT_LOCAL_TESTING: ${{ env.ACT_LOCAL_TESTING }}"
+          echo "::endgroup::"
+
       - uses: ./.github/actions/setup-python
         with:
           python-version: ${{ matrix.python-version }}
@@ -146,8 +164,10 @@ jobs:
 
       - name: Install dependencies
         run: |
+          echo "::group::Installing Dependencies"
           uv pip install -r requirements.lock
           uv pip install hatch python-semantic-release pre-commit --system
+          echo "::endgroup::"
 
       - name: Run linting and type checking
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
@@ -158,7 +178,9 @@ jobs:
       - name: Run tests
         id: run-tests
         run: |
+          echo "::group::Running Tests"
           hatch run test
+          echo "::endgroup::"
 
       - name: Upload test results
         if: always()
@@ -168,6 +190,7 @@ jobs:
           path: |
             .coverage
             coverage.xml
+            .pytest_cache/
           retention-days: 30
 
       - name: Upload coverage to Codecov
@@ -180,20 +203,14 @@ jobs:
 
       - name: Notify on failure
         if: failure()
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const testContext = github.context;
-            const message = `Tests failed for ${{ steps.run-tests.outputs.current_version }} on ${{ matrix.os }} with Python ${{ matrix.python-version }}`;
-
-            // Create a new issue since we don't have an issue context
-            github.rest.issues.create({
-              owner: testContext.repo.owner,
-              repo: testContext.repo.repo,
-              title: `Test Failure - ${testContext.sha.substring(0, 7)}`,
-              body: message
-            });
+        run: |
+          echo "::error::Tests failed for ${{ steps.run-tests.outputs.current_version }} on ${{ matrix.os }} with Python ${{ matrix.python-version }}"
+          echo "::error::See workflow logs for details: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          echo "::group::Debug Information"
+          echo "OS: ${{ matrix.os }}"
+          echo "Python Version: ${{ matrix.python-version }}"
+          echo "Workflow Run ID: ${{ github.run_id }}"
+          echo "::endgroup::"
 
   approve-release:
     name: Approve Release
@@ -263,18 +280,24 @@ jobs:
 
       - name: Create virtual environment
         run: |
+          echo "::group::Creating Virtual Environment"
           uv venv .venv
           source .venv/bin/activate
+          echo "::endgroup::"
 
       - name: Install dependencies
         run: |
+          echo "::group::Installing Dependencies"
           uv pip install -r uv.lock
           uv pip install python-semantic-release build twine hatch
+          echo "::endgroup::"
 
       - name: Build package
         run: |
+          echo "::group::Building Package"
           uv pip install -e .
           python -m build
+          echo "::endgroup::"
 
       - name: Semantic Release
         id: release
@@ -305,9 +328,11 @@ jobs:
         id: publish
         if: ${{ !env.ACT_LOCAL_TESTING || env.ACT_LOCAL_TESTING != 'true' }}
         run: |
+          echo "::group::Publishing Release"
           semantic-release publish
           VERSION=$(python -c "from conda_forge_converter import __version__; print(__version__)")
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "::endgroup::"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPOSITORY_URL: https://upload.pypi.org/legacy/
@@ -325,20 +350,13 @@ jobs:
 
       - name: Notify on failure
         if: failure()
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const releaseContext = github.context;
-            const message = `Release failed for ${{ steps.release.outputs.version }}`;
-
-            // Create a new issue since we don't have an issue context
-            github.rest.issues.create({
-              owner: releaseContext.repo.owner,
-              repo: releaseContext.repo.repo,
-              title: `Release Failed - ${releaseContext.sha.substring(0, 7)}`,
-              body: message
-            });
+        run: |
+          echo "::error::Release failed for ${{ steps.release.outputs.version }}"
+          echo "::error::See workflow logs for details: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          echo "::group::Debug Information"
+          echo "Release Version: ${{ steps.release.outputs.version }}"
+          echo "Workflow Run ID: ${{ github.run_id }}"
+          echo "::endgroup::"
 
   health-check:
     name: Deployment Health Check
@@ -353,13 +371,16 @@ jobs:
 
       - name: Create virtual environment
         run: |
+          echo "::group::Creating Virtual Environment"
           uv venv .venv
           source .venv/bin/activate
+          echo "::endgroup::"
 
       - name: Install released package (Production)
         id: install
         if: ${{ !env.ACT_LOCAL_TESTING || env.ACT_LOCAL_TESTING != 'true' }}
         run: |
+          echo "::group::Installing Released Package"
           uv pip install conda-forge-converter==${{ needs.release.outputs.version }} --no-cache-dir
           # Verify installation
           if conda-forge-converter --version | grep -q "${{ needs.release.outputs.version }}"; then
@@ -368,12 +389,15 @@ jobs:
             echo "status=failure" >> "$GITHUB_OUTPUT"
             exit 1
           fi
+          echo "::endgroup::"
 
       - name: Run smoke tests
         if: steps.install.outputs.status == 'success'
         run: |
+          echo "::group::Running Smoke Tests"
           conda-forge-converter --help
           # Add more comprehensive smoke tests as needed
+          echo "::endgroup::"
 
   rollback:
     name: Rollback Release
@@ -389,18 +413,24 @@ jobs:
 
       - name: Create virtual environment
         run: |
+          echo "::group::Creating Virtual Environment"
           uv venv .venv
           source .venv/bin/activate
+          echo "::endgroup::"
 
       - name: Install dependencies
         run: |
+          echo "::group::Installing Dependencies"
           uv pip install python-semantic-release twine
+          echo "::endgroup::"
 
       - name: Get previous version
         id: prev_version
         run: |
+          echo "::group::Getting Previous Version"
           PREV_VERSION=$(git describe --abbrev=0 --tags "$(git rev-list --tags --skip=1 --max-count=1)")
           echo "version=${PREV_VERSION#v}" >> "$GITHUB_OUTPUT"
+          echo "::endgroup::"
 
       - name: Create rollback PR
         uses: ./.github/actions/mock-service
