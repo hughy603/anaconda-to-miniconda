@@ -52,12 +52,11 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv pip install -r requirements-prod.lock
-          uv pip install hatch python-semantic-release pre-commit
+          uv pip install -r requirements.lock
 
       - name: Run pre-commit checks
         run: |
-          hatch run pre-commit run --all-files
+          uv run pre-commit run --all-files
 
       - name: Build package
         run: |
@@ -130,17 +129,20 @@ jobs:
             }
 
   test:
-    name: Test on Multiple Platforms
+    name: Test (${{ matrix.os }}, Python ${{ matrix.python-version }})
     needs: [validate]
     runs-on: ${{ matrix.os }}
     timeout-minutes: ${{ vars.TEST_TIMEOUT_MINUTES && fromJSON(vars.TEST_TIMEOUT_MINUTES) || 30 }}
     strategy:
       matrix:
-        python-version: ['3.11', '3.12']
+        python-version: ["3.11", "3.12"]
         os: [ubuntu-latest, windows-latest, macos-latest]
       fail-fast: false
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - uses: ./.github/actions/setup-python
         with:
           python-version: ${{ matrix.python-version }}
@@ -151,15 +153,15 @@ jobs:
             .coverage
             coverage.xml
 
-      - name: Create virtual environment
-        run: |
-          uv venv .venv
-          source .venv/bin/activate
-
       - name: Install dependencies
         run: |
-          uv pip install -r uv.lock
-          uv pip install hatch
+          uv pip install -r requirements.lock
+
+      - name: Run linting and type checking
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
+        run: |
+          hatch run lint
+          hatch run type-check
 
       - name: Run tests
         id: run-tests
@@ -170,7 +172,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-results-${{ matrix.python-version }}-${{ matrix.os }}
+          name: test-results-${{ matrix.os }}-py${{ matrix.python-version }}
           path: |
             .coverage
             coverage.xml
