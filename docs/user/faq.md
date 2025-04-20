@@ -61,54 +61,94 @@ conda create -n converter -c conda-forge python=3.10 conda-forge-converter
 conda activate converter
 ```
 
-## Usage Questions
+## Usage {#usage}
 
-### How do I convert a single environment?
+### Basic Usage
 
-Use the following command:
+The basic command syntax is:
 
 ```bash
-conda-forge-converter -s source_env -t target_env
+conda-forge-converter [OPTIONS] COMMAND [ARGS]...
 ```
 
-Replace `source_env` with your existing Anaconda environment name and `target_env` with the desired name for your new conda-forge environment.
+Common options include:
 
-### How do I convert multiple environments?
+- `--verbose`: Enable detailed output
+- `--dry-run`: Show what would happen without making changes
+- `--help`: Show help message and exit
 
-Use the batch mode:
+For detailed command options, run:
 
 ```bash
-conda-forge-converter --batch
+conda-forge-converter --help
 ```
 
-This will convert all environments. To convert only environments matching a pattern:
+### Environment Variables
+
+The tool respects the following environment variables:
+
+- `CONDA_FORGE_CONVERTER_CACHE_DIR`: Cache directory location
+- `CONDA_FORGE_CONVERTER_LOG_LEVEL`: Logging level (DEBUG, INFO, WARNING, ERROR)
+- `CONDA_FORGE_CONVERTER_CONFIG`: Path to custom config file
+
+## Common Workflows {#common-workflows}
+
+### Converting a Single Environment
+
+1. Create a backup of your environment:
+
+   ```bash
+   conda create --name myenv_backup --clone myenv
+   ```
+
+1. Convert the environment:
+
+   ```bash
+   conda-forge-converter -s myenv -t myenv_forge
+   ```
+
+1. Verify the conversion:
+
+   ```bash
+   conda-forge-converter verify myenv_forge
+   ```
+
+### Batch Converting Multiple Environments
+
+1. List all environments:
+
+   ```bash
+   conda-forge-converter list
+   ```
+
+1. Convert matching environments:
+
+   ```bash
+   conda-forge-converter --batch --pattern "data*"
+   ```
+
+1. Verify all conversions:
+
+   ```bash
+   conda-forge-converter verify-all
+   ```
+
+### Automated Conversion Pipeline
+
+For CI/CD pipelines:
 
 ```bash
-conda-forge-converter --batch --pattern 'data*'
-```
+#!/bin/bash
+# Convert environments
+conda-forge-converter --batch --non-interactive
 
-### Can I specify a different Python version for the new environment?
+# Verify conversions
+conda-forge-converter verify-all --json > report.json
 
-Yes, use the `--python-version` option:
-
-```bash
-conda-forge-converter -s myenv -t myenv_forge --python-version 3.10
-```
-
-### How can I see what would happen without making changes?
-
-Use the `--dry-run` option:
-
-```bash
-conda-forge-converter -s myenv -t myenv_forge --dry-run
-```
-
-### How do I get more detailed output?
-
-Use the `--verbose` option:
-
-```bash
-conda-forge-converter -s myenv -t myenv_forge --verbose
+# Check for errors
+if [ $(jq '.failed_envs | length' report.json) -gt 0 ]; then
+    exit 1
+fi
 ```
 
 ## System Administrator Questions

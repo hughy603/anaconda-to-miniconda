@@ -13,7 +13,7 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Mock ${{ inputs.service-name }} Service
+    - name: Mock Service
       if: ${{ env.ACT_LOCAL_TESTING == 'true' }}
       shell: bash
       run: |
@@ -21,7 +21,7 @@ runs:
         ${{ inputs.mock-script }}
         echo "::notice::Mock service execution completed"
 
-    - name: Run ${{ inputs.service-name }} Service (Production)
+    - name: Run Service (Production)
       if: ${{ env.ACT_LOCAL_TESTING != 'true' }}
       shell: bash
       run: |
