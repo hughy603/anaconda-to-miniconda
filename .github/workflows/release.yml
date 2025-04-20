@@ -57,7 +57,7 @@ jobs:
 
       - name: Run pre-commit checks
         run: |
-          pre-commit run --all-files
+          hatch run pre-commit run --all-files
 
       - name: Build package
         run: |
@@ -108,23 +108,23 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const context = github.context;
+            const validateContext = github.context;
             const message = `Release validation failed for ${{ steps.validate.outputs.current_version }}`;
 
             // Only create comment if we have an issue number
-            if (context.issue.number) {
+            if (validateContext.issue.number) {
               github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
+                issue_number: validateContext.issue.number,
+                owner: validateContext.repo.owner,
+                repo: validateContext.repo.repo,
                 body: message
               });
             } else {
               // If no issue number, create a new issue
               github.rest.issues.create({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                title: `Release Validation Failed - ${context.sha.substring(0, 7)}`,
+                owner: validateContext.repo.owner,
+                repo: validateContext.repo.repo,
+                title: `Release Validation Failed - ${validateContext.sha.substring(0, 7)}`,
                 body: message
               });
             }
@@ -190,23 +190,23 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const context = github.context;
+            const testContext = github.context;
             const message = `Tests failed for ${{ steps.run-tests.outputs.current_version }} on ${{ matrix.os }} with Python ${{ matrix.python-version }}`;
 
             // Only create comment if we have an issue number
-            if (context.issue.number) {
+            if (testContext.issue.number) {
               github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
+                issue_number: testContext.issue.number,
+                owner: testContext.repo.owner,
+                repo: testContext.repo.repo,
                 body: message
               });
             } else {
               // If no issue number, create a new issue
               github.rest.issues.create({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                title: `Test Failure - ${context.sha.substring(0, 7)}`,
+                owner: testContext.repo.owner,
+                repo: testContext.repo.repo,
+                title: `Test Failure - ${testContext.sha.substring(0, 7)}`,
                 body: message
               });
             }
@@ -345,23 +345,23 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const context = github.context;
+            const releaseContext = github.context;
             const message = `Release failed for ${{ steps.release.outputs.version }}`;
 
             // Only create comment if we have an issue number
-            if (context.issue.number) {
+            if (releaseContext.issue.number) {
               github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
+                issue_number: releaseContext.issue.number,
+                owner: releaseContext.repo.owner,
+                repo: releaseContext.repo.repo,
                 body: message
               });
             } else {
               // If no issue number, create a new issue
               github.rest.issues.create({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                title: `Release Failed - ${context.sha.substring(0, 7)}`,
+                owner: releaseContext.repo.owner,
+                repo: releaseContext.repo.repo,
+                title: `Release Failed - ${releaseContext.sha.substring(0, 7)}`,
                 body: message
               });
             }
