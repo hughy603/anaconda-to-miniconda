@@ -97,7 +97,7 @@ repos:
 
       - id: requirements-lock
         name: Lock requirements with UV
-        entry: uv pip compile pyproject.toml --output-file=requirements.lock --extra=all
+        entry: uv pip compile pyproject.toml --output-file=requirements.lock --extra=all --python-platform linux
         language: system
         files: ^pyproject\.toml$
         pass_filenames: false
@@ -105,7 +105,7 @@ repos:
 
       - id: prod-requirements-lock
         name: Lock production requirements with UV
-        entry: uv pip compile pyproject.toml --output-file=requirements-prod.lock
+        entry: uv pip compile pyproject.toml --output-file=requirements-prod.lock --python-platform linux
         language: system
         files: ^pyproject\.toml$
         pass_filenames: false
