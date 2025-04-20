@@ -172,6 +172,8 @@ jobs:
           uv pip install -r requirements.lock
           # Install test dependencies separately
           uv pip install hatch python-semantic-release pre-commit --system
+          # Install dev dependencies for linting
+          uv pip install -e ".[all]"
           echo "::endgroup::"
 
       - name: Run linting and type checking
