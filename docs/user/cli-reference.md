@@ -30,16 +30,16 @@ conda-forge-converter --help
 
 ## Common Options
 
-| Option                        | Description                                                    |
+| Option | Description |
 | ----------------------------- | -------------------------------------------------------------- |
-| `-s, --source-env SOURCE_ENV` | Name of the source Anaconda environment                        |
-| `-t, --target-env TARGET_ENV` | Name for the new conda-forge environment                       |
-| `--python VERSION`            | Specify Python version for the new environment                 |
-| `--dry-run`                   | Show what would be done without making changes                 |
-| `--batch`                     | Convert multiple environments                                  |
-| `--pattern PATTERN`           | Pattern for matching environment names (e.g., 'data\*')        |
-| `--exclude EXCLUDE`           | Comma-separated list of environments to exclude                |
-| `--target-suffix SUFFIX`      | Suffix to add to target environment names (default: "\_forge") |
+| `-s, --source-env SOURCE_ENV` | Name of the source Anaconda environment |
+| `-t, --target-env TARGET_ENV` | Name for the new conda-forge environment |
+| `--python VERSION` | Specify Python version for the new environment |
+| `--dry-run` | Show what would be done without making changes |
+| `--batch` | Convert multiple environments |
+| `--pattern PATTERN` | Pattern for matching environment names (e.g., 'data\*') |
+| `--exclude EXCLUDE` | Comma-separated list of environments to exclude |
+| `--target-suffix SUFFIX` | Suffix to add to target environment names (default: "\_forge") |
 
 ## Examples
 

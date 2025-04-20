@@ -27,13 +27,13 @@
 - Add test file for commit message validation
   ([`e907b88`](https://github.com/hughy603/anaconda-to-miniconda/commit/e907b885aca193300fcf539bc068c5841a9c9be2))
 
-- Bump development version \[skip ci\]
+- Bump development version [skip ci]
   ([`90336c1`](https://github.com/hughy603/anaconda-to-miniconda/commit/90336c1b9b5489befdc4fe90eb585cbea01761eb))
 
-- Bump development version \[skip ci\]
+- Bump development version [skip ci]
   ([`17bcda6`](https://github.com/hughy603/anaconda-to-miniconda/commit/17bcda6eee415ae90fc9be30f66b6bb4d1b30db3))
 
-- Bump development version \[skip ci\]
+- Bump development version [skip ci]
   ([`16dcccd`](https://github.com/hughy603/anaconda-to-miniconda/commit/16dcccd86a2fbd68e11de1bbd548b3ddfd5e6bfd))
 
 - Merge branch 'develop' of <https://github.com/hughy603/anaconda-to-miniconda> into develop

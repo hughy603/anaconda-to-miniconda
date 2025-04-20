@@ -83,12 +83,12 @@ Add to crontab:
 
 The conda-forge-converter respects the following environment variables:
 
-| Variable                           | Description                                 | Default                          |
+| Variable | Description | Default |
 | ---------------------------------- | ------------------------------------------- | -------------------------------- |
-| `CONDA_FORGE_CONVERTER_CACHE_DIR`  | Directory for caching package metadata      | `~/.cache/conda-forge-converter` |
-| `CONDA_FORGE_CONVERTER_LOG_LEVEL`  | Logging level (DEBUG, INFO, WARNING, ERROR) | `INFO`                           |
-| `CONDA_FORGE_CONVERTER_TIMEOUT`    | Timeout for network operations (seconds)    | `60`                             |
-| `CONDA_FORGE_CONVERTER_BATCH_SIZE` | Number of packages to install in a batch    | `20`                             |
+| `CONDA_FORGE_CONVERTER_CACHE_DIR` | Directory for caching package metadata | `~/.cache/conda-forge-converter` |
+| `CONDA_FORGE_CONVERTER_LOG_LEVEL` | Logging level (DEBUG, INFO, WARNING, ERROR) | `INFO` |
+| `CONDA_FORGE_CONVERTER_TIMEOUT` | Timeout for network operations (seconds) | `60` |
+| `CONDA_FORGE_CONVERTER_BATCH_SIZE` | Number of packages to install in a batch | `20` |
 
 Example usage:
 
@@ -241,23 +241,23 @@ exec { 'convert_environment':
 
 ### Basic Commands
 
-| Command                                           | Description                                    |
+| Command | Description |
 | ------------------------------------------------- | ---------------------------------------------- |
-| `conda-forge-converter --help`                    | Show help message                              |
-| `conda-forge-converter --version`                 | Show version information                       |
-| `conda-forge-converter -s SOURCE -t TARGET`       | Convert a single environment                   |
-| `conda-forge-converter --batch`                   | Convert all environments                       |
-| `conda-forge-converter --batch --pattern PATTERN` | Convert environments matching pattern          |
-| `conda-forge-converter --dry-run`                 | Show what would be done without making changes |
-| `conda-forge-converter --verbose`                 | Show detailed output                           |
+| `conda-forge-converter --help` | Show help message |
+| `conda-forge-converter --version` | Show version information |
+| `conda-forge-converter -s SOURCE -t TARGET` | Convert a single environment |
+| `conda-forge-converter --batch` | Convert all environments |
+| `conda-forge-converter --batch --pattern PATTERN` | Convert environments matching pattern |
+| `conda-forge-converter --dry-run` | Show what would be done without making changes |
+| `conda-forge-converter --verbose` | Show detailed output |
 
 ### Advanced Options
 
-| Option                     | Description                                          |
+| Option | Description |
 | -------------------------- | ---------------------------------------------------- |
-| `--no-preserve-ownership`  | Don't preserve original environment ownership        |
-| `--python-version VERSION` | Specify Python version for the new environment       |
-| `--use-fast-solver`        | Use libmamba solver for faster dependency resolution |
-| `--batch-size SIZE`        | Number of packages to install in a batch             |
-| `--no-backup`              | Skip creating backup of the original environment     |
-| `--skip-validation`        | Skip validation of the converted environment         |
+| `--no-preserve-ownership` | Don't preserve original environment ownership |
+| `--python-version VERSION` | Specify Python version for the new environment |
+| `--use-fast-solver` | Use libmamba solver for faster dependency resolution |
+| `--batch-size SIZE` | Number of packages to install in a batch |
+| `--no-backup` | Skip creating backup of the original environment |
+| `--skip-validation` | Skip validation of the converted environment |

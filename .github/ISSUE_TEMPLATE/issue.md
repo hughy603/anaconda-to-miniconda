@@ -1,15 +1,15 @@
 ______________________________________________________________________
 
-## name: Issue Report about: Report a bug, feature request, or other issue title: '' labels: \[needs-triage\] assignees: ''
+## name: Issue Report about: Report a bug, feature request, or other issue title: '' labels: [needs-triage] assignees: ''
 
 ## Issue Type
 
 <!-- Select one by changing [ ] to [x] -->
 
-- \[ \] Bug Report
-- \[ \] Feature Request
-- \[ \] Documentation Issue
-- \[ \] Question/Support
+- [ ] Bug Report
+- [ ] Feature Request
+- [ ] Documentation Issue
+- [ ] Question/Support
 
 ## Description
 
@@ -63,6 +63,6 @@ Paste your logs here
 
 <!-- Put an x in the boxes that apply -->
 
-- \[ \] I've searched for similar issues before creating this one
-- \[ \] I've included all the relevant information
-- \[ \] I've included error messages and logs if applicable
+- [ ] I've searched for similar issues before creating this one
+- [ ] I've included all the relevant information
+- [ ] I've included error messages and logs if applicable

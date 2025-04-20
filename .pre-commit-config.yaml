@@ -1,7 +1,7 @@
 # Pre-commit configuration
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v5.0.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
@@ -22,14 +22,14 @@ repos:
       - id: requirements-txt-fixer
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.3.0
+    rev: v0.11.6
     hooks:
       - id: ruff
         args: [--fix]
       - id: ruff-format
 
   - repo: https://github.com/PyCQA/bandit
-    rev: 1.7.7
+    rev: 1.8.3
     hooks:
       - id: bandit
         args:
@@ -37,13 +37,13 @@ repos:
         additional_dependencies: ["bandit[toml]"]
 
   - repo: https://github.com/commitizen-tools/commitizen
-    rev: v3.15.0
+    rev: v4.6.0
     hooks:
       - id: commitizen
         stages: [commit-msg]
 
   - repo: https://github.com/executablebooks/mdformat
-    rev: 0.7.16
+    rev: 0.7.22
     hooks:
       - id: mdformat
         additional_dependencies: [mdformat-black]
@@ -56,7 +56,7 @@ repos:
 
   # Commit message format validation
   - repo: https://github.com/compilerla/conventional-pre-commit
-    rev: v3.1.0
+    rev: v4.0.0
     hooks:
       - id: conventional-pre-commit
         stages: [commit-msg]
@@ -77,7 +77,7 @@ repos:
 
   # GitHub workflow validation
   - repo: https://github.com/rhysd/actionlint
-    rev: v1.6.26
+    rev: v1.7.7
     hooks:
       - id: actionlint
         name: Validate GitHub Actions workflows
@@ -97,7 +97,7 @@ repos:
 
       - id: requirements-lock
         name: Lock requirements with UV
-        entry: uv pip compile pyproject.toml --output-file=requirements.lock --extra=all --preview
+        entry: uv pip compile pyproject.toml --output-file=requirements.lock --extra=all
         language: system
         files: ^pyproject\.toml$
         pass_filenames: false
@@ -105,7 +105,7 @@ repos:
 
       - id: prod-requirements-lock
         name: Lock production requirements with UV
-        entry: uv pip compile pyproject.toml --output-file=requirements-prod.lock --preview
+        entry: uv pip compile pyproject.toml --output-file=requirements-prod.lock
         language: system
         files: ^pyproject\.toml$
         pass_filenames: false
@@ -155,7 +155,7 @@ repos:
 
   # Shell script validation
   - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.9.0.6
+    rev: v0.10.0.1
     hooks:
       - id: shellcheck
         name: Validate shell scripts

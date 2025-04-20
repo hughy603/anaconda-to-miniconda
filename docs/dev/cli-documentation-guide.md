@@ -69,10 +69,10 @@ command [required_arg] [optional_arg] [--required-option VALUE] [--optional-opti
 
 Document options in a table format:
 
-| Option      | Description             | Default    | Required |
+| Option | Description | Default | Required |
 | ----------- | ----------------------- | ---------- | -------- |
-| `--option1` | Description of option 1 | `default1` | Yes/No   |
-| `--option2` | Description of option 2 | `default2` | Yes/No   |
+| `--option1` | Description of option 1 | `default1` | Yes/No |
+| `--option2` | Description of option 2 | `default2` | Yes/No |
 
 ### Examples
 
@@ -153,16 +153,16 @@ The `conda-forge-converter` command converts an existing Anaconda environment to
 
 #### Options
 
-| Option                    | Description                                                        | Default        | Required |
+| Option | Description | Default | Required |
 | ------------------------- | ------------------------------------------------------------------ | -------------- | -------- |
-| `-s, --source`            | Source environment name or path                                    | -              | Yes      |
-| `-t, --target`            | Target environment name                                            | -              | Yes      |
-| `--python-version`        | Python version for the new environment                             | Same as source | No       |
-| `--dry-run`               | Show what would be done without making changes                     | `False`        | No       |
-| `--verbose`               | Show detailed output                                               | `False`        | No       |
-| `--batch`                 | Convert multiple environments                                      | `False`        | No       |
-| `--pattern`               | Pattern to match environment names when using --batch              | `*`            | No       |
-| `--no-preserve-ownership` | Don't preserve original environment ownership when running as root | `False`        | No       |
+| `-s, --source` | Source environment name or path | - | Yes |
+| `-t, --target` | Target environment name | - | Yes |
+| `--python-version` | Python version for the new environment | Same as source | No |
+| `--dry-run` | Show what would be done without making changes | `False` | No |
+| `--verbose` | Show detailed output | `False` | No |
+| `--batch` | Convert multiple environments | `False` | No |
+| `--pattern` | Pattern to match environment names when using --batch | `*` | No |
+| `--no-preserve-ownership` | Don't preserve original environment ownership when running as root | `False` | No |
 
 #### Examples
 

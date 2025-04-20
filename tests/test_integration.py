@@ -295,9 +295,9 @@ class TestEnvironmentConversion:
             )
             assert target_env in envs, f"Target environment '{target_env}' not found"
             target_env_path = envs[target_env]
-            assert Path(
-                target_env_path
-            ).exists(), f"Target environment path '{target_env_path}' does not exist"
+            assert Path(target_env_path).exists(), (
+                f"Target environment path '{target_env_path}' does not exist"
+            )
 
             # Verify key packages are installed
             print(f"Verifying packages in target environment '{target_env}'...")

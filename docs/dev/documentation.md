@@ -78,13 +78,13 @@ Each documentation file should follow this structure:
 
 ### Consistent Terms
 
-| Term        | Usage                        |
+| Term | Usage |
 | ----------- | ---------------------------- |
 | conda-forge | Always hyphenated, lowercase |
-| Anaconda    | Capitalized                  |
-| environment | Lowercase                    |
-| package     | Lowercase                    |
-| CLI         | All caps                     |
+| Anaconda | Capitalized |
+| environment | Lowercase |
+| package | Lowercase |
+| CLI | All caps |
 
 ### Command Examples
 

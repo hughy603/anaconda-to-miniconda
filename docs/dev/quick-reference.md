@@ -138,18 +138,18 @@ actionlint .github/workflows/ci.yml
 
 ### Types
 
-| Type       | Description                                           |
+| Type | Description |
 | ---------- | ----------------------------------------------------- |
-| `feat`     | A new feature                                         |
-| `fix`      | A bug fix                                             |
-| `docs`     | Documentation only changes                            |
-| `style`    | Changes that don't affect code meaning                |
+| `feat` | A new feature |
+| `fix` | A bug fix |
+| `docs` | Documentation only changes |
+| `style` | Changes that don't affect code meaning |
 | `refactor` | Code change that neither fixes a bug nor adds feature |
-| `perf`     | Performance improvement                               |
-| `test`     | Adding or correcting tests                            |
-| `build`    | Changes to build system or dependencies               |
-| `ci`       | Changes to CI configuration                           |
-| `chore`    | Other changes that don't modify src or test files     |
+| `perf` | Performance improvement |
+| `test` | Adding or correcting tests |
+| `build` | Changes to build system or dependencies |
+| `ci` | Changes to CI configuration |
+| `chore` | Other changes that don't modify src or test files |
 
 ### Common Scopes
 
@@ -174,11 +174,11 @@ test(cli): add tests for new verbose option
 
 ### Before Creating PR
 
-- \[ \] All tests pass locally
-- \[ \] Pre-commit checks pass
-- \[ \] Documentation is updated
-- \[ \] Code follows project style guidelines
-- \[ \] Commits follow conventional commit format
+- [ ] All tests pass locally
+- [ ] Pre-commit checks pass
+- [ ] Documentation is updated
+- [ ] Code follows project style guidelines
+- [ ] Commits follow conventional commit format
 
 ### PR Template Sections
 
@@ -302,11 +302,11 @@ pytest -xvs
 
 ## Environment Variables
 
-| Variable                          | Purpose                           | Example                    |
+| Variable | Purpose | Example |
 | --------------------------------- | --------------------------------- | -------------------------- |
-| `CONDA_FORGE_CONVERTER_LOG_LEVEL` | Set logging level                 | `DEBUG`, `INFO`, `WARNING` |
-| `CONDA_FORGE_CONVERTER_CACHE_DIR` | Override cache directory location | `/path/to/cache`           |
-| `CONDA_FORGE_CONVERTER_NO_CACHE`  | Disable caching                   | `1`, `true`, `yes`         |
+| `CONDA_FORGE_CONVERTER_LOG_LEVEL` | Set logging level | `DEBUG`, `INFO`, `WARNING` |
+| `CONDA_FORGE_CONVERTER_CACHE_DIR` | Override cache directory location | `/path/to/cache` |
+| `CONDA_FORGE_CONVERTER_NO_CACHE` | Disable caching | `1`, `true`, `yes` |
 
 ## Release Process Quick Reference
 
