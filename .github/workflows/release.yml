@@ -53,6 +53,7 @@ jobs:
       - name: Install dependencies
         run: |
           uv pip install -r requirements.lock
+          uv pip install hatch python-semantic-release pre-commit --system
 
       - name: Run pre-commit checks
         run: |
@@ -156,6 +157,7 @@ jobs:
       - name: Install dependencies
         run: |
           uv pip install -r requirements.lock
+          uv pip install hatch python-semantic-release pre-commit --system
 
       - name: Run linting and type checking
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
