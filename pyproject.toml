@@ -116,8 +116,6 @@ test-github-actions = "pytest tests/test_github_actions_validator.py tests/test_
 test-conda-forge = "pytest tests/test_cli.py"
 test-fast = "pytest -k 'not slow and not integration'"
 test-specific = "pytest"
-clean-coverage = "python -c \"import pathlib; [p.unlink() for p in pathlib.Path('.').glob('.coverage*') if p.is_file()]; [p.unlink() for p in pathlib.Path('.').glob('coverage.xml') if p.is_file()]; import shutil; shutil.rmtree('htmlcov', ignore_errors=True)\""
-update-coverage-threshold = "python scripts/update_coverage_threshold.py"
 
 # Linting and type checking
 lint = "ruff check ."
