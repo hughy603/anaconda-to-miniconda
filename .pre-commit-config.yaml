@@ -139,11 +139,10 @@ repos:
 
       - id: mkdocs-strict-build
         name: Validate MkDocs strict build
-        entry: hatch run docs-build -- --strict
+        entry: pwsh -NoProfile -Command "hatch run docs-build -- --strict"
         language: system
         pass_filenames: false
-        types: [markdown, yaml]
-        files: ^(docs/.*\.md|mkdocs\.yml)$
+        verbose: true
         stages: [pre-commit]
 
   # Shell script validation
