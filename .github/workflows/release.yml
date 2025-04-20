@@ -108,13 +108,26 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
+            const context = github.context;
             const message = `Release validation failed for ${{ steps.validate.outputs.current_version }}`;
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: message
-            });
+
+            // Only create comment if we have an issue number
+            if (context.issue.number) {
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: message
+              });
+            } else {
+              // If no issue number, create a new issue
+              github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `Release Validation Failed - ${context.sha.substring(0, 7)}`,
+                body: message
+              });
+            }
 
   test:
     name: Test on Multiple Platforms
@@ -177,13 +190,26 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
+            const context = github.context;
             const message = `Tests failed for ${{ steps.run-tests.outputs.current_version }} on ${{ matrix.os }} with Python ${{ matrix.python-version }}`;
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: message
-            });
+
+            // Only create comment if we have an issue number
+            if (context.issue.number) {
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: message
+              });
+            } else {
+              // If no issue number, create a new issue
+              github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `Test Failure - ${context.sha.substring(0, 7)}`,
+                body: message
+              });
+            }
 
   approve-release:
     name: Approve Release
@@ -319,13 +345,26 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
+            const context = github.context;
             const message = `Release failed for ${{ steps.release.outputs.version }}`;
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: message
-            });
+
+            // Only create comment if we have an issue number
+            if (context.issue.number) {
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: message
+              });
+            } else {
+              // If no issue number, create a new issue
+              github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `Release Failed - ${context.sha.substring(0, 7)}`,
+                body: message
+              });
+            }
 
   health-check:
     name: Deployment Health Check
