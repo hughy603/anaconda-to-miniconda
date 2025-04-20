@@ -63,22 +63,31 @@ jobs:
       - name: Install dependencies
         run: |
           echo "::group::Installing Dependencies"
-          uv pip install -r requirements.lock
-          uv pip install hatch python-semantic-release pre-commit --system
+          # Install production dependencies only
+          uv pip install -r requirements.txt --production
+          # Install build tools separately
+          uv pip install build hatch python-semantic-release --system
           echo "::endgroup::"
 
       - name: Run pre-commit checks
         run: |
           echo "::group::Running Pre-commit Checks"
+          # Install development dependencies temporarily for checks
+          uv pip install -r requirements-dev.txt
           uv run pre-commit run --all-files
+          # Remove dev dependencies after checks
+          uv pip uninstall -r requirements-dev.txt -y
           echo "::endgroup::"
 
       - name: Build package
         run: |
           echo "::group::Building Package"
-          uv pip install -e .
+          # Install in development mode with production dependencies only
+          uv pip install -e . --production
           python -m build
-          ls -la dist/
+          # Verify package contents
+          echo "::notice::Package contents:"
+          tar -tvf dist/*.tar.gz
           echo "::endgroup::"
 
       - name: Upload build artifacts
@@ -165,7 +174,10 @@ jobs:
       - name: Install dependencies
         run: |
           echo "::group::Installing Dependencies"
-          uv pip install -r requirements.lock
+          # Install production dependencies only
+          uv pip install -r requirements.txt --production
+          # Install test dependencies separately
+          uv pip install -r requirements-test.txt
           uv pip install hatch python-semantic-release pre-commit --system
           echo "::endgroup::"
 
@@ -288,15 +300,19 @@ jobs:
       - name: Install dependencies
         run: |
           echo "::group::Installing Dependencies"
-          uv pip install -r uv.lock
-          uv pip install python-semantic-release build twine hatch
+          # Install production dependencies only
+          uv pip install -r requirements-prod.lock
+          uv pip install python-semantic-release build twine hatch --system
           echo "::endgroup::"
 
       - name: Build package
         run: |
           echo "::group::Building Package"
-          uv pip install -e .
+          # uv pip install -e .
           python -m build
+          # Verify package contents
+          echo "::notice::Package contents:"
+          tar -tvf dist/*.tar.gz
           echo "::endgroup::"
 
       - name: Semantic Release
