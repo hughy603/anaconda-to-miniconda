@@ -37,7 +37,7 @@ dependencies = [
     "typing_extensions>=4.10.0", # For additional type hints if needed
     "click>=8.1.0",              # Modern CLI framework
     "rich>=13.0.0",              # Terminal formatting
-    "pydantic>=2.0.0",           # Data validation and settings management
+    "pydantic>=2.12.5",           # Data validation and settings management
 ]
 [project.optional-dependencies]
 dev = [
