@@ -41,13 +41,13 @@ dependencies = [
 ]
 [project.optional-dependencies]
 dev = [
-    "ruff>=0.3.0",
-    "pyright>=1.1.350",
+    "ruff>=0.15.10",
+    "pyright>=1.1.408",
     "python-semantic-release>=9.0.0",
-    "pre-commit>=3.5.0",
-    "build>=1.0.0",
-    "hatch>=1.9.0",
-    "types-pyyaml>=6.0.12.20250402",
+    "pre-commit>=4.5.1",
+    "build>=1.4.3",
+    "hatch>=1.16.5",
+    "types-pyyaml>=6.0.12.20260408",
 ]
 test = [
     "pytest>=8.0.0",
@@ -63,7 +63,7 @@ docs = [
     "mkdocstrings-python>=1.8.0",
     "mkdocs-minify-plugin>=0.7.0",
     "mkdocs-redirects>=1.2.1",
-    "hatch>=1.9.0",
+    "hatch>=1.16.5",
     "pymdown-extensions>=10.14.3",
     "mkdocs-git-revision-date-localized-plugin>=1.4.5",
 ]
@@ -245,7 +245,7 @@ prerelease_token = "feature"
 # Coverage configuration is now in .coveragerc
 
 [dependency-groups]
-dev = ["types-pyyaml>=6.0.12.20250402"]
+dev = ["types-pyyaml>=6.0.12.20260408"]
 
 # Test configuration
 [tool.pytest.ini_options]
